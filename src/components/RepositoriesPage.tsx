@@ -16,6 +16,12 @@ export function RepositoriesPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState("");
   const [newRepoName, setNewRepoName] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleAddRepository = () => {
     if (newRepoUrl && newRepoName) {
@@ -26,6 +32,10 @@ export function RepositoriesPage() {
             setNewRepoUrl("");
             setNewRepoName("");
             setShowAddForm(false);
+            showToast("仓库已添加，正在扫描技能...");
+          },
+          onError: (error: any) => {
+            showToast(`添加失败: ${error.message || error}`);
           },
         }
       );
@@ -73,18 +83,26 @@ export function RepositoriesPage() {
           <div className="flex gap-2">
             <button
               onClick={handleAddRepository}
-              className="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={!newRepoUrl || !newRepoName}
+              className="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              disabled={!newRepoUrl || !newRepoName || addMutation.isPending}
             >
-              确认添加
+              {addMutation.isPending ? "添加中..." : "确认添加"}
             </button>
             <button
               onClick={() => setShowAddForm(false)}
               className="px-4 py-2 rounded bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              disabled={addMutation.isPending}
             >
               取消
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 px-4 py-3 rounded-lg bg-primary text-primary-foreground shadow-lg animate-slide-up z-50">
+          {toast}
         </div>
       )}
 
@@ -120,9 +138,18 @@ export function RepositoriesPage() {
 
                 <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() => scanMutation.mutate(repo.id)}
+                    onClick={() =>
+                      scanMutation.mutate(repo.id, {
+                        onSuccess: (skills) => {
+                          showToast(`找到 ${skills.length} 个技能`);
+                        },
+                        onError: (error: any) => {
+                          showToast(`扫描失败: ${error.message || error}`);
+                        },
+                      })
+                    }
                     disabled={scanMutation.isPending}
-                    className="px-3 py-1 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1"
+                    className="px-3 py-1 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-1"
                   >
                     <Search className="w-4 h-4" />
                     {scanMutation.isPending ? "扫描中..." : "扫描"}

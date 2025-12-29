@@ -10,6 +10,12 @@ export function SkillsPage() {
   const deleteMutation = useDeleteSkill();
 
   const [filter, setFilter] = useState<"all" | "installed" | "not-installed">("all");
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const filteredSkills = skills?.filter((skill) => {
     if (filter === "installed") return skill.installed;
@@ -96,9 +102,27 @@ export function SkillsPage() {
             <SkillCard
               key={skill.id}
               skill={skill}
-              onInstall={() => installMutation.mutate(skill.id)}
-              onUninstall={() => uninstallMutation.mutate(skill.id)}
-              onDelete={() => deleteMutation.mutate(skill.id)}
+              onInstall={() => {
+                installMutation.mutate(skill.id, {
+                  onSuccess: () => showToast("✅ 技能安装成功"),
+                  onError: (error: any) => showToast(`❌ 安装失败: ${error.message || error}`),
+                });
+              }}
+              onUninstall={() => {
+                uninstallMutation.mutate(skill.id, {
+                  onSuccess: () => showToast("✅ 技能已卸载"),
+                  onError: (error: any) => showToast(`❌ 卸载失败: ${error.message || error}`),
+                });
+              }}
+              onDelete={() => {
+                deleteMutation.mutate(skill.id, {
+                  onSuccess: () => showToast("✅ 技能记录已删除"),
+                  onError: (error: any) => showToast(`❌ 删除失败: ${error.message || error}`),
+                });
+              }}
+              isInstalling={installMutation.isPending}
+              isUninstalling={uninstallMutation.isPending}
+              isDeleting={deleteMutation.isPending}
               getSecurityBadge={getSecurityBadge}
             />
           ))}
@@ -107,6 +131,13 @@ export function SkillsPage() {
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg mb-2">暂无 Skills</p>
           <p className="text-sm">请先在「仓库配置」中添加仓库并扫描</p>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 px-4 py-3 rounded-lg bg-primary text-primary-foreground shadow-lg animate-slide-up z-50">
+          {toast}
         </div>
       )}
     </div>
@@ -118,10 +149,22 @@ interface SkillCardProps {
   onInstall: () => void;
   onUninstall: () => void;
   onDelete: () => void;
+  isInstalling: boolean;
+  isUninstalling: boolean;
+  isDeleting: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
 }
 
-function SkillCard({ skill, onInstall, onUninstall, onDelete, getSecurityBadge }: SkillCardProps) {
+function SkillCard({
+  skill,
+  onInstall,
+  onUninstall,
+  onDelete,
+  isInstalling,
+  isUninstalling,
+  isDeleting,
+  getSecurityBadge
+}: SkillCardProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -145,6 +188,12 @@ function SkillCard({ skill, onInstall, onUninstall, onDelete, getSecurityBadge }
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
             <span>仓库: {skill.repository_url.split("/").slice(-2).join("/")}</span>
             <span>路径: {skill.file_path}</span>
+            {/* Debug info */}
+            {!skill.installed && (
+              <span className="text-orange-600">
+                [Debug: score={skill.security_score ?? 'null'}]
+              </span>
+            )}
           </div>
 
           {showDetails && skill.security_issues && skill.security_issues.length > 0 && (
@@ -165,18 +214,19 @@ function SkillCard({ skill, onInstall, onUninstall, onDelete, getSecurityBadge }
           {skill.installed ? (
             <button
               onClick={onUninstall}
-              className="px-3 py-1 text-sm rounded bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="px-3 py-1 text-sm rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+              disabled={isUninstalling}
             >
-              卸载
+              {isUninstalling ? "卸载中..." : "卸载"}
             </button>
           ) : (
             <button
               onClick={onInstall}
-              className="px-3 py-1 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1"
-              disabled={skill.security_score !== undefined && skill.security_score < 50}
+              className="px-3 py-1 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1 disabled:opacity-50"
+              disabled={isInstalling || (skill.security_score !== undefined && skill.security_score < 50)}
             >
               <Download className="w-4 h-4" />
-              安装
+              {isInstalling ? "安装中..." : "安装"}
             </button>
           )}
 
@@ -189,7 +239,8 @@ function SkillCard({ skill, onInstall, onUninstall, onDelete, getSecurityBadge }
 
           <button
             onClick={onDelete}
-            className="px-3 py-1 text-sm rounded bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            className="px-3 py-1 text-sm rounded bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50"
+            disabled={isDeleting}
           >
             <Trash2 className="w-4 h-4" />
           </button>

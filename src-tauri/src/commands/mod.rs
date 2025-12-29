@@ -16,10 +16,12 @@ pub async fn add_repository(
     state: State<'_, AppState>,
     url: String,
     name: String,
-) -> Result<(), String> {
+) -> Result<String, String> {
     let repo = Repository::new(url, name);
+    let repo_id = repo.id.clone();
     state.db.add_repository(&repo)
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    Ok(repo_id)
 }
 
 /// 获取所有仓库
@@ -117,5 +119,15 @@ pub async fn delete_skill(
     skill_id: String,
 ) -> Result<(), String> {
     state.db.delete_skill(&skill_id)
+        .map_err(|e| e.to_string())
+}
+
+/// 扫描本地技能目录并导入未追踪的技能
+#[tauri::command]
+pub async fn scan_local_skills(
+    state: State<'_, AppState>,
+) -> Result<Vec<Skill>, String> {
+    let manager = state.skill_manager.lock().await;
+    manager.scan_local_skills()
         .map_err(|e| e.to_string())
 }

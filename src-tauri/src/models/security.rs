@@ -8,6 +8,8 @@ pub struct SecurityReport {
     pub level: SecurityLevel,
     pub issues: Vec<SecurityIssue>,
     pub recommendations: Vec<String>,
+    pub blocked: bool,  // 是否被硬触发规则阻止安装
+    pub hard_trigger_issues: Vec<String>,  // 触发的硬阻止规则列表
 }
 
 /// 安全等级

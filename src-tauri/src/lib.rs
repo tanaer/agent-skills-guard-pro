@@ -60,6 +60,7 @@ pub fn run() {
             commands::install_skill,
             commands::uninstall_skill,
             commands::delete_skill,
+            commands::scan_local_skills,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

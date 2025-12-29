@@ -112,16 +112,44 @@ impl GitHubService {
             .get(&url)
             .send()
             .await
-            .context("Failed to fetch GitHub directory")?;
+            .context("网络请求失败，请检查您的网络连接")?;
 
-        if !response.status().is_success() {
-            anyhow::bail!("GitHub API returned error: {}", response.status());
+        let status = response.status();
+
+        // 处理不同的 HTTP 错误
+        if !status.is_success() {
+            match status.as_u16() {
+                403 => {
+                    // 检查是否是 API 限流
+                    if let Some(remaining) = response.headers().get("x-ratelimit-remaining") {
+                        if remaining == "0" {
+                            if let Some(reset) = response.headers().get("x-ratelimit-reset") {
+                                anyhow::bail!("GitHub API 速率限制已达上限，请在 {} 之后重试", reset.to_str().unwrap_or("稍后"));
+                            }
+                            anyhow::bail!("GitHub API 速率限制已达上限，请稍后重试");
+                        }
+                    }
+                    anyhow::bail!("无权限访问该仓库，请检查仓库是否为私有仓库");
+                }
+                404 => {
+                    anyhow::bail!("仓库或路径不存在: {}/{}", owner, repo);
+                }
+                401 => {
+                    anyhow::bail!("未授权访问，请配置 GitHub Token");
+                }
+                500..=599 => {
+                    anyhow::bail!("GitHub 服务器错误，请稍后重试");
+                }
+                _ => {
+                    anyhow::bail!("GitHub API 返回错误: {}", status);
+                }
+            }
         }
 
         let contents: Vec<GitHubContent> = response
             .json()
             .await
-            .context("Failed to parse GitHub response")?;
+            .context("解析 GitHub 响应失败，数据格式可能不正确")?;
 
         Ok(contents)
     }
@@ -132,16 +160,33 @@ impl GitHubService {
             .get(download_url)
             .send()
             .await
-            .context("Failed to download file")?;
+            .context("网络请求失败，无法下载文件")?;
 
-        if !response.status().is_success() {
-            anyhow::bail!("Failed to download file: {}", response.status());
+        let status = response.status();
+
+        if !status.is_success() {
+            match status.as_u16() {
+                403 => {
+                    if let Some(remaining) = response.headers().get("x-ratelimit-remaining") {
+                        if remaining == "0" {
+                            anyhow::bail!("GitHub API 速率限制已达上限，请稍后重试");
+                        }
+                    }
+                    anyhow::bail!("无权限访问该文件");
+                }
+                404 => {
+                    anyhow::bail!("文件不存在: {}", download_url);
+                }
+                _ => {
+                    anyhow::bail!("下载文件失败: {}", status);
+                }
+            }
         }
 
         let bytes = response
             .bytes()
             .await
-            .context("Failed to read file bytes")?;
+            .context("读取文件内容失败")?;
 
         Ok(bytes.to_vec())
     }
@@ -206,6 +251,18 @@ impl GitHubService {
             .context("Failed to parse SKILL.md frontmatter as YAML")?;
 
         Ok((frontmatter.name, frontmatter.description))
+    }
+
+    /// 获取目录下的所有文件（不递归）
+    pub async fn get_directory_files(&self, owner: &str, repo: &str, path: &str) -> Result<Vec<GitHubContent>> {
+        let contents = self.fetch_directory_contents(owner, repo, path).await?;
+
+        // 只返回文件，过滤掉子目录
+        let files: Vec<GitHubContent> = contents.into_iter()
+            .filter(|item| item.content_type == "file")
+            .collect();
+
+        Ok(files)
     }
 }
 

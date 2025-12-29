@@ -3,7 +3,7 @@ import { Repository, Skill } from "../types";
 
 export const api = {
   // Repository APIs
-  async addRepository(url: string, name: string): Promise<void> {
+  async addRepository(url: string, name: string): Promise<string> {
     return invoke("add_repository", { url, name });
   },
 
@@ -38,5 +38,10 @@ export const api = {
 
   async deleteSkill(skillId: string): Promise<void> {
     return invoke("delete_skill", { skillId });
+  },
+
+  // Scan local skills directory
+  async scanLocalSkills(): Promise<Skill[]> {
+    return invoke("scan_local_skills");
   },
 };

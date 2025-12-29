@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:brainstorming:*)",
+      "Skill(superpowers:executing-plans)",
+      "Skill(superpowers:executing-plans:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo run:*)"
     ]
   }
 }
