@@ -6,8 +6,10 @@ import {
   useScanRepository,
 } from "../hooks/useRepositories";
 import { Search, Plus, Trash2, GitBranch, Loader2, Database, X, Terminal } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function RepositoriesPage() {
+  const { t } = useTranslation();
   const { data: repositories, isLoading } = useRepositories();
   const addMutation = useAddRepository();
   const deleteMutation = useDeleteRepository();
@@ -32,10 +34,10 @@ export function RepositoriesPage() {
             setNewRepoUrl("");
             setNewRepoName("");
             setShowAddForm(false);
-            showToast("REPOSITORY_ADDED // SCANNING_SKILLS...");
+            showToast(t('repositories.toast.added'));
           },
           onError: (error: any) => {
-            showToast(`ERROR: ${error.message || error}`);
+            showToast(`${t('repositories.toast.error')}${error.message || error}`);
           },
         }
       );
@@ -49,7 +51,7 @@ export function RepositoriesPage() {
         <div className="flex items-center gap-3">
           <Database className="w-6 h-6 text-terminal-cyan" />
           <h2 className="text-xl font-bold text-terminal-cyan tracking-wider uppercase">
-            Repository_Config
+            {t('repositories.title')}
           </h2>
         </div>
         <button
@@ -59,12 +61,12 @@ export function RepositoriesPage() {
           {showAddForm ? (
             <>
               <X className="w-4 h-4" />
-              CANCEL
+              {t('repositories.cancel')}
             </>
           ) : (
             <>
               <Plus className="w-4 h-4" />
-              ADD_REPO
+              {t('repositories.addRepo')}
             </>
           )}
         </button>
@@ -82,14 +84,14 @@ export function RepositoriesPage() {
           <div className="flex items-center gap-2 mb-4">
             <Terminal className="w-5 h-5 text-terminal-cyan" />
             <h3 className="font-bold text-terminal-cyan tracking-wider uppercase">
-              NEW_REPOSITORY
+              {t('repositories.newRepository')}
             </h3>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider">
-                repo_name:
+                {t('repositories.repoName')}
               </label>
               <input
                 type="text"
@@ -102,7 +104,7 @@ export function RepositoriesPage() {
 
             <div>
               <label className="block text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider">
-                github_url:
+                {t('repositories.githubUrl')}
               </label>
               <input
                 type="text"
@@ -123,12 +125,12 @@ export function RepositoriesPage() {
               {addMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  ADDING...
+                  {t('repositories.adding')}
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  CONFIRM_ADD
+                  {t('repositories.confirmAdd')}
                 </>
               )}
             </button>
@@ -137,7 +139,7 @@ export function RepositoriesPage() {
               className="px-4 py-2 rounded font-mono text-xs border border-muted-foreground text-muted-foreground hover:border-terminal-purple hover:text-terminal-purple transition-all duration-200"
               disabled={addMutation.isPending}
             >
-              CANCEL
+              {t('repositories.cancel')}
             </button>
           </div>
         </div>
@@ -162,7 +164,7 @@ export function RepositoriesPage() {
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-terminal-cyan animate-spin mb-4" />
           <p className="font-mono text-sm text-terminal-cyan uppercase tracking-wider">
-            Loading_Repositories...
+            {t('repositories.loading')}
           </p>
         </div>
       ) : repositories && repositories.length > 0 ? (
@@ -187,14 +189,14 @@ export function RepositoriesPage() {
                     </h3>
                     {repo.enabled && (
                       <span className="status-indicator text-terminal-green border-terminal-green/30 bg-terminal-green/10">
-                        ENABLED
+                        {t('repositories.enabled')}
                       </span>
                     )}
                   </div>
 
                   {/* Repository URL */}
                   <div className="font-mono text-xs text-muted-foreground mb-2 pl-8">
-                    <span className="text-terminal-green">URL:</span>{" "}
+                    <span className="text-terminal-green">{t('repositories.url')}</span>{" "}
                     <span className="text-terminal-cyan">{repo.url}</span>
                   </div>
 
@@ -209,7 +211,7 @@ export function RepositoriesPage() {
                   <div className="flex items-center gap-6 pl-8 text-xs font-mono">
                     {repo.last_scanned && (
                       <div className="text-muted-foreground">
-                        <span className="text-terminal-purple">LAST_SCAN:</span>{" "}
+                        <span className="text-terminal-purple">{t('repositories.lastScan')}</span>{" "}
                         {new Date(repo.last_scanned).toLocaleString('zh-CN', {
                           year: 'numeric',
                           month: '2-digit',
@@ -228,10 +230,10 @@ export function RepositoriesPage() {
                     onClick={() =>
                       scanMutation.mutate(repo.id, {
                         onSuccess: (skills) => {
-                          showToast(`FOUND_${skills.length}_SKILLS`);
+                          showToast(t('repositories.toast.foundSkills', { count: skills.length }));
                         },
                         onError: (error: any) => {
-                          showToast(`SCAN_ERROR: ${error.message || error}`);
+                          showToast(`${t('repositories.toast.scanError')}${error.message || error}`);
                         },
                       })
                     }
@@ -241,12 +243,12 @@ export function RepositoriesPage() {
                     {scanMutation.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        SCANNING
+                        {t('repositories.scanning')}
                       </>
                     ) : (
                       <>
                         <Search className="w-4 h-4" />
-                        SCAN
+                        {t('repositories.scan')}
                       </>
                     )}
                   </button>
@@ -269,10 +271,10 @@ export function RepositoriesPage() {
         >
           <Database className="w-16 h-16 text-terminal-cyan/30 mx-auto mb-4" />
           <p className="text-lg font-mono text-terminal-cyan mb-2 uppercase tracking-wider">
-            <span className="text-terminal-green">❯</span> No_Repositories_Found
+            <span className="text-terminal-green">❯</span> {t('repositories.noReposFound')}
           </p>
           <p className="text-sm text-muted-foreground font-mono">
-            Click "ADD_REPO" to configure your first repository
+            {t('repositories.clickAddRepo')}
           </p>
         </div>
       )}
