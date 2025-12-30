@@ -7,8 +7,18 @@ export function LanguageSwitcher() {
 
   const toggleLanguage = () => {
     const newLang = currentLang === 'zh' ? 'en' : 'zh';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('language', newLang);
+
+    // 切换语言
+    i18n.changeLanguage(newLang).catch((error) => {
+      console.error('Failed to change language:', error);
+    });
+
+    // 保存到 localStorage（带错误处理）
+    try {
+      localStorage.setItem('language', newLang);
+    } catch (error) {
+      console.warn('Failed to save language preference:', error);
+    }
   };
 
   return (
