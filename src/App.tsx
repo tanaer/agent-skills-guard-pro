@@ -7,7 +7,14 @@ import { Terminal, Database, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 
-const queryClient = new QueryClient();
+// 全局类型声明
+declare const __APP_VERSION__: string;
+
+// 动画延迟常量
+const SCAN_INIT_DELAY = 800;
+const SCAN_MESSAGE_DURATION = 2500;
+
+const reactQueryClient = new QueryClient();
 
 function AppContent() {
   const { t } = useTranslation();
@@ -22,7 +29,7 @@ function AppContent() {
       setShowScanAnimation(true);
       setLocalScanMessage(t('scan.initializing'));
 
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, SCAN_INIT_DELAY));
 
       try {
         const skills = await api.scanLocalSkills();
@@ -39,7 +46,7 @@ function AppContent() {
         setTimeout(() => {
           setShowScanAnimation(false);
           setLocalScanMessage(null);
-        }, 2500);
+        }, SCAN_MESSAGE_DURATION);
       }
     };
     initLocalSkills();
@@ -160,7 +167,7 @@ function AppContent() {
           <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
             <span className="text-terminal-green">❯</span>
             <span>agent-skills-guard</span>
-            <span className="text-terminal-cyan">{t('footer.version')}0.1.0</span>
+            <span className="text-terminal-cyan">{t('footer.version')}{__APP_VERSION__}</span>
             <span className="mx-2">•</span>
             <span className="text-terminal-purple">{t('footer.status')}</span>
             <span className="text-terminal-green">{t('footer.operational')}</span>
@@ -173,7 +180,7 @@ function AppContent() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={reactQueryClient}>
       <AppContent />
     </QueryClientProvider>
   );

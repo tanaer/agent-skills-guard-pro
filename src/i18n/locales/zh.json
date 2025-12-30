@@ -89,7 +89,7 @@
     "scan": "扫描",
     "scanning": "扫描中",
     "noReposFound": "未发现仓库",
-    "clickAddRepo": "点击"添加仓库"以配置您的第一个仓库",
+    "clickAddRepo": "点击「添加仓库」以配置您的第一个仓库",
     "toast": {
       "added": "仓库已添加 // 扫描技能中...",
       "error": "错误：",
