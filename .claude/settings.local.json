@@ -14,7 +14,18 @@
       "Bash(pnpm dev)",
       "Skill(frontend-design:frontend-design)",
       "Skill(frontend-design:frontend-design:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd i18n and scrollbar optimization design document\n\n添加多语言支持和滚动条优化的设计方案，包括：\n- 使用 i18next + react-i18next 实现中英文双语\n- 优化布局，隐藏滚动条但保留滚动功能\n- 在 Header 右上角添加语言切换器\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:writing-plans:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd i18n and scrollbar implementation plan\n\n详细的实现计划，包含：\n- 7 个主要任务，每个任务都有详细步骤\n- 完整的代码示例和文件路径\n- 测试验证步骤\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:subagent-driven-development:*)",
+      "Bash(git commit:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(del:*)",
+      "Skill(superpowers:systematic-debugging)",
+      "Skill(superpowers:systematic-debugging:*)"
     ]
   }
 }

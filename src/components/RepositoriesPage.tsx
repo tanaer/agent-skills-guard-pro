@@ -19,6 +19,8 @@ export function RepositoriesPage() {
   const [newRepoUrl, setNewRepoUrl] = useState("");
   const [newRepoName, setNewRepoName] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [scanningRepoId, setScanningRepoId] = useState<string | null>(null);
+  const [deletingRepoId, setDeletingRepoId] = useState<string | null>(null);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -119,7 +121,7 @@ export function RepositoriesPage() {
           <div className="flex gap-3 mt-6">
             <button
               onClick={handleAddRepository}
-              className="neon-button disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+              className="neon-button disabled:opacity-50 disabled:cursor-not-allowed flex-1 inline-flex items-center justify-center gap-2"
               disabled={!newRepoUrl || !newRepoName || addMutation.isPending}
             >
               {addMutation.isPending ? (
@@ -227,20 +229,23 @@ export function RepositoriesPage() {
                 {/* Action Buttons */}
                 <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      setScanningRepoId(repo.id);
                       scanMutation.mutate(repo.id, {
                         onSuccess: (skills) => {
+                          setScanningRepoId(null);
                           showToast(t('repositories.toast.foundSkills', { count: skills.length }));
                         },
                         onError: (error: any) => {
+                          setScanningRepoId(null);
                           showToast(`${t('repositories.toast.scanError')}${error.message || error}`);
                         },
-                      })
-                    }
-                    disabled={scanMutation.isPending}
+                      });
+                    }}
+                    disabled={scanMutation.isPending || deleteMutation.isPending}
                     className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 text-xs"
                   >
-                    {scanMutation.isPending ? (
+                    {scanningRepoId === repo.id ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
                         {t('repositories.scanning')}
@@ -254,10 +259,25 @@ export function RepositoriesPage() {
                   </button>
 
                   <button
-                    onClick={() => deleteMutation.mutate(repo.id)}
-                    className="px-3 py-2 rounded font-mono text-xs border border-terminal-red text-terminal-red hover:bg-terminal-red hover:text-background transition-all duration-200"
+                    onClick={() => {
+                      setDeletingRepoId(repo.id);
+                      deleteMutation.mutate(repo.id, {
+                        onSuccess: () => {
+                          setDeletingRepoId(null);
+                        },
+                        onError: () => {
+                          setDeletingRepoId(null);
+                        },
+                      });
+                    }}
+                    disabled={scanMutation.isPending || deleteMutation.isPending}
+                    className="px-3 py-2 rounded font-mono text-xs border border-terminal-red text-terminal-red hover:bg-terminal-red hover:text-background transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {deletingRepoId === repo.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>

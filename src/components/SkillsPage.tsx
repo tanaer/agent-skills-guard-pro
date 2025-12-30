@@ -13,6 +13,9 @@ export function SkillsPage() {
 
   const [filter, setFilter] = useState<"all" | "installed" | "not-installed">("all");
   const [toast, setToast] = useState<string | null>(null);
+  const [installingSkillId, setInstallingSkillId] = useState<string | null>(null);
+  const [uninstallingSkillId, setUninstallingSkillId] = useState<string | null>(null);
+  const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -124,26 +127,48 @@ export function SkillsPage() {
               skill={skill}
               index={index}
               onInstall={() => {
+                setInstallingSkillId(skill.id);
                 installMutation.mutate(skill.id, {
-                  onSuccess: () => showToast(t('skills.toast.installed')),
-                  onError: (error: any) => showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`),
+                  onSuccess: () => {
+                    setInstallingSkillId(null);
+                    showToast(t('skills.toast.installed'));
+                  },
+                  onError: (error: any) => {
+                    setInstallingSkillId(null);
+                    showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
+                  },
                 });
               }}
               onUninstall={() => {
+                setUninstallingSkillId(skill.id);
                 uninstallMutation.mutate(skill.id, {
-                  onSuccess: () => showToast(t('skills.toast.uninstalled')),
-                  onError: (error: any) => showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`),
+                  onSuccess: () => {
+                    setUninstallingSkillId(null);
+                    showToast(t('skills.toast.uninstalled'));
+                  },
+                  onError: (error: any) => {
+                    setUninstallingSkillId(null);
+                    showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
+                  },
                 });
               }}
               onDelete={() => {
+                setDeletingSkillId(skill.id);
                 deleteMutation.mutate(skill.id, {
-                  onSuccess: () => showToast(t('skills.toast.deleted')),
-                  onError: (error: any) => showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`),
+                  onSuccess: () => {
+                    setDeletingSkillId(null);
+                    showToast(t('skills.toast.deleted'));
+                  },
+                  onError: (error: any) => {
+                    setDeletingSkillId(null);
+                    showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
+                  },
                 });
               }}
-              isInstalling={installMutation.isPending}
-              isUninstalling={uninstallMutation.isPending}
-              isDeleting={deleteMutation.isPending}
+              isInstalling={installingSkillId === skill.id}
+              isUninstalling={uninstallingSkillId === skill.id}
+              isDeleting={deletingSkillId === skill.id}
+              isAnyOperationPending={installMutation.isPending || uninstallMutation.isPending || deleteMutation.isPending}
               getSecurityBadge={getSecurityBadge}
               t={t}
             />
@@ -187,6 +212,7 @@ interface SkillCardProps {
   isInstalling: boolean;
   isUninstalling: boolean;
   isDeleting: boolean;
+  isAnyOperationPending: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
   t: (key: string, options?: any) => string;
 }
@@ -200,6 +226,7 @@ function SkillCard({
   isInstalling,
   isUninstalling,
   isDeleting,
+  isAnyOperationPending,
   getSecurityBadge,
   t
 }: SkillCardProps) {
@@ -260,7 +287,7 @@ function SkillCard({
           {skill.installed ? (
             <button
               onClick={onUninstall}
-              disabled={isUninstalling}
+              disabled={isAnyOperationPending}
               className="neon-button text-terminal-red border-terminal-red hover:bg-terminal-red disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUninstalling ? (
@@ -272,7 +299,7 @@ function SkillCard({
           ) : (
             <button
               onClick={handleInstallClick}
-              disabled={isInstalling}
+              disabled={isAnyOperationPending}
               className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
               {isInstalling ? (
@@ -291,10 +318,14 @@ function SkillCard({
 
           <button
             onClick={onDelete}
-            disabled={isDeleting}
+            disabled={isAnyOperationPending}
             className="px-3 py-2 rounded border border-border bg-card text-muted-foreground hover:border-terminal-red hover:text-terminal-red transition-all duration-200 disabled:opacity-50"
           >
-            <Trash2 className="w-4 h-4" />
+            {isDeleting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

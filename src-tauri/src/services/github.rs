@@ -40,11 +40,21 @@ impl GitHubService {
             if item.content_type == "dir" {
                 // 检查文件夹是否为 skill（包含 SKILL.md）
                 if self.is_skill_directory(&owner, &repo_name, &item.path).await? {
-                    let skill = Skill::new(
-                        item.name.clone(),
+                    // 获取 skill 的元数据（name 和 description）
+                    let (name, description) = match self.fetch_skill_metadata(&owner, &repo_name, &item.path).await {
+                        Ok(metadata) => metadata,
+                        Err(e) => {
+                            log::warn!("Failed to fetch metadata for {}: {}, using fallback", item.path, e);
+                            (item.name.clone(), None)
+                        }
+                    };
+
+                    let mut skill = Skill::new(
+                        name,
                         repo.url.clone(),
                         item.path.clone(),
                     );
+                    skill.description = description;
                     skills.push(skill);
                 } else if repo.scan_subdirs {
                     // 递归扫描子目录
@@ -75,11 +85,21 @@ impl GitHubService {
                 if item.content_type == "dir" {
                     // 检查文件夹是否为 skill（包含 SKILL.md）
                     if self.is_skill_directory(owner, repo, &item.path).await? {
-                        let skill = Skill::new(
-                            item.name.clone(),
+                        // 获取 skill 的元数据（name 和 description）
+                        let (name, description) = match self.fetch_skill_metadata(owner, repo, &item.path).await {
+                            Ok(metadata) => metadata,
+                            Err(e) => {
+                                log::warn!("Failed to fetch metadata for {}: {}, using fallback", item.path, e);
+                                (item.name.clone(), None)
+                            }
+                        };
+
+                        let mut skill = Skill::new(
+                            name,
                             repo_url.to_string(),
                             item.path.clone(),
                         );
+                        skill.description = description;
                         skills.push(skill);
                     } else if path.split('/').count() < 5 {
                         // 递归扫描（限制深度避免无限递归）
