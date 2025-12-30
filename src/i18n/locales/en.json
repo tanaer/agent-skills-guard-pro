@@ -1,0 +1,104 @@
+{
+  "header": {
+    "title": "AGENT SKILLS GUARD",
+    "subtitle": "SECURE_SKILL_MANAGEMENT_PROTOCOL"
+  },
+  "nav": {
+    "skills": "SKILLS_REGISTRY",
+    "repositories": "REPO_CONFIG"
+  },
+  "footer": {
+    "version": "v",
+    "status": "SYSTEM_STATUS:",
+    "operational": "OPERATIONAL"
+  },
+  "scan": {
+    "initializing": "INITIALIZING_SKILL_SCANNER...",
+    "complete": "SCAN_COMPLETE: {{count}} SKILLS_DETECTED",
+    "noSkills": "SCAN_COMPLETE: NO_LOCAL_SKILLS_FOUND",
+    "error": "SCAN_ERROR: INITIALIZATION_FAILED"
+  },
+  "skills": {
+    "title": "SKILL_DATABASE",
+    "totalEntries": "TOTAL_ENTRIES",
+    "all": "ALL",
+    "installed": "INSTALLED",
+    "available": "AVAILABLE",
+    "loading": "LOADING_SKILLS_DATABASE",
+    "install": "INSTALL",
+    "uninstall": "UNINSTALL",
+    "installing": "INSTALLING",
+    "uninstalling": "UNINSTALLING",
+    "delete": "DELETE",
+    "empty": "[ EMPTY ]",
+    "noSkillsFound": "NO_SKILLS_FOUND",
+    "navigateToRepo": "Navigate to REPO_CONFIG to scan repositories",
+    "noDescription": "[NO_DESCRIPTION_PROVIDED]",
+    "repo": "REPO:",
+    "path": "PATH:",
+    "collapseDetails": "COLLAPSE_DETAILS",
+    "expandDetails": "EXPAND_DETAILS",
+    "fullRepository": "FULL_REPOSITORY",
+    "version": "VERSION",
+    "author": "AUTHOR",
+    "localPath": "LOCAL_PATH",
+    "securityAnalysis": "SECURITY_ANALYSIS:",
+    "securityScore": "SECURITY_SCORE:",
+    "score": "SCORE",
+    "secure": "SECURE",
+    "lowRisk": "LOWRISK",
+    "medRisk": "MEDRISK",
+    "highRisk": "HIGHRISK",
+    "safe": "[SAFE]",
+    "lowRiskLabel": "[LOW_RISK]",
+    "mediumRiskLabel": "[MEDIUM_RISK]",
+    "highRiskInstallNotRecommended": "[HIGH_RISK - INSTALLATION_NOT_RECOMMENDED]",
+    "securityIssuesDetected": "SECURITY_ISSUES_DETECTED:",
+    "installedAt": "INSTALLED_AT",
+    "securityWarning": "SECURITY_WARNING",
+    "highRiskSkillDetected": "HIGH_RISK_SKILL_DETECTED",
+    "criticalRisk": "[CRITICAL_RISK]",
+    "elevatedRisk": "[ELEVATED_RISK]",
+    "detectedIssues": "DETECTED_ISSUES:",
+    "moreIssues": "MORE_ISSUES",
+    "installWarning": "Installing this skill may compromise system security. Verify source authenticity before proceeding.",
+    "abort": "ABORT",
+    "proceedAnyway": "PROCEED_ANYWAY",
+    "toast": {
+      "installed": "[SUCCESS] SKILL_INSTALLED",
+      "installFailed": "[ERROR] INSTALL_FAILED",
+      "uninstalled": "[SUCCESS] SKILL_UNINSTALLED",
+      "uninstallFailed": "[ERROR] UNINSTALL_FAILED",
+      "deleted": "[SUCCESS] RECORD_DELETED",
+      "deleteFailed": "[ERROR] DELETE_FAILED"
+    }
+  },
+  "repositories": {
+    "title": "Repository_Config",
+    "addRepo": "ADD_REPO",
+    "cancel": "CANCEL",
+    "newRepository": "NEW_REPOSITORY",
+    "repoName": "repo_name:",
+    "githubUrl": "github_url:",
+    "confirmAdd": "CONFIRM_ADD",
+    "adding": "ADDING...",
+    "loading": "Loading_Repositories...",
+    "enabled": "ENABLED",
+    "url": "URL:",
+    "lastScan": "LAST_SCAN:",
+    "scan": "SCAN",
+    "scanning": "SCANNING",
+    "noReposFound": "No_Repositories_Found",
+    "clickAddRepo": "Click \"ADD_REPO\" to configure your first repository",
+    "toast": {
+      "added": "REPOSITORY_ADDED // SCANNING_SKILLS...",
+      "error": "ERROR:",
+      "foundSkills": "FOUND_{{count}}_SKILLS",
+      "scanError": "SCAN_ERROR:"
+    }
+  },
+  "language": {
+    "zh": "中",
+    "en": "EN"
+  }
+}
