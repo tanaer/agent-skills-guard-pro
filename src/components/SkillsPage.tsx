@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useSkills, useInstallSkill, useUninstallSkill, useDeleteSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
 import { Download, Trash2, AlertTriangle, ChevronDown, ChevronUp, Package, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function SkillsPage() {
+  const { t } = useTranslation();
   const { data: skills, isLoading } = useSkills();
   const installMutation = useInstallSkill();
   const uninstallMutation = useUninstallSkill();
@@ -29,25 +31,25 @@ export function SkillsPage() {
     if (score >= 90) {
       return (
         <span className="status-indicator text-terminal-green border-terminal-green/30 bg-terminal-green/10">
-          SECURE_{score}
+          {t('skills.secure')}_{score}
         </span>
       );
     } else if (score >= 70) {
       return (
         <span className="status-indicator text-terminal-yellow border-terminal-yellow/30 bg-terminal-yellow/10">
-          LOWRISK_{score}
+          {t('skills.lowRisk')}_{score}
         </span>
       );
     } else if (score >= 50) {
       return (
         <span className="status-indicator text-terminal-orange border-terminal-orange/30 bg-terminal-orange/10">
-          MEDRISK_{score}
+          {t('skills.medRisk')}_{score}
         </span>
       );
     } else {
       return (
         <span className="status-indicator text-terminal-red border-terminal-red/30 bg-terminal-red/10">
-          HIGHRISK_{score}
+          {t('skills.highRisk')}_{score}
         </span>
       );
     }
@@ -60,10 +62,10 @@ export function SkillsPage() {
         <div>
           <h2 className="text-lg text-terminal-cyan tracking-wider flex items-center gap-2">
             <Package className="w-5 h-5" />
-            <span>SKILL_DATABASE</span>
+            <span>{t('skills.title')}</span>
           </h2>
           <p className="text-xs text-muted-foreground font-mono mt-1">
-            <span className="text-terminal-green">&gt;</span> {filteredSkills?.length || 0} TOTAL_ENTRIES
+            <span className="text-terminal-green">&gt;</span> {filteredSkills?.length || 0} {t('skills.totalEntries')}
           </p>
         </div>
 
@@ -79,7 +81,7 @@ export function SkillsPage() {
               }
             `}
           >
-            ALL [{skills?.length || 0}]
+            {t('skills.all')} [{skills?.length || 0}]
           </button>
           <button
             onClick={() => setFilter("installed")}
@@ -91,7 +93,7 @@ export function SkillsPage() {
               }
             `}
           >
-            INSTALLED [{skills?.filter((s) => s.installed).length || 0}]
+            {t('skills.installed')} [{skills?.filter((s) => s.installed).length || 0}]
           </button>
           <button
             onClick={() => setFilter("not-installed")}
@@ -103,7 +105,7 @@ export function SkillsPage() {
               }
             `}
           >
-            AVAILABLE [{skills?.filter((s) => !s.installed).length || 0}]
+            {t('skills.available')} [{skills?.filter((s) => !s.installed).length || 0}]
           </button>
         </div>
       </div>
@@ -112,7 +114,7 @@ export function SkillsPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16">
           <Loader2 className="w-12 h-12 text-terminal-cyan animate-spin mb-4" />
-          <p className="text-sm font-mono text-terminal-cyan terminal-cursor">LOADING_SKILLS_DATABASE</p>
+          <p className="text-sm font-mono text-terminal-cyan terminal-cursor">{t('skills.loading')}</p>
         </div>
       ) : filteredSkills && filteredSkills.length > 0 ? (
         <div className="grid gap-4">
@@ -123,35 +125,36 @@ export function SkillsPage() {
               index={index}
               onInstall={() => {
                 installMutation.mutate(skill.id, {
-                  onSuccess: () => showToast("[SUCCESS] SKILL_INSTALLED"),
-                  onError: (error: any) => showToast(`[ERROR] INSTALL_FAILED: ${error.message || error}`),
+                  onSuccess: () => showToast(t('skills.toast.installed')),
+                  onError: (error: any) => showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`),
                 });
               }}
               onUninstall={() => {
                 uninstallMutation.mutate(skill.id, {
-                  onSuccess: () => showToast("[SUCCESS] SKILL_UNINSTALLED"),
-                  onError: (error: any) => showToast(`[ERROR] UNINSTALL_FAILED: ${error.message || error}`),
+                  onSuccess: () => showToast(t('skills.toast.uninstalled')),
+                  onError: (error: any) => showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`),
                 });
               }}
               onDelete={() => {
                 deleteMutation.mutate(skill.id, {
-                  onSuccess: () => showToast("[SUCCESS] RECORD_DELETED"),
-                  onError: (error: any) => showToast(`[ERROR] DELETE_FAILED: ${error.message || error}`),
+                  onSuccess: () => showToast(t('skills.toast.deleted')),
+                  onError: (error: any) => showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`),
                 });
               }}
               isInstalling={installMutation.isPending}
               isUninstalling={uninstallMutation.isPending}
               isDeleting={deleteMutation.isPending}
               getSecurityBadge={getSecurityBadge}
+              t={t}
             />
           ))}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border rounded-lg">
-          <div className="text-terminal-cyan font-mono text-2xl mb-4">[ EMPTY ]</div>
-          <p className="text-sm text-muted-foreground font-mono">NO_SKILLS_FOUND</p>
+          <div className="text-terminal-cyan font-mono text-2xl mb-4">{t('skills.empty')}</div>
+          <p className="text-sm text-muted-foreground font-mono">{t('skills.noSkillsFound')}</p>
           <p className="text-xs text-muted-foreground font-mono mt-2">
-            <span className="text-terminal-green">&gt;</span> Navigate to REPO_CONFIG to scan repositories
+            <span className="text-terminal-green">&gt;</span> {t('skills.navigateToRepo')}
           </p>
         </div>
       )}
@@ -185,6 +188,7 @@ interface SkillCardProps {
   isUninstalling: boolean;
   isDeleting: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
+  t: (key: string, options?: any) => string;
 }
 
 function SkillCard({
@@ -196,7 +200,8 @@ function SkillCard({
   isInstalling,
   isUninstalling,
   isDeleting,
-  getSecurityBadge
+  getSecurityBadge,
+  t
 }: SkillCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -233,9 +238,9 @@ function SkillCard({
               {skill.name}
             </h3>
             {skill.installed ? (
-              <span className="status-installed">INSTALLED</span>
+              <span className="status-installed">{t('skills.installed')}</span>
             ) : isInstalling ? (
-              <span className="status-installing">INSTALLING</span>
+              <span className="status-installing">{t('skills.installing')}</span>
             ) : null}
           </div>
 
@@ -244,7 +249,7 @@ function SkillCard({
             {getSecurityBadge(skill.security_score)}
             {skill.security_score != null && (
               <span className="font-mono text-xs text-muted-foreground">
-                SCORE: <span className="text-terminal-cyan">{skill.security_score}/100</span>
+                {t('skills.score')}: <span className="text-terminal-cyan">{skill.security_score}/100</span>
               </span>
             )}
           </div>
@@ -261,7 +266,7 @@ function SkillCard({
               {isUninstalling ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "UNINSTALL"
+                t('skills.uninstall')
               )}
             </button>
           ) : (
@@ -273,12 +278,12 @@ function SkillCard({
               {isInstalling ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  INSTALLING
+                  {t('skills.installing')}
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  INSTALL
+                  {t('skills.install')}
                 </>
               )}
             </button>
@@ -296,17 +301,17 @@ function SkillCard({
 
       {/* Description */}
       <p className="text-sm text-muted-foreground mb-3 font-mono">
-        {skill.description || "[NO_DESCRIPTION_PROVIDED]"}
+        {skill.description || t('skills.noDescription')}
       </p>
 
       {/* Repository Info */}
       <div className="flex items-center gap-4 mb-3 text-xs font-mono">
         <span className="text-muted-foreground">
-          <span className="text-terminal-green">REPO:</span>{" "}
+          <span className="text-terminal-green">{t('skills.repo')}</span>{" "}
           {skill.repository_url.split("/").slice(-2).join("/")}
         </span>
         <span className="text-muted-foreground">
-          <span className="text-terminal-purple">PATH:</span> {skill.file_path}
+          <span className="text-terminal-purple">{t('skills.path')}</span> {skill.file_path}
         </span>
       </div>
 
@@ -318,12 +323,12 @@ function SkillCard({
         {showDetails ? (
           <>
             <ChevronUp className="w-4 h-4 transition-transform group-hover/details:translate-y-[-2px]" />
-            COLLAPSE_DETAILS
+            {t('skills.collapseDetails')}
           </>
         ) : (
           <>
             <ChevronDown className="w-4 h-4 transition-transform group-hover/details:translate-y-[2px]" />
-            EXPAND_DETAILS
+            {t('skills.expandDetails')}
           </>
         )}
       </button>
@@ -334,27 +339,27 @@ function SkillCard({
           className="mt-4 p-4 bg-muted/50 border border-border rounded space-y-3"
           style={{ animation: 'fadeIn 0.3s ease-out' }}
         >
-          <DetailItem label="FULL_REPOSITORY" value={skill.repository_url} />
-          {skill.version && <DetailItem label="VERSION" value={skill.version} />}
-          {skill.author && <DetailItem label="AUTHOR" value={skill.author} />}
-          {skill.local_path && <DetailItem label="LOCAL_PATH" value={skill.local_path} />}
+          <DetailItem label={t('skills.fullRepository')} value={skill.repository_url} />
+          {skill.version && <DetailItem label={t('skills.version')} value={skill.version} />}
+          {skill.author && <DetailItem label={t('skills.author')} value={skill.author} />}
+          {skill.local_path && <DetailItem label={t('skills.localPath')} value={skill.local_path} />}
 
           {skill.security_score != null && (
             <div className="text-xs font-mono">
-              <p className="text-terminal-cyan mb-1">SECURITY_ANALYSIS:</p>
+              <p className="text-terminal-cyan mb-1">{t('skills.securityAnalysis')}</p>
               <p className="text-muted-foreground">
                 {skill.security_score}/100 {" "}
-                {skill.security_score >= 90 && "[SAFE]"}
-                {skill.security_score >= 70 && skill.security_score < 90 && "[LOW_RISK]"}
-                {skill.security_score >= 50 && skill.security_score < 70 && "[MEDIUM_RISK]"}
-                {skill.security_score < 50 && "[HIGH_RISK - INSTALLATION_NOT_RECOMMENDED]"}
+                {skill.security_score >= 90 && t('skills.safe')}
+                {skill.security_score >= 70 && skill.security_score < 90 && t('skills.lowRiskLabel')}
+                {skill.security_score >= 50 && skill.security_score < 70 && t('skills.mediumRiskLabel')}
+                {skill.security_score < 50 && t('skills.highRiskInstallNotRecommended')}
               </p>
             </div>
           )}
 
           {skill.security_issues && skill.security_issues.length > 0 && (
             <div className="text-xs font-mono">
-              <p className="text-terminal-red mb-2">SECURITY_ISSUES_DETECTED:</p>
+              <p className="text-terminal-red mb-2">{t('skills.securityIssuesDetected')}</p>
               <div className="space-y-1 pl-4 border-l-2 border-terminal-red/30">
                 {skill.security_issues.map((issue, idx) => (
                   <p key={idx} className="text-muted-foreground">
@@ -367,7 +372,7 @@ function SkillCard({
 
           {skill.installed_at && (
             <DetailItem
-              label="INSTALLED_AT"
+              label={t('skills.installedAt')}
               value={new Date(skill.installed_at).toLocaleString('zh-CN')}
             />
           )}
@@ -387,28 +392,28 @@ function SkillCard({
               <AlertTriangle className="w-8 h-8 text-terminal-orange flex-shrink-0 animate-pulse" />
               <div>
                 <h3 className="text-xl font-bold text-terminal-orange mb-2 tracking-wider uppercase">
-                  SECURITY_WARNING
+                  {t('skills.securityWarning')}
                 </h3>
                 <p className="text-sm text-muted-foreground font-mono">
-                  HIGH_RISK_SKILL_DETECTED
+                  {t('skills.highRiskSkillDetected')}
                 </p>
               </div>
             </div>
 
             {skill.security_score != null && (
               <div className="mb-4 p-3 bg-terminal-orange/10 border border-terminal-orange/30 rounded">
-                <p className="text-xs font-mono text-terminal-orange mb-1">SECURITY_SCORE:</p>
+                <p className="text-xs font-mono text-terminal-orange mb-1">{t('skills.securityScore')}</p>
                 <p className="text-sm font-mono text-foreground">
                   {skill.security_score}/100
-                  {skill.security_score < 50 && " [CRITICAL_RISK]"}
-                  {skill.security_score >= 50 && skill.security_score < 70 && " [ELEVATED_RISK]"}
+                  {skill.security_score < 50 && ` ${t('skills.criticalRisk')}`}
+                  {skill.security_score >= 50 && skill.security_score < 70 && ` ${t('skills.elevatedRisk')}`}
                 </p>
               </div>
             )}
 
             {skill.security_issues && skill.security_issues.length > 0 && (
               <div className="mb-4 p-3 bg-muted border border-border rounded max-h-40 overflow-y-auto">
-                <p className="text-xs font-mono text-terminal-red mb-2">DETECTED_ISSUES:</p>
+                <p className="text-xs font-mono text-terminal-red mb-2">{t('skills.detectedIssues')}</p>
                 <ul className="text-xs space-y-1 font-mono">
                   {skill.security_issues.slice(0, 5).map((issue, idx) => (
                     <li key={idx} className="text-muted-foreground">
@@ -417,7 +422,7 @@ function SkillCard({
                   ))}
                   {skill.security_issues.length > 5 && (
                     <li className="text-muted-foreground italic">
-                      ... +{skill.security_issues.length - 5} MORE_ISSUES
+                      ... +{skill.security_issues.length - 5} {t('skills.moreIssues')}
                     </li>
                   )}
                 </ul>
@@ -425,8 +430,7 @@ function SkillCard({
             )}
 
             <p className="text-xs text-muted-foreground font-mono mb-6 p-3 bg-muted/50 rounded border border-border">
-              <span className="text-terminal-orange">[!]</span> Installing this skill may compromise system security.
-              Verify source authenticity before proceeding.
+              <span className="text-terminal-orange">[!]</span> {t('skills.installWarning')}
             </p>
 
             <div className="flex gap-3">
@@ -434,13 +438,13 @@ function SkillCard({
                 onClick={() => setShowConfirm(false)}
                 className="flex-1 px-4 py-3 rounded bg-card border border-border text-foreground hover:border-terminal-cyan transition-all font-mono text-sm"
               >
-                ABORT
+                {t('skills.abort')}
               </button>
               <button
                 onClick={confirmInstall}
                 className="flex-1 px-4 py-3 rounded bg-terminal-orange border border-terminal-orange text-background hover:bg-terminal-orange/90 transition-all font-mono text-sm font-bold"
               >
-                PROCEED_ANYWAY
+                {t('skills.proceedAnyway')}
               </button>
             </div>
           </div>
