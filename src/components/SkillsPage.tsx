@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useSkills, useInstallSkill, useUninstallSkill, useDeleteSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
-import { Download, Trash2, AlertTriangle, ChevronDown, ChevronUp, Package, Loader2 } from "lucide-react";
+import { Download, Trash2, AlertTriangle, ChevronDown, ChevronUp, Package, Loader2, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { openPath } from "@tauri-apps/plugin-opener";
 
 export function SkillsPage() {
   const { t } = useTranslation();
@@ -232,6 +233,33 @@ function SkillCard({
 }: SkillCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showLocalToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  const handleOpenFolder = async () => {
+    if (!skill.local_path) return;
+
+    try {
+      console.log('[DEBUG] Attempting to open folder:', skill.local_path);
+      console.log('[DEBUG] User Agent:', navigator.userAgent);
+
+      await openPath(skill.local_path);
+
+      console.log('[DEBUG] openPath() succeeded without error');
+      showLocalToast(`已打开文件夹`);
+    } catch (error: any) {
+      console.error('[ERROR] Failed to open folder:', error);
+      console.error('[ERROR] Error type:', typeof error);
+      console.error('[ERROR] Error message:', error?.message);
+      console.error('[ERROR] Error stack:', error?.stack);
+
+      showLocalToast(`打开文件夹失败：${error?.message || String(error)}`);
+    }
+  };
 
   const handleInstallClick = () => {
     if ((skill.security_score != null && skill.security_score < 50) ||
@@ -261,7 +289,7 @@ function SkillCard({
         <div className="flex-1">
           {/* Skill Name with Status */}
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-bold text-foreground tracking-wide uppercase">
+            <h3 className="text-lg font-bold text-foreground tracking-wide">
               {skill.name}
             </h3>
             {skill.installed ? (
@@ -373,7 +401,18 @@ function SkillCard({
           <DetailItem label={t('skills.fullRepository')} value={skill.repository_url} />
           {skill.version && <DetailItem label={t('skills.version')} value={skill.version} />}
           {skill.author && <DetailItem label={t('skills.author')} value={skill.author} />}
-          {skill.local_path && <DetailItem label={t('skills.localPath')} value={skill.local_path} />}
+          {skill.local_path && (
+            <div className="text-xs font-mono">
+              <p className="text-terminal-cyan mb-1">{t('skills.localPath')}:</p>
+              <button
+                onClick={handleOpenFolder}
+                className="text-muted-foreground break-all hover:text-terminal-cyan transition-colors flex items-center gap-2 group"
+              >
+                <FolderOpen className="w-4 h-4 flex-shrink-0 group-hover:text-terminal-cyan" />
+                <span className="text-left">{skill.local_path}</span>
+              </button>
+            </div>
+          )}
 
           {skill.security_score != null && (
             <div className="text-xs font-mono">
@@ -478,6 +517,22 @@ function SkillCard({
                 {t('skills.proceedAnyway')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Local Toast for Folder Open Feedback */}
+      {toast && (
+        <div
+          className="fixed bottom-6 right-6 px-6 py-4 rounded border border-terminal-cyan bg-card/95 backdrop-blur-sm shadow-2xl z-50"
+          style={{
+            animation: 'slideInLeft 0.3s ease-out',
+            boxShadow: '0 0 20px rgba(94, 234, 212, 0.3), 0 0 40px rgba(94, 234, 212, 0.1)'
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-terminal-cyan animate-pulse"></div>
+            <span className="font-mono text-sm text-terminal-cyan">{toast}</span>
           </div>
         </div>
       )}
