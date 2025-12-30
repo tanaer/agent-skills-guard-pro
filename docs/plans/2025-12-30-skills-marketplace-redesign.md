@@ -24,6 +24,7 @@
 **功能定位**: 管理已安装的技能
 
 **UI布局**:
+
 ```
 已安装
 ┌────────────────────────────────────────────────┐
@@ -34,6 +35,7 @@
 ```
 
 **核心功能**:
+
 - 搜索框：搜索技能名称和描述（实时搜索）
 - 统计信息：显示已安装技能数量
 - 技能卡片：显示名称、来源标识（@owner）、安全评分、本地路径
@@ -44,6 +46,7 @@
 **功能定位**: 浏览和发现所有可用技能
 
 **UI布局**:
+
 ```
 技能市场
 ┌────────────────────────────────────────────────┐
@@ -54,11 +57,13 @@
 ```
 
 **控件布局**（单行紧凑）:
+
 - 搜索框：占约60%宽度
 - 仓库下拉选择器：占约25%宽度，默认"全部"
 - 隐藏已安装复选框：占约15%宽度
 
 **核心功能**:
+
 - 搜索：实时搜索技能名称和描述
 - 仓库筛选：下拉菜单选择特定仓库，显示每个仓库的技能数量
   ```
@@ -80,6 +85,7 @@
 ### Skill接口扩展
 
 **TypeScript**:
+
 ```typescript
 export interface Skill {
   id: string;
@@ -100,6 +106,7 @@ export interface Skill {
 ```
 
 **Rust**:
+
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Skill {
@@ -123,6 +130,7 @@ pub struct Skill {
 ### 仓库所有者解析逻辑
 
 **前端工具函数** (`src/lib/utils.ts`):
+
 ```typescript
 // 从repository_url解析仓库所有者
 export function parseRepositoryOwner(repositoryUrl: string): string {
@@ -142,6 +150,7 @@ export function formatRepositoryTag(skill: Skill): string {
 
 **后端解析** (Rust):
 在扫描和安装技能时，自动解析并填充 `repository_owner` 字段：
+
 - GitHub仓库：提取用户名/组织名（如 "anthropics"）
 - 本地技能：设置为 "local"
 
@@ -161,12 +170,14 @@ src/components/
 ### InstalledSkillsPage.tsx（已安装页面）
 
 **状态管理**:
+
 ```typescript
 const [searchQuery, setSearchQuery] = useState("");
 const { data: installedSkills, isLoading } = useInstalledSkills();
 ```
 
 **筛选逻辑**:
+
 ```typescript
 const filteredSkills = installedSkills?.filter(skill =>
   !searchQuery ||
@@ -176,6 +187,7 @@ const filteredSkills = installedSkills?.filter(skill =>
 ```
 
 **UI组件**:
+
 - 搜索框（带图标，实时搜索）
 - 统计信息
 - 技能卡片列表
@@ -184,6 +196,7 @@ const filteredSkills = installedSkills?.filter(skill =>
 ### MarketplacePage.tsx（技能市场页面）
 
 **状态管理**:
+
 ```typescript
 const [searchQuery, setSearchQuery] = useState("");
 const [selectedRepository, setSelectedRepository] = useState("all");
@@ -192,6 +205,7 @@ const { data: allSkills, isLoading } = useSkills();
 ```
 
 **仓库列表提取**:
+
 ```typescript
 const repositories = useMemo(() => {
   const owners = new Set(
@@ -213,6 +227,7 @@ const repositoryCounts = useMemo(() => {
 ```
 
 **筛选逻辑**:
+
 ```typescript
 const filteredSkills = useMemo(() => {
   return allSkills?.filter(skill => {
@@ -234,6 +249,7 @@ const filteredSkills = useMemo(() => {
 ```
 
 **UI组件**:
+
 - 搜索框（带防抖，300ms）
 - 仓库下拉选择器（显示技能数量）
 - "隐藏已安装"复选框
@@ -243,6 +259,7 @@ const filteredSkills = useMemo(() => {
 ### SkillCard.tsx（技能卡片组件）
 
 **改进点**:
+
 - 在技能名称旁边添加仓库标识徽章
 - 显示格式：`技能名称 @owner`
 - 样式区分：
@@ -250,6 +267,7 @@ const filteredSkills = useMemo(() => {
   - 远程仓库：青色徽章，前缀 @
 
 **示例代码**:
+
 ```tsx
 <div className="flex items-center gap-3 mb-2">
   <h3 className="text-lg font-bold text-foreground">
@@ -297,6 +315,7 @@ const shouldVirtualize = filteredSkills.length > 100;
 ```
 
 **优势**:
+
 - 即使有10,000个技能，也只渲染可见区域的~20个DOM节点
 - 滚动性能保持流畅
 - 内存占用大幅降低
@@ -304,6 +323,7 @@ const shouldVirtualize = filteredSkills.length > 100;
 ### 2. 搜索和筛选优化
 
 **防抖处理**:
+
 ```typescript
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
@@ -312,6 +332,7 @@ const searchQuery = useDebouncedValue(searchInput, 300);
 ```
 
 **缓存优化**:
+
 ```typescript
 // 使用 useMemo 缓存筛选结果
 const filteredSkills = useMemo(() => {
@@ -341,6 +362,7 @@ const repositories = useMemo(() => {
 ### 4. 用户体验增强
 
 **加载状态**:
+
 ```tsx
 {isLoading ? (
   <div className="grid gap-4">
@@ -354,6 +376,7 @@ const repositories = useMemo(() => {
 ```
 
 **空状态**:
+
 ```tsx
 {filteredSkills.length === 0 && !isLoading && (
   <EmptyState
@@ -378,6 +401,7 @@ const repositories = useMemo(() => {
 ```
 
 **搜索高亮**（可选优化）:
+
 ```typescript
 function highlightMatch(text: string, query: string) {
   if (!query) return text;
@@ -458,6 +482,7 @@ impl Database {
 5. ✅ 测试现有API确保向后兼容
 
 **修改文件**:
+
 - `src-tauri/src/models.rs`
 - `src-tauri/src/services/database.rs`
 - `src-tauri/src/services/skill_manager.rs`
@@ -472,11 +497,13 @@ impl Database {
 6. ✅ 更新 `App.tsx` 的Tab导航
 
 **新增文件**:
+
 - `src/lib/utils.ts`
 - `src/components/InstalledSkillsPage.tsx`
 - `src/components/MarketplacePage.tsx`
 
 **修改文件**:
+
 - `src/types/index.ts`
 - `src/components/SkillCard.tsx`
 - `src/App.tsx`
@@ -490,6 +517,7 @@ impl Database {
 5. ✅ 添加统计信息显示
 
 **新增Hook**:
+
 - `src/hooks/useDebouncedValue.ts`
 
 ### 阶段4：性能优化
@@ -501,6 +529,7 @@ impl Database {
 5. ✅ 测试大数据量性能（模拟10,000个技能）
 
 **新增依赖**:
+
 ```bash
 pnpm add @tanstack/react-virtual
 ```
@@ -511,6 +540,7 @@ pnpm add @tanstack/react-virtual
 2. ✅ 更新所有UI文本使用 `t()` 函数
 
 **修改文件**:
+
 - `src/i18n/locales/zh.json`
 - `src/i18n/locales/en.json`
 
@@ -519,6 +549,7 @@ pnpm add @tanstack/react-virtual
 ### 单元测试
 
 **工具函数测试**:
+
 ```typescript
 describe('parseRepositoryOwner', () => {
   it('should parse GitHub URL correctly', () => {
@@ -537,6 +568,7 @@ describe('parseRepositoryOwner', () => {
 ```
 
 **筛选逻辑测试**:
+
 ```typescript
 describe('Marketplace filtering', () => {
   it('should filter by search query', () => {
@@ -560,16 +592,17 @@ describe('Marketplace filtering', () => {
 ### 集成测试
 
 1. **数据库迁移测试**:
+
    - 迁移脚本成功执行
    - 现有数据正确填充 `repository_owner`
    - 新记录自动填充该字段
-
 2. **API测试**:
+
    - 所有技能返回正确的 `repository_owner` 值
    - 本地技能正确标记为 "local"
    - GitHub技能正确解析所有者名称
-
 3. **UI交互测试**:
+
    - Tab切换正常工作
    - 搜索功能正常
    - 筛选器正常工作
@@ -578,12 +611,13 @@ describe('Marketplace filtering', () => {
 ### 性能测试
 
 1. **大数据量测试**:
+
    - 模拟10,000个技能
    - 测试页面加载时间（< 2秒）
    - 测试搜索响应时间（< 300ms）
    - 测试虚拟滚动流畅度（60fps）
-
 2. **内存测试**:
+
    - 虚拟滚动前后内存占用对比
    - 长时间使用后的内存稳定性
 
@@ -592,72 +626,26 @@ describe('Marketplace filtering', () => {
 ### 技术风险
 
 1. **数据库迁移风险**:
+
    - **风险**: 现有数据迁移可能失败
    - **缓解**: 在迁移前备份数据库，提供回滚方案
-
 2. **性能风险**:
+
    - **风险**: 虚拟滚动可能在某些情况下出现闪烁
    - **缓解**: 充分测试，调整 `estimateSize` 和 `overscan` 参数
-
 3. **向后兼容性**:
+
    - **风险**: 新字段可能影响现有功能
    - **缓解**: `repository_owner` 设为可选字段，旧代码仍能正常工作
 
 ### 用户体验风险
 
 1. **学习曲线**:
+
    - **风险**: 用户需要适应新的页面结构
    - **缓解**: 新设计符合应用商店模式，用户已有心智模型
-
 2. **筛选器复杂度**:
+
    - **风险**: 多个筛选条件可能让用户困惑
    - **缓解**: 提供"清除筛选"按钮，默认状态简单明了
-
-## 未来扩展
-
-### 短期优化（3个月内）
-
-1. **搜索增强**:
-   - 支持按作者搜索
-   - 支持按标签/分类搜索（需要先添加标签功能）
-   - 搜索结果高亮
-
-2. **排序功能**:
-   - 按名称排序
-   - 按安全评分排序
-   - 按安装时间排序
-   - 按更新时间排序
-
-3. **批量操作**:
-   - 批量安装
-   - 批量卸载
-   - 批量更新
-
-### 长期规划（6个月以上）
-
-1. **技能推荐**:
-   - 基于已安装技能推荐相关技能
-   - 热门技能排行
-   - 新上架技能展示
-
-2. **技能评分和评论**:
-   - 用户评分系统
-   - 用户评论和反馈
-   - 社区互动
-
-3. **技能分类和标签**:
-   - 添加技能分类（开发工具、安全、数据分析等）
-   - 支持自定义标签
-   - 按分类浏览
-
-## 总结
-
-这次重新设计将技能管理页面从单一列表视图升级为双页面应用商店模式，主要改进包括：
-
-1. **清晰的页面分离**：已安装和技能市场分开，符合用户心智模型
-2. **强大的搜索和筛选**：支持按仓库、安装状态、关键词筛选
-3. **仓库来源标识**：清晰显示技能来自哪个仓库，解决同名技能问题
-4. **性能优化**：虚拟滚动支持成千上万技能的流畅浏览
-5. **良好的扩展性**：为未来的排序、批量操作、推荐等功能留出空间
-
-设计遵循YAGNI原则，只实现当前必需的功能，为未来扩展预留接口但不过度设计。
+     ## 总结
