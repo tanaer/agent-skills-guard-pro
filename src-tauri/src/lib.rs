@@ -17,10 +17,21 @@ const MENU_SHOW: &str = "show";
 const MENU_HIDE: &str = "hide";
 const MENU_QUIT: &str = "quit";
 
+/// 获取托盘菜单文本（中英文双语）
+///
+/// 返回值：(显示窗口文本, 隐藏窗口文本, 退出文本)
+fn get_menu_texts() -> (&'static str, &'static str, &'static str) {
+    // 简化版：使用中英文双语显示
+    // 可以根据系统语言环境判断，这里默认使用双语，为未来的完整国际化做准备
+    ("显示窗口 / Show", "隐藏窗口 / Hide", "退出 / Quit")
+}
+
 fn create_tray_menu(app: &tauri::AppHandle) -> Result<tauri::menu::Menu<tauri::Wry>, tauri::Error> {
-    let show_item = MenuItemBuilder::with_id(MENU_SHOW, "显示窗口").build(app)?;
-    let hide_item = MenuItemBuilder::with_id(MENU_HIDE, "隐藏窗口").build(app)?;
-    let quit_item = MenuItemBuilder::with_id(MENU_QUIT, "退出").build(app)?;
+    let (show_text, hide_text, quit_text) = get_menu_texts();
+
+    let show_item = MenuItemBuilder::with_id(MENU_SHOW, show_text).build(app)?;
+    let hide_item = MenuItemBuilder::with_id(MENU_HIDE, hide_text).build(app)?;
+    let quit_item = MenuItemBuilder::with_id(MENU_QUIT, quit_text).build(app)?;
 
     MenuBuilder::new(app)
         .item(&show_item)
