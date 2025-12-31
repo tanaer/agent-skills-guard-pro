@@ -424,6 +424,110 @@ impl GitHubService {
         }
         Ok(())
     }
+
+    /// 从本地缓存扫描skills（不需要API请求）
+    pub fn scan_cached_repository(
+        &self,
+        cache_path: &Path,
+        repo_url: &str,
+        scan_subdirs: bool,
+    ) -> Result<Vec<Skill>> {
+        use walkdir::WalkDir;
+
+        let mut skills = Vec::new();
+        let max_depth = if scan_subdirs { 10 } else { 2 };
+
+        log::info!("开始扫描本地缓存: {:?}, scan_subdirs: {}", cache_path, scan_subdirs);
+
+        // GitHub zipball的根目录是 {owner}-{repo}-{commit}/
+        // 需要找到这个根目录
+        let root_dir = self.find_repo_root(cache_path)?;
+
+        log::info!("找到仓库根目录: {:?}", root_dir);
+
+        // 遍历本地文件系统
+        for entry in WalkDir::new(&root_dir)
+            .max_depth(max_depth)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            if entry.file_type().is_dir() {
+                // 检查是否包含SKILL.md
+                let skill_md_path = entry.path().join("SKILL.md");
+                if skill_md_path.exists() {
+                    log::info!("发现skill: {:?}", entry.path());
+
+                    // 读取并解析SKILL.md
+                    match self.parse_skill_from_file(&skill_md_path, entry.path(), &root_dir, repo_url) {
+                        Ok(skill) => skills.push(skill),
+                        Err(e) => log::warn!("解析skill失败 {:?}: {}", entry.path(), e),
+                    }
+                }
+            }
+        }
+
+        log::info!("本地扫描完成，发现 {} 个skills", skills.len());
+
+        Ok(skills)
+    }
+
+    /// 找到GitHub zipball解压后的根目录
+    fn find_repo_root(&self, extract_dir: &Path) -> Result<PathBuf> {
+        // GitHub zipball解压后会有一个 {owner}-{repo}-{commit}/ 目录
+        // 我们需要找到这个目录
+        for entry in fs::read_dir(extract_dir)
+            .context("无法读取解压目录")?
+        {
+            let entry = entry.context("无法读取目录条目")?;
+            if entry.file_type()?.is_dir() {
+                return Ok(entry.path());
+            }
+        }
+
+        Err(anyhow::anyhow!("未找到仓库根目录"))
+    }
+
+    /// 从本地SKILL.md文件解析skill信息
+    fn parse_skill_from_file(
+        &self,
+        skill_md_path: &Path,
+        skill_dir: &Path,
+        repo_root: &Path,
+        repo_url: &str,
+    ) -> Result<Skill> {
+        // 读取SKILL.md内容
+        let content = fs::read_to_string(skill_md_path)
+            .context("无法读取SKILL.md")?;
+
+        // 解析frontmatter获取name和description
+        let (name, description) = self.parse_skill_frontmatter(&content)?;
+
+        // 计算相对于仓库根目录的路径
+        let relative_path = skill_dir.strip_prefix(repo_root)
+            .context("无法计算相对路径")?;
+
+        let file_path = relative_path.to_string_lossy().to_string();
+
+        // 计算checksum
+        let checksum = self.calculate_checksum(&content);
+
+        let mut skill = Skill::new(name, repo_url.to_string(), file_path);
+        skill.description = description;
+        skill.checksum = Some(checksum);
+
+        Ok(skill)
+    }
+
+    /// 计算文件内容的SHA256 checksum
+    fn calculate_checksum(&self, content: &str) -> String {
+        use sha2::{Sha256, Digest};
+
+        let mut hasher = Sha256::new();
+        hasher.update(content.as_bytes());
+        let result = hasher.finalize();
+
+        hex::encode(result)
+    }
 }
 
 impl Default for GitHubService {
