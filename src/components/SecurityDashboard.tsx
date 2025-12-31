@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { Search, Loader2, Shield } from "lucide-react";
+import { SecurityDetailDialog } from "./SecurityDetailDialog";
 
 // TypeScript 接口定义
 interface SecurityIssue {
@@ -40,9 +41,7 @@ export function SecurityDashboard() {
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"score" | "name" | "time">("score");
   const [searchQuery, setSearchQuery] = useState("");
-  // TODO: 任务 4.4 将实现详情对话框功能
   const [selectedSkill, setSelectedSkill] = useState<SkillScanResult | null>(null);
-  void selectedSkill; // Explicitly mark as used for future task 4.4
 
   // 获取扫描结果
   const { data: scanResults = [], isLoading } = useQuery<SkillScanResult[]>({
@@ -244,6 +243,13 @@ export function SecurityDashboard() {
           </table>
         )}
       </div>
+
+      {/* 详情对话框 */}
+      <SecurityDetailDialog
+        result={selectedSkill}
+        open={selectedSkill !== null}
+        onClose={() => setSelectedSkill(null)}
+      />
     </div>
   );
 }
