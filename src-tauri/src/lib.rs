@@ -8,7 +8,44 @@ use commands::security::{scan_all_installed_skills, get_scan_results, scan_skill
 use services::{Database, SkillManager};
 use std::sync::Arc;
 use tauri::Manager;
+use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState};
 use tokio::sync::Mutex;
+
+const MAIN_WINDOW_LABEL: &str = "main";
+
+fn handle_tray_event(tray: &tauri::tray::TrayIcon<tauri::Wry>, event: tauri::tray::TrayIconEvent) {
+    if let tauri::tray::TrayIconEvent::Click {
+        button: MouseButton::Left,
+        button_state: MouseButtonState::Up,
+        ..
+    } = event
+    {
+        log::debug!("托盘图标被点击");
+        let app = tray.app_handle();
+        if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
+            match window.is_visible() {
+                Ok(true) => {
+                    if let Err(e) = window.hide() {
+                        log::warn!("隐藏窗口失败: {}", e);
+                    }
+                }
+                Ok(false) => {
+                    if let Err(e) = window.show() {
+                        log::warn!("显示窗口失败: {}", e);
+                    }
+                    if let Err(e) = window.set_focus() {
+                        log::warn!("设置窗口焦点失败: {}", e);
+                    }
+                }
+                Err(e) => {
+                    log::error!("检查窗口可见性失败: {}", e);
+                }
+            }
+        } else {
+            log::error!("无法获取主窗口");
+        }
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -51,6 +88,20 @@ pub fn run() {
                 skill_manager,
                 github,
             });
+
+            // 初始化系统托盘
+            let icon = app.default_window_icon()
+                .ok_or("无法获取默认窗口图标")?
+                .clone();
+
+            let tray = TrayIconBuilder::new()
+                .icon(icon)
+                .tooltip("Agent Skills Guard")
+                .on_tray_icon_event(handle_tray_event)
+                .build(app)?;
+
+            // 存储托盘实例到 app state
+            app.manage(tray);
 
             Ok(())
         })
