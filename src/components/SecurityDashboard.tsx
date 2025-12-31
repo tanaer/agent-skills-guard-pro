@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, Loader2, Shield } from "lucide-react";
 
 // TypeScript 接口定义
 interface SecurityIssue {
@@ -33,6 +33,37 @@ interface SkillScanResult {
   report: SecurityReport;
 }
 
+function SecurityBadge({ level }: { level: string }) {
+  const colors = {
+    Safe: "bg-green-500/20 text-green-500 border-green-500/50",
+    Low: "bg-blue-500/20 text-blue-500 border-blue-500/50",
+    Medium: "bg-yellow-500/20 text-yellow-500 border-yellow-500/50",
+    High: "bg-orange-500/20 text-orange-500 border-orange-500/50",
+    Critical: "bg-red-500/20 text-red-500 border-red-500/50",
+  };
+
+  return (
+    <span className={`px-2 py-1 rounded text-xs font-mono border ${colors[level as keyof typeof colors] || colors.Safe}`}>
+      {level}
+    </span>
+  );
+}
+
+function ScoreDisplay({ score }: { score: number }) {
+  const getColor = (score: number) => {
+    if (score >= 90) return "text-green-500";
+    if (score >= 70) return "text-yellow-500";
+    if (score >= 50) return "text-orange-500";
+    return "text-red-500";
+  };
+
+  return (
+    <span className={`text-2xl font-bold font-mono ${getColor(score)}`}>
+      {score}
+    </span>
+  );
+}
+
 export function SecurityDashboard() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -40,6 +71,9 @@ export function SecurityDashboard() {
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"score" | "name" | "time">("score");
   const [searchQuery, setSearchQuery] = useState("");
+  // TODO: 任务 4.4 将实现详情对话框功能
+  const [selectedSkill, setSelectedSkill] = useState<SkillScanResult | null>(null);
+  console.log(selectedSkill); // 临时使用，避免 lint 警告
 
   // 获取扫描结果
   const { data: scanResults = [], isLoading } = useQuery<SkillScanResult[]>({
@@ -158,18 +192,83 @@ export function SecurityDashboard() {
         </div>
       </div>
 
-      {/* TODO: 任务 4.3 - Skills 列表表格 */}
-
-      {/* 临时占位符 */}
-      {isLoading ? (
-        <div className="text-center py-8">{t("security.dashboard.loading")}</div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          {filteredAndSortedResults.length === 0
-            ? t("security.dashboard.noResults")
-            : `${t("security.dashboard.resultsCount")}: ${filteredAndSortedResults.length}`}
-        </div>
-      )}
+      {/* Skills 列表表格 */}
+      <div className="bg-card/30 rounded-lg border border-border overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-terminal-cyan" />
+          </div>
+        ) : filteredAndSortedResults.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Shield className="w-12 h-12 mb-4" />
+            <p className="font-mono">{t('security.noResults')}</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-background/50 border-b border-border">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-mono text-muted-foreground uppercase">
+                  {t('security.table.skillName')}
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                  {t('security.table.score')}
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                  {t('security.table.level')}
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                  {t('security.table.issues')}
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                  {t('security.table.lastScan')}
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                  {t('security.table.actions')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredAndSortedResults.map((result) => (
+                <tr key={result.skill_id} className="hover:bg-background/50 transition-colors">
+                  <td className="px-6 py-4 font-mono text-sm">
+                    {result.skill_name}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <ScoreDisplay score={result.score} />
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <SecurityBadge level={result.level} />
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center gap-2 text-xs font-mono">
+                      {result.report.issues.filter(i => i.severity === "Critical").length > 0 && (
+                        <span className="text-red-500">C:{result.report.issues.filter(i => i.severity === "Critical").length}</span>
+                      )}
+                      {result.report.issues.filter(i => i.severity === "Error").length > 0 && (
+                        <span className="text-orange-500">H:{result.report.issues.filter(i => i.severity === "Error").length}</span>
+                      )}
+                      {result.report.issues.filter(i => i.severity === "Warning").length > 0 && (
+                        <span className="text-yellow-500">M:{result.report.issues.filter(i => i.severity === "Warning").length}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center text-xs font-mono text-muted-foreground">
+                    {new Date(result.scanned_at).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => setSelectedSkill(result)}
+                      className="px-3 py-1 text-xs font-mono border border-terminal-cyan text-terminal-cyan rounded hover:bg-terminal-cyan/10"
+                    >
+                      {t('security.table.viewDetails')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

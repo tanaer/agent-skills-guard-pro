@@ -161,6 +161,7 @@
     "filterByLevel": "风险等级",
     "sortBy": "排序",
     "search": "搜索 Skills...",
+    "noResults": "未找到扫描结果",
     "levels": {
       "all": "全部",
       "critical": "严重",
@@ -173,6 +174,15 @@
       "score": "按评分",
       "name": "按名称",
       "time": "按扫描时间"
+    },
+    "table": {
+      "skillName": "Skill 名称",
+      "score": "安全评分",
+      "level": "风险等级",
+      "issues": "问题数量",
+      "lastScan": "最后扫描",
+      "actions": "操作",
+      "viewDetails": "查看详情"
     }
   }
 }

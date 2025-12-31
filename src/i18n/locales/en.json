@@ -161,6 +161,7 @@
     "filterByLevel": "Risk Level",
     "sortBy": "Sort By",
     "search": "Search Skills...",
+    "noResults": "No scan results found",
     "levels": {
       "all": "All",
       "critical": "Critical",
@@ -173,6 +174,15 @@
       "score": "By Score",
       "name": "By Name",
       "time": "By Scan Time"
+    },
+    "table": {
+      "skillName": "Skill Name",
+      "score": "Security Score",
+      "level": "Risk Level",
+      "issues": "Issues",
+      "lastScan": "Last Scan",
+      "actions": "Actions",
+      "viewDetails": "View Details"
     }
   }
 }
