@@ -38,7 +38,9 @@ pub async fn scan_all_installed_skills(
                         skill.scanned_at = Some(chrono::Utc::now());
 
                         // 保存到数据库
-                        let _ = db.save_skill(&skill);
+                        if let Err(e) = db.save_skill(&skill) {
+                            eprintln!("Failed to save skill {}: {}", skill.name, e);
+                        }
 
                         results.push(SkillScanResult {
                             skill_id: skill.id.clone(),
