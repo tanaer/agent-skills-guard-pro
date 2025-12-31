@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { InstalledSkillsPage } from "./components/InstalledSkillsPage";
 import { MarketplacePage } from "./components/MarketplacePage";
@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { WindowControls } from "./components/WindowControls";
 import { Toaster } from "sonner";
+import { getPlatform, type Platform } from "./lib/platform";
 
 // 全局类型声明
 declare const __APP_VERSION__: string;
@@ -18,6 +19,11 @@ const reactQueryClient = new QueryClient();
 function AppContent() {
   const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<"security" | "installed" | "marketplace" | "repositories">("security");
+  const [platform, setPlatform] = useState<Platform>('unknown');
+
+  useEffect(() => {
+    getPlatform().then(setPlatform);
+  }, []);
 
   // Removed automatic local skills scan on startup - security dashboard now handles scanning
 
@@ -30,35 +36,75 @@ function AppContent() {
       <header className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur-sm shadow-lg z-40">
         <div data-tauri-drag-region className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Left: ASCII Logo and Title */}
-            <div className="flex items-center gap-4">
-              <div className="text-terminal-cyan font-mono text-2xl leading-none select-none pointer-events-none">
-                <pre className="text-xs leading-tight">
+            {/* Mac 布局：左侧控件 + 中间标题 + 右侧语言切换 */}
+            {platform === 'macos' && (
+              <>
+                {/* 左侧：窗口控件 */}
+                <div className="pointer-events-auto">
+                  <WindowControls />
+                </div>
+
+                {/* 中间：Logo 和标题 */}
+                <div className="flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
+                  <div className="text-terminal-cyan font-mono text-2xl leading-none select-none pointer-events-none">
+                    <pre className="text-xs leading-tight">
 {`╔═══╗
 ║ ◎ ║
 ╚═══╝`}
-                </pre>
-              </div>
+                    </pre>
+                  </div>
 
-              <div className="pointer-events-none">
-                <h1 className="text-2xl font-bold text-terminal-cyan text-glow tracking-wider">
-                  {t('header.title')}
-                </h1>
-                <p className="text-xs text-muted-foreground font-mono mt-1 tracking-wide">
-                  <span className="text-terminal-green">&gt;</span> {t('header.subtitle')}
-                </p>
-              </div>
-            </div>
+                  <div className="pointer-events-none">
+                    <h1 className="text-2xl font-bold text-terminal-cyan text-glow tracking-wider">
+                      {t('header.title')}
+                    </h1>
+                    <p className="text-xs text-muted-foreground font-mono mt-1 tracking-wide">
+                      <span className="text-terminal-green">&gt;</span> {t('header.subtitle')}
+                    </p>
+                  </div>
+                </div>
 
-            {/* Right: Language Switcher and Window Controls */}
-            <div className="flex items-center gap-4">
-              <div className="pointer-events-auto">
-                <LanguageSwitcher />
-              </div>
-              <div className="pointer-events-auto">
-                <WindowControls />
-              </div>
-            </div>
+                {/* 右侧：语言切换器 */}
+                <div className="pointer-events-auto">
+                  <LanguageSwitcher />
+                </div>
+              </>
+            )}
+
+            {/* Windows/Linux 布局：左侧标题 + 右侧语言切换和控件 */}
+            {platform !== 'macos' && (
+              <>
+                {/* 左侧：Logo 和标题 */}
+                <div className="flex items-center gap-4">
+                  <div className="text-terminal-cyan font-mono text-2xl leading-none select-none pointer-events-none">
+                    <pre className="text-xs leading-tight">
+{`╔═══╗
+║ ◎ ║
+╚═══╝`}
+                    </pre>
+                  </div>
+
+                  <div className="pointer-events-none">
+                    <h1 className="text-2xl font-bold text-terminal-cyan text-glow tracking-wider">
+                      {t('header.title')}
+                    </h1>
+                    <p className="text-xs text-muted-foreground font-mono mt-1 tracking-wide">
+                      <span className="text-terminal-green">&gt;</span> {t('header.subtitle')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 右侧：语言切换器和窗口控件 */}
+                <div className="flex items-center gap-4">
+                  <div className="pointer-events-auto">
+                    <LanguageSwitcher />
+                  </div>
+                  <div className="pointer-events-auto">
+                    <WindowControls />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>
