@@ -13,6 +13,10 @@ pub struct Repository {
     pub scan_subdirs: bool,
     pub added_at: DateTime<Utc>,
     pub last_scanned: Option<DateTime<Utc>>,
+    // 新增：缓存相关字段
+    pub cache_path: Option<String>,
+    pub cached_at: Option<DateTime<Utc>>,
+    pub cached_commit_sha: Option<String>,
 }
 
 impl Repository {
@@ -26,6 +30,9 @@ impl Repository {
             scan_subdirs: true,
             added_at: Utc::now(),
             last_scanned: None,
+            cache_path: None,
+            cached_at: None,
+            cached_commit_sha: None,
         }
     }
 

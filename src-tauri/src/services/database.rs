@@ -82,6 +82,7 @@ impl Database {
 
         // 执行数据库迁移
         self.migrate_add_repository_owner()?;
+        self.migrate_add_cache_fields()?;
 
         Ok(())
     }
@@ -128,8 +129,8 @@ impl Database {
 
         conn.execute(
             "INSERT OR REPLACE INTO repositories
-            (id, url, name, description, enabled, scan_subdirs, added_at, last_scanned)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            (id, url, name, description, enabled, scan_subdirs, added_at, last_scanned, cache_path, cached_at, cached_commit_sha)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             params![
                 repo.id,
                 repo.url,
@@ -139,6 +140,9 @@ impl Database {
                 repo.scan_subdirs as i32,
                 repo.added_at.to_rfc3339(),
                 repo.last_scanned.as_ref().map(|d| d.to_rfc3339()),
+                repo.cache_path,
+                repo.cached_at.as_ref().map(|d| d.to_rfc3339()),
+                repo.cached_commit_sha,
             ],
         )?;
 
@@ -149,7 +153,7 @@ impl Database {
     pub fn get_repositories(&self) -> Result<Vec<Repository>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, url, name, description, enabled, scan_subdirs, added_at, last_scanned
+            "SELECT id, url, name, description, enabled, scan_subdirs, added_at, last_scanned, cache_path, cached_at, cached_commit_sha
              FROM repositories"
         )?;
 
@@ -164,6 +168,10 @@ impl Database {
                 added_at: row.get::<_, String>(6)?.parse().unwrap(),
                 last_scanned: row.get::<_, Option<String>>(7)?
                     .and_then(|s| s.parse().ok()),
+                cache_path: row.get(8)?,
+                cached_at: row.get::<_, Option<String>>(9)?
+                    .and_then(|s| s.parse().ok()),
+                cached_commit_sha: row.get(10)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -253,6 +261,31 @@ impl Database {
         let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM skills WHERE id = ?1", params![skill_id])?;
         conn.execute("DELETE FROM installations WHERE skill_id = ?1", params![skill_id])?;
+        Ok(())
+    }
+
+    /// 数据库迁移：添加缓存相关字段
+    fn migrate_add_cache_fields(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+
+        // 添加 cache_path 列
+        let _ = conn.execute(
+            "ALTER TABLE repositories ADD COLUMN cache_path TEXT",
+            [],
+        );
+
+        // 添加 cached_at 列
+        let _ = conn.execute(
+            "ALTER TABLE repositories ADD COLUMN cached_at TEXT",
+            [],
+        );
+
+        // 添加 cached_commit_sha 列
+        let _ = conn.execute(
+            "ALTER TABLE repositories ADD COLUMN cached_commit_sha TEXT",
+            [],
+        );
+
         Ok(())
     }
 }
