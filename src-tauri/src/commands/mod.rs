@@ -49,17 +49,70 @@ pub async fn scan_repository(
     state: State<'_, AppState>,
     repo_id: String,
 ) -> Result<Vec<Skill>, String> {
+    use chrono::Utc;
+
     // 获取仓库信息
-    let repos = state.db.get_repositories()
+    let repo = state.db.get_repository(&repo_id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "仓库不存在".to_string())?;
+
+    let (owner, repo_name) = Repository::from_github_url(&repo.url)
         .map_err(|e| e.to_string())?;
 
-    let repo = repos.into_iter()
-        .find(|r| r.id == repo_id)
-        .ok_or_else(|| "Repository not found".to_string())?;
+    // 确定缓存基础目录
+    let cache_base_dir = dirs::cache_dir()
+        .ok_or("无法获取缓存目录".to_string())?
+        .join("agent-skills-guard")
+        .join("repositories");
 
-    // 扫描仓库
-    let skills = state.github.scan_repository(&repo).await
-        .map_err(|e| e.to_string())?;
+    let skills = if let Some(cache_path) = &repo.cache_path {
+        // 使用缓存扫描(0次API请求)
+        log::info!("使用本地缓存扫描仓库: {}", repo.name);
+
+        let cache_path_buf = std::path::PathBuf::from(cache_path);
+        if cache_path_buf.exists() {
+            state.github.scan_cached_repository(&cache_path_buf, &repo.url, repo.scan_subdirs)
+                .map_err(|e| format!("扫描缓存失败: {}", e))?
+        } else {
+            // 缓存路径不存在,重新下载
+            log::warn!("缓存路径不存在,重新下载: {:?}", cache_path_buf);
+            let extract_dir = state.github
+                .download_repository_archive(&owner, &repo_name, &cache_base_dir)
+                .await
+                .map_err(|e| format!("下载仓库压缩包失败: {}", e))?;
+
+            // 更新数据库缓存信息
+            state.db.update_repository_cache(
+                &repo_id,
+                &extract_dir.to_string_lossy(),
+                Utc::now(),
+                None,  // cached_commit_sha - Task 4修复后需要此参数
+            ).map_err(|e| e.to_string())?;
+
+            state.github.scan_cached_repository(&extract_dir, &repo.url, repo.scan_subdirs)
+                .map_err(|e| format!("扫描缓存失败: {}", e))?
+        }
+    } else {
+        // 首次扫描: 下载压缩包并缓存(1次API请求)
+        log::info!("首次扫描,下载仓库压缩包: {}", repo.name);
+
+        let extract_dir = state.github
+            .download_repository_archive(&owner, &repo_name, &cache_base_dir)
+            .await
+            .map_err(|e| format!("下载仓库压缩包失败: {}", e))?;
+
+        // 更新数据库缓存信息
+        state.db.update_repository_cache(
+            &repo_id,
+            &extract_dir.to_string_lossy(),
+            Utc::now(),
+            None,  // cached_commit_sha - Task 4修复后需要此参数
+        ).map_err(|e| e.to_string())?;
+
+        // 扫描本地缓存
+        state.github.scan_cached_repository(&extract_dir, &repo.url, repo.scan_subdirs)
+            .map_err(|e| format!("扫描缓存失败: {}", e))?
+    };
 
     // 保存到数据库
     for skill in &skills {
