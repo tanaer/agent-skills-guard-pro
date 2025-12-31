@@ -4,6 +4,10 @@ use reqwest::Client;
 use serde::Deserialize;
 use std::future::Future;
 use std::pin::Pin;
+use std::path::{Path, PathBuf};
+use std::fs::{self, File};
+use std::io::Write;
+use zip::ZipArchive;
 
 /// SKILL.md 文件的 frontmatter
 #[derive(Debug, Deserialize)]
@@ -300,6 +304,125 @@ impl GitHubService {
             .collect();
 
         Ok(files)
+    }
+
+    /// 下载仓库压缩包并解压到本地缓存
+    pub async fn download_repository_archive(
+        &self,
+        owner: &str,
+        repo: &str,
+        cache_base_dir: &Path,
+    ) -> Result<PathBuf> {
+        // 1. 创建仓库专属缓存目录
+        let repo_cache_dir = cache_base_dir.join(format!("{}_{}", owner, repo));
+        fs::create_dir_all(&repo_cache_dir)
+            .context("无法创建缓存目录")?;
+
+        // 2. 下载压缩包
+        let url = format!("{}/repos/{}/{}/zipball/main", self.api_base, owner, repo);
+        log::info!("正在下载仓库压缩包: {}", url);
+
+        let response = self.client.get(&url).send().await
+            .context("下载压缩包失败")?;
+
+        // 检查API限流
+        self.check_rate_limit(&response)?;
+
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!(
+                "下载失败，HTTP状态码: {}",
+                response.status()
+            ));
+        }
+
+        // 3. 保存压缩包到本地
+        let archive_path = repo_cache_dir.join("archive.zip");
+        let bytes = response.bytes().await
+            .context("读取压缩包内容失败")?;
+
+        let mut file = File::create(&archive_path)
+            .context("无法创建压缩包文件")?;
+        file.write_all(&bytes)
+            .context("写入压缩包失败")?;
+
+        log::info!("压缩包已保存: {:?}, 大小: {} bytes", archive_path, bytes.len());
+
+        // 4. 解压缩
+        let extract_dir = repo_cache_dir.join("extracted");
+        self.extract_zip(&archive_path, &extract_dir)
+            .context("解压缩失败")?;
+
+        log::info!("解压完成: {:?}", extract_dir);
+
+        Ok(extract_dir)
+    }
+
+    /// 解压zip文件
+    fn extract_zip(&self, archive_path: &Path, extract_dir: &Path) -> Result<()> {
+        let file = File::open(archive_path)
+            .context("无法打开压缩包")?;
+
+        let mut archive = ZipArchive::new(file)
+            .context("无法读取ZIP文件")?;
+
+        log::info!("正在解压 {} 个文件...", archive.len());
+
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i)
+                .context(format!("无法读取ZIP条目 {}", i))?;
+
+            // GitHub的zipball会在根目录包含一个 {owner}-{repo}-{commit}/ 的文件夹
+            // 我们需要提取这个路径
+            let outpath = match file.enclosed_name() {
+                Some(path) => extract_dir.join(path),
+                None => continue,
+            };
+
+            if file.is_dir() {
+                fs::create_dir_all(&outpath)
+                    .context(format!("无法创建目录: {:?}", outpath))?;
+            } else {
+                if let Some(parent) = outpath.parent() {
+                    fs::create_dir_all(parent)
+                        .context(format!("无法创建父目录: {:?}", parent))?;
+                }
+
+                let mut outfile = File::create(&outpath)
+                    .context(format!("无法创建文件: {:?}", outpath))?;
+
+                std::io::copy(&mut file, &mut outfile)
+                    .context(format!("无法写入文件: {:?}", outpath))?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// 检查GitHub API限流状态
+    fn check_rate_limit(&self, response: &reqwest::Response) -> Result<()> {
+        if let Some(remaining) = response.headers().get("x-ratelimit-remaining") {
+            if let Ok(remaining_str) = remaining.to_str() {
+                log::debug!("GitHub API剩余配额: {}", remaining_str);
+
+                if remaining_str == "0" {
+                    if let Some(reset) = response.headers().get("x-ratelimit-reset") {
+                        if let Ok(reset_str) = reset.to_str() {
+                            if let Ok(reset_timestamp) = reset_str.parse::<i64>() {
+                                let now = chrono::Utc::now().timestamp();
+                                let wait_seconds = reset_timestamp - now;
+                                let wait_minutes = (wait_seconds + 59) / 60;
+
+                                return Err(anyhow::anyhow!(
+                                    "GitHub API 速率限制已达上限，请等待约 {} 分钟后重试。\n\n提示：未认证的请求限制为每小时60次，认证后可提升至5000次/小时。",
+                                    wait_minutes
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
