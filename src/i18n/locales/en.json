@@ -74,7 +74,24 @@
       "noResults": "No skills found containing \"{{query}}\"",
       "noSkillsInFilter": "No skills match current filters",
       "localRepo": "📁 LOCAL",
-      "allRepos": "ALL"
+      "allRepos": "ALL",
+      "install": {
+        "scanResult": "Security Scan Result",
+        "preparingInstall": "Preparing to install",
+        "securityScore": "Security Score",
+        "issuesDetected": "Issues Detected",
+        "critical": "Critical",
+        "highRisk": "High Risk",
+        "mediumRisk": "Medium Risk",
+        "cancel": "Cancel",
+        "installAnyway": "Install Anyway",
+        "installCautiously": "Install Cautiously",
+        "install": "Install",
+        "warningTitle": "⚠️ Strongly Recommended NOT to Install This Skill!",
+        "warningMessage": "Severe security threats detected that may harm your system or data.",
+        "blocked": "This Skill has severe security risks and has been blocked",
+        "preparationFailed": "Installation preparation failed"
+      }
     },
     "installedPage": {
       "count": "INSTALLED_{{count}}_SKILLS",

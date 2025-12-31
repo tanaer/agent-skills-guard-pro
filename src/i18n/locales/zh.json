@@ -74,7 +74,24 @@
       "noResults": "没有找到包含\"{{query}}\"的技能",
       "noSkillsInFilter": "当前筛选条件下没有技能",
       "localRepo": "📁 本地",
-      "allRepos": "全部"
+      "allRepos": "全部",
+      "install": {
+        "scanResult": "安全扫描结果",
+        "preparingInstall": "准备安装",
+        "securityScore": "安全评分",
+        "issuesDetected": "检测到的问题",
+        "critical": "严重",
+        "highRisk": "高风险",
+        "mediumRisk": "中风险",
+        "cancel": "取消",
+        "installAnyway": "仍然安装",
+        "installCautiously": "谨慎安装",
+        "install": "安装",
+        "warningTitle": "⚠️ 强烈建议不要安装此 Skill！",
+        "warningMessage": "检测到严重安全威胁，可能危害您的系统或数据。",
+        "blocked": "该 Skill 存在严重安全风险，已被阻止安装",
+        "preparationFailed": "安装准备失败"
+      }
     },
     "installedPage": {
       "count": "已安装 {{count}} 个技能",

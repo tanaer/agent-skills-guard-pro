@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { formatRepositoryTag } from "../lib/utils";
 import { invoke } from "@tauri-apps/api/core";
+import { countIssuesBySeverity } from "@/lib/security-utils";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -224,7 +225,7 @@ export function MarketplacePage() {
                     // 如果被阻止，显示错误
                     if (report.blocked) {
                       setInstallingSkillId(null);
-                      showToast("该 Skill 存在严重安全风险，已被阻止安装");
+                      showToast(t('skills.marketplace.install.blocked'));
                       setPendingInstall({ skill, report });
                       return;
                     }
@@ -250,7 +251,7 @@ export function MarketplacePage() {
                   });
                 } catch (error: any) {
                   setInstallingSkillId(null);
-                  showToast(`安装准备失败: ${error.message || error}`);
+                  showToast(`${t('skills.marketplace.install.preparationFailed')}: ${error.message || error}`);
                 }
               }}
               onUninstall={() => {
@@ -715,10 +716,17 @@ function InstallConfirmDialog({
   report,
   skillName
 }: InstallConfirmDialogProps) {
+  const { t } = useTranslation();
+
   if (!report) return null;
 
   const isMediumRisk = report.score >= 50 && report.score < 70;
   const isHighRisk = report.score < 50 || report.blocked;
+
+  const issueCounts = useMemo(
+    () => countIssuesBySeverity(report.issues),
+    [report.issues]
+  );
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
@@ -732,17 +740,17 @@ function InstallConfirmDialog({
             ) : (
               <CheckCircle className="w-6 h-6 text-green-500" />
             )}
-            安全扫描结果
+            {t('skills.marketplace.install.scanResult')}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4">
               <div>
-                准备安装: <span className="font-mono font-bold">{skillName}</span>
+                {t('skills.marketplace.install.preparingInstall')}: <span className="font-mono font-bold">{skillName}</span>
               </div>
 
               {/* 评分 */}
               <div className="flex items-center justify-between p-4 bg-card/50 rounded-lg">
-                <span className="text-sm">安全评分:</span>
+                <span className="text-sm">{t('skills.marketplace.install.securityScore')}:</span>
                 <span className={`text-3xl font-bold font-mono ${
                   report.score >= 90 ? 'text-green-500' :
                   report.score >= 70 ? 'text-yellow-500' :
@@ -755,21 +763,21 @@ function InstallConfirmDialog({
               {/* 问题摘要 */}
               {report.issues.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-bold">检测到的问题:</div>
+                  <div className="text-sm font-bold">{t('skills.marketplace.install.issuesDetected')}:</div>
                   <div className="flex gap-4 text-sm">
-                    {report.issues.filter(i => i.severity === "Critical").length > 0 && (
+                    {issueCounts.critical > 0 && (
                       <span className="text-red-500">
-                        严重: {report.issues.filter(i => i.severity === "Critical").length}
+                        {t('skills.marketplace.install.critical')}: {issueCounts.critical}
                       </span>
                     )}
-                    {report.issues.filter(i => i.severity === "Error").length > 0 && (
+                    {issueCounts.error > 0 && (
                       <span className="text-orange-500">
-                        高风险: {report.issues.filter(i => i.severity === "Error").length}
+                        {t('skills.marketplace.install.highRisk')}: {issueCounts.error}
                       </span>
                     )}
-                    {report.issues.filter(i => i.severity === "Warning").length > 0 && (
+                    {issueCounts.warning > 0 && (
                       <span className="text-yellow-500">
-                        中风险: {report.issues.filter(i => i.severity === "Warning").length}
+                        {t('skills.marketplace.install.mediumRisk')}: {issueCounts.warning}
                       </span>
                     )}
                   </div>
@@ -794,16 +802,16 @@ function InstallConfirmDialog({
               {/* 警告信息 */}
               {isHighRisk && (
                 <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg text-sm">
-                  <strong>⚠️ 强烈建议不要安装此 Skill！</strong>
+                  <strong>{t('skills.marketplace.install.warningTitle')}</strong>
                   <br />
-                  检测到严重安全威胁，可能危害您的系统或数据。
+                  {t('skills.marketplace.install.warningMessage')}
                 </div>
               )}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>取消</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>{t('skills.marketplace.install.cancel')}</AlertDialogCancel>
           {!report.blocked && (
             <button
               onClick={onConfirm}
@@ -813,7 +821,7 @@ function InstallConfirmDialog({
                 'bg-green-500 hover:bg-green-600'
               } text-white`}
             >
-              {isHighRisk ? '仍然安装' : isMediumRisk ? '谨慎安装' : '安装'}
+              {isHighRisk ? t('skills.marketplace.install.installAnyway') : isMediumRisk ? t('skills.marketplace.install.installCautiously') : t('skills.marketplace.install.install')}
             </button>
           )}
         </AlertDialogFooter>

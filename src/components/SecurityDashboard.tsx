@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Search, Loader2, Shield } from "lucide-react";
 import { SecurityDetailDialog } from "./SecurityDetailDialog";
 import type { SkillScanResult } from "@/types/security";
+import { countIssuesBySeverity } from "@/lib/security-utils";
 
 export function SecurityDashboard() {
   const { t } = useTranslation();
@@ -170,9 +171,7 @@ export function SecurityDashboard() {
             </thead>
             <tbody className="divide-y divide-border">
               {filteredAndSortedResults.map((result) => {
-                const criticalCount = result.report.issues.filter(i => i.severity === "Critical").length;
-                const errorCount = result.report.issues.filter(i => i.severity === "Error").length;
-                const warningCount = result.report.issues.filter(i => i.severity === "Warning").length;
+                const issueCounts = countIssuesBySeverity(result.report.issues);
 
                 return (
                   <tr key={result.skill_id} className="hover:bg-background/50 transition-colors">
@@ -187,14 +186,14 @@ export function SecurityDashboard() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2 text-xs font-mono">
-                        {criticalCount > 0 && (
-                          <span className="text-red-500">C:{criticalCount}</span>
+                        {issueCounts.critical > 0 && (
+                          <span className="text-red-500">C:{issueCounts.critical}</span>
                         )}
-                        {errorCount > 0 && (
-                          <span className="text-orange-500">H:{errorCount}</span>
+                        {issueCounts.error > 0 && (
+                          <span className="text-orange-500">H:{issueCounts.error}</span>
                         )}
-                        {warningCount > 0 && (
-                          <span className="text-yellow-500">M:{warningCount}</span>
+                        {issueCounts.warning > 0 && (
+                          <span className="text-yellow-500">M:{issueCounts.warning}</span>
                         )}
                       </div>
                     </td>
