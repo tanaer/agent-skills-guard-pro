@@ -19,11 +19,33 @@ const reactQueryClient = new QueryClient();
 function AppContent() {
   const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<"security" | "installed" | "marketplace" | "repositories">("security");
-  const [platform, setPlatform] = useState<Platform>('unknown');
+  const [platform, setPlatform] = useState<Platform | null>(null);
 
   useEffect(() => {
     getPlatform().then(setPlatform);
   }, []);
+
+  // 辅助函数：渲染 Logo 和标题，避免代码重复
+  const renderLogoTitle = (isCentered: boolean) => (
+    <div className={`flex items-center gap-4 ${isCentered ? 'absolute left-1/2 -translate-x-1/2' : ''}`}>
+      <div className="text-terminal-cyan font-mono text-2xl leading-none select-none pointer-events-none">
+        <pre className="text-xs leading-tight">
+{`╔═══╗
+║ ◎ ║
+╚═══╝`}
+        </pre>
+      </div>
+
+      <div className="pointer-events-none">
+        <h1 className="text-2xl font-bold text-terminal-cyan text-glow tracking-wider">
+          {t('header.title')}
+        </h1>
+        <p className="text-xs text-muted-foreground font-mono mt-1 tracking-wide">
+          <span className="text-terminal-green">&gt;</span> {t('header.subtitle')}
+        </p>
+      </div>
+    </div>
+  );
 
   // Removed automatic local skills scan on startup - security dashboard now handles scanning
 
@@ -45,24 +67,7 @@ function AppContent() {
                 </div>
 
                 {/* 中间：Logo 和标题 */}
-                <div className="flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
-                  <div className="text-terminal-cyan font-mono text-2xl leading-none select-none pointer-events-none">
-                    <pre className="text-xs leading-tight">
-{`╔═══╗
-║ ◎ ║
-╚═══╝`}
-                    </pre>
-                  </div>
-
-                  <div className="pointer-events-none">
-                    <h1 className="text-2xl font-bold text-terminal-cyan text-glow tracking-wider">
-                      {t('header.title')}
-                    </h1>
-                    <p className="text-xs text-muted-foreground font-mono mt-1 tracking-wide">
-                      <span className="text-terminal-green">&gt;</span> {t('header.subtitle')}
-                    </p>
-                  </div>
-                </div>
+                {renderLogoTitle(true)}
 
                 {/* 右侧：语言切换器 */}
                 <div className="pointer-events-auto">
@@ -72,27 +77,10 @@ function AppContent() {
             )}
 
             {/* Windows/Linux 布局：左侧标题 + 右侧语言切换和控件 */}
-            {platform !== 'macos' && (
+            {platform !== 'macos' && platform !== null && (
               <>
                 {/* 左侧：Logo 和标题 */}
-                <div className="flex items-center gap-4">
-                  <div className="text-terminal-cyan font-mono text-2xl leading-none select-none pointer-events-none">
-                    <pre className="text-xs leading-tight">
-{`╔═══╗
-║ ◎ ║
-╚═══╝`}
-                    </pre>
-                  </div>
-
-                  <div className="pointer-events-none">
-                    <h1 className="text-2xl font-bold text-terminal-cyan text-glow tracking-wider">
-                      {t('header.title')}
-                    </h1>
-                    <p className="text-xs text-muted-foreground font-mono mt-1 tracking-wide">
-                      <span className="text-terminal-green">&gt;</span> {t('header.subtitle')}
-                    </p>
-                  </div>
-                </div>
+                {renderLogoTitle(false)}
 
                 {/* 右侧：语言切换器和窗口控件 */}
                 <div className="flex items-center gap-4">
