@@ -90,6 +90,9 @@ lazy_static! {
             100,
             "rm -rf / 删除根目录",
             true,
+            Confidence::High,
+            "检查命令参数，避免操作根目录或使用通配符",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "RM_RF_HOME",
@@ -100,6 +103,9 @@ lazy_static! {
             90,
             "rm -rf ~ 删除用户目录",
             true,
+            Confidence::High,
+            "检查命令参数，避免操作用户主目录",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "DD_WIPE",
@@ -110,6 +116,9 @@ lazy_static! {
             100,
             "dd 写入磁盘设备",
             true,
+            Confidence::High,
+            "检查命令参数，避免写入系统磁盘设备",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "MKFS_FORMAT",
@@ -120,6 +129,9 @@ lazy_static! {
             100,
             "mkfs 格式化命令",
             true,
+            Confidence::High,
+            "检查命令参数，避免格式化系统磁盘",
+            Some("CWE-78"),
         ),
 
         // B. 远程执行
@@ -132,6 +144,9 @@ lazy_static! {
             90,
             "curl | sh 远程执行",
             true,
+            Confidence::High,
+            "避免直接执行远程脚本，应先下载后检查",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "WGET_PIPE_SH",
@@ -142,6 +157,9 @@ lazy_static! {
             90,
             "wget | sh 远程执行",
             true,
+            Confidence::High,
+            "避免直接执行远程脚本，应先下载后检查",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "BASE64_EXEC",
@@ -152,6 +170,9 @@ lazy_static! {
             85,
             "base64 解码后执行",
             true,
+            Confidence::High,
+            "避免执行Base64编码的命令，可能隐藏恶意代码",
+            Some("CWE-506"),
         ),
         PatternRule::new(
             "REVERSE_SHELL",
@@ -162,6 +183,9 @@ lazy_static! {
             95,
             "反弹Shell后门",
             true,
+            Confidence::High,
+            "检查网络连接和进程调用，避免反弹Shell后门",
+            Some("CWE-506"),
         ),
 
         // C. 命令注入
@@ -174,6 +198,9 @@ lazy_static! {
             70,
             "eval() 动态执行",
             false,
+            Confidence::Medium,
+            "避免使用eval()动态执行代码，使用安全的替代方法",
+            Some("CWE-94"),
         ),
         PatternRule::new(
             "PY_EXEC",
@@ -184,6 +211,9 @@ lazy_static! {
             70,
             "exec() 动态执行",
             false,
+            Confidence::Medium,
+            "避免使用exec()动态执行代码，使用安全的替代方法",
+            Some("CWE-94"),
         ),
         PatternRule::new(
             "OS_SYSTEM",
@@ -194,6 +224,9 @@ lazy_static! {
             65,
             "os.system() Shell执行",
             false,
+            Confidence::Medium,
+            "避免使用os.system()，改用subprocess.run()并设置shell=False",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "SUBPROCESS_SHELL",
@@ -204,6 +237,9 @@ lazy_static! {
             65,
             "subprocess shell=True",
             false,
+            Confidence::High,
+            "避免设置shell=True，使用列表参数传递命令",
+            Some("CWE-78"),
         ),
         PatternRule::new(
             "SUBPROCESS_CALL",
@@ -214,6 +250,9 @@ lazy_static! {
             25,
             "subprocess 进程调用",
             false,
+            Confidence::Low,
+            "确保命令参数经过验证，避免注入风险",
+            Some("CWE-78"),
         ),
 
         // D. 网络外传
@@ -226,6 +265,9 @@ lazy_static! {
             40,
             "curl POST 请求",
             false,
+            Confidence::Medium,
+            "确认网络请求目标，避免泄露敏感数据",
+            Some("CWE-319"),
         ),
         PatternRule::new(
             "NETCAT",
@@ -236,6 +278,9 @@ lazy_static! {
             60,
             "netcat 网络连接",
             false,
+            Confidence::Medium,
+            "检查netcat使用场景，避免未授权的网络连接",
+            Some("CWE-319"),
         ),
         PatternRule::new(
             "PY_URLLIB",
@@ -246,6 +291,9 @@ lazy_static! {
             35,
             "urllib 网络请求",
             false,
+            Confidence::Low,
+            "确认请求目标URL的安全性，使用HTTPS协议",
+            None,
         ),
         PatternRule::new(
             "HTTP_REQUEST",
@@ -256,6 +304,9 @@ lazy_static! {
             15,
             "Python requests HTTP 请求",
             false,
+            Confidence::Low,
+            "确认请求目标URL的安全性，使用HTTPS协议",
+            None,
         ),
 
         // E. 权限提升
@@ -268,6 +319,9 @@ lazy_static! {
             60,
             "sudo 权限提升",
             false,
+            Confidence::Low,
+            "审查sudo使用场景，确保符合最小权限原则",
+            Some("CWE-250"),
         ),
         PatternRule::new(
             "CHMOD_777",
@@ -278,6 +332,9 @@ lazy_static! {
             55,
             "chmod 777 开放权限",
             false,
+            Confidence::High,
+            "避免设置777权限，使用最小权限原则",
+            Some("CWE-732"),
         ),
         PatternRule::new(
             "SUDOERS",
@@ -288,6 +345,9 @@ lazy_static! {
             95,
             "sudoers 文件修改",
             true,
+            Confidence::High,
+            "检查sudoers修改，避免不当的权限配置",
+            Some("CWE-250"),
         ),
 
         // F. 持久化
@@ -300,6 +360,9 @@ lazy_static! {
             65,
             "crontab 持久化",
             false,
+            Confidence::Medium,
+            "检查定时任务内容，避免恶意持久化机制",
+            Some("CWE-506"),
         ),
         PatternRule::new(
             "SSH_KEYS",
@@ -310,6 +373,9 @@ lazy_static! {
             90,
             "SSH 密钥写入",
             true,
+            Confidence::High,
+            "检查SSH密钥写入操作，避免未授权访问",
+            Some("CWE-506"),
         ),
 
         // G. 敏感泄露
@@ -322,6 +388,9 @@ lazy_static! {
             70,
             "硬编码私钥",
             false,
+            Confidence::High,
+            "使用环境变量或密钥管理服务，不要硬编码私钥",
+            Some("CWE-798"),
         ),
         PatternRule::new(
             "API_KEY",
@@ -332,6 +401,9 @@ lazy_static! {
             60,
             "硬编码 API Key",
             false,
+            Confidence::High,
+            "使用环境变量或密钥管理服务，不要硬编码API密钥",
+            Some("CWE-798"),
         ),
         PatternRule::new(
             "PASSWORD",
@@ -342,6 +414,9 @@ lazy_static! {
             55,
             "硬编码密码",
             false,
+            Confidence::Medium,
+            "使用环境变量或配置文件，不要硬编码密码",
+            Some("CWE-798"),
         ),
         PatternRule::new(
             "AWS_KEY",
@@ -352,6 +427,9 @@ lazy_static! {
             80,
             "AWS Access Key",
             false,
+            Confidence::High,
+            "使用AWS密钥管理服务或环境变量，不要硬编码AWS密钥",
+            Some("CWE-798"),
         ),
         PatternRule::new(
             "GITHUB_TOKEN",
@@ -362,6 +440,9 @@ lazy_static! {
             80,
             "GitHub Token",
             false,
+            Confidence::High,
+            "使用GitHub Secrets或环境变量，不要硬编码Token",
+            Some("CWE-798"),
         ),
     ];
 
