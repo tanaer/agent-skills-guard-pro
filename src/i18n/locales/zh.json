@@ -157,6 +157,22 @@
       "resultsCount": "已扫描 Skills",
       "scanSuccess": "成功扫描 {{count}} 个 Skills",
       "scanError": "扫描失败，请重试"
+    },
+    "filterByLevel": "风险等级",
+    "sortBy": "排序",
+    "search": "搜索 Skills...",
+    "levels": {
+      "all": "全部",
+      "critical": "严重",
+      "high": "高风险",
+      "medium": "中风险",
+      "low": "低风险",
+      "safe": "安全"
+    },
+    "sort": {
+      "score": "按评分",
+      "name": "按名称",
+      "time": "按扫描时间"
     }
   }
 }

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
 
 // TypeScript 接口定义
 interface SecurityIssue {
@@ -36,6 +37,9 @@ export function SecurityDashboard() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
+  const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"score" | "name" | "time">("score");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 获取扫描结果
   const { data: scanResults = [], isLoading } = useQuery<SkillScanResult[]>({
@@ -60,6 +64,32 @@ export function SecurityDashboard() {
     }
   };
 
+  // 过滤和排序
+  const filteredAndSortedResults = scanResults
+    .filter((result) => {
+      // 等级过滤
+      if (filterLevel !== "all" && result.level !== filterLevel) {
+        return false;
+      }
+      // 搜索过滤
+      if (searchQuery && !result.skill_name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "score":
+          return a.score - b.score; // 低分在前
+        case "name":
+          return a.skill_name.localeCompare(b.skill_name);
+        case "time":
+          return new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime();
+        default:
+          return 0;
+      }
+    });
+
   return (
     <div className="space-y-6">
       {/* 顶部操作栏 */}
@@ -74,7 +104,58 @@ export function SecurityDashboard() {
         </button>
       </div>
 
-      {/* TODO: 任务 4.2 - 过滤和排序栏 */}
+      {/* 过滤和排序栏 */}
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-card/30 rounded-lg border border-border">
+        {/* 风险等级过滤 */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-mono text-muted-foreground">
+            {t('security.filterByLevel')}:
+          </label>
+          <select
+            value={filterLevel}
+            onChange={(e) => setFilterLevel(e.target.value)}
+            className="px-3 py-1 bg-background border border-border rounded font-mono text-sm"
+          >
+            <option value="all">{t('security.levels.all')}</option>
+            <option value="Critical">{t('security.levels.critical')}</option>
+            <option value="High">{t('security.levels.high')}</option>
+            <option value="Medium">{t('security.levels.medium')}</option>
+            <option value="Low">{t('security.levels.low')}</option>
+            <option value="Safe">{t('security.levels.safe')}</option>
+          </select>
+        </div>
+
+        {/* 排序选项 */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-mono text-muted-foreground">
+            {t('security.sortBy')}:
+          </label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="px-3 py-1 bg-background border border-border rounded font-mono text-sm"
+          >
+            <option value="score">{t('security.sort.score')}</option>
+            <option value="name">{t('security.sort.name')}</option>
+            <option value="time">{t('security.sort.time')}</option>
+          </select>
+        </div>
+
+        {/* 搜索框 */}
+        <div className="flex-1 min-w-[200px]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('security.search')}
+              className="w-full pl-10 pr-4 py-1 bg-background border border-border rounded font-mono text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* TODO: 任务 4.3 - Skills 列表表格 */}
 
       {/* 临时占位符 */}
@@ -82,9 +163,9 @@ export function SecurityDashboard() {
         <div className="text-center py-8">{t("security.dashboard.loading")}</div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          {scanResults.length === 0
+          {filteredAndSortedResults.length === 0
             ? t("security.dashboard.noResults")
-            : `${t("security.dashboard.resultsCount")}: ${scanResults.length}`}
+            : `${t("security.dashboard.resultsCount")}: ${filteredAndSortedResults.length}`}
         </div>
       )}
     </div>

@@ -157,6 +157,22 @@
       "resultsCount": "Skills Scanned",
       "scanSuccess": "Successfully scanned {{count}} Skills",
       "scanError": "Scan failed, please try again"
+    },
+    "filterByLevel": "Risk Level",
+    "sortBy": "Sort By",
+    "search": "Search Skills...",
+    "levels": {
+      "all": "All",
+      "critical": "Critical",
+      "high": "High Risk",
+      "medium": "Medium Risk",
+      "low": "Low Risk",
+      "safe": "Safe"
+    },
+    "sort": {
+      "score": "By Score",
+      "name": "By Name",
+      "time": "By Scan Time"
     }
   }
 }
