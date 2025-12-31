@@ -146,5 +146,15 @@
   "language": {
     "zh": "中",
     "en": "EN"
+  },
+  "security": {
+    "dashboard": {
+      "title": "Security Scanner Dashboard",
+      "scanButton": "Scan All Skills",
+      "scanning": "Scanning...",
+      "loading": "Loading...",
+      "noResults": "No scan results yet. Click 'Scan All Skills' to start.",
+      "resultsCount": "Skills Scanned"
+    }
   }
 }
