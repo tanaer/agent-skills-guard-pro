@@ -13,13 +13,13 @@ pub struct SecurityReport {
 }
 
 /// 安全等级
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SecurityLevel {
-    Safe,       // 90-100分
-    Low,        // 70-89分
-    Medium,     // 50-69分
-    High,       // 30-49分
-    Critical,   // 0-29分
+    Safe,      // 90-100
+    Low,       // 70-89
+    Medium,    // 50-69
+    High,      // 30-49
+    Critical,  // 0-29
 }
 
 impl SecurityLevel {
@@ -30,6 +30,16 @@ impl SecurityLevel {
             50..=69 => SecurityLevel::Medium,
             30..=49 => SecurityLevel::High,
             _ => SecurityLevel::Critical,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SecurityLevel::Safe => "Safe",
+            SecurityLevel::Low => "Low",
+            SecurityLevel::Medium => "Medium",
+            SecurityLevel::High => "High",
+            SecurityLevel::Critical => "Critical",
         }
     }
 }
@@ -63,4 +73,15 @@ pub enum IssueCategory {
     DangerousFunction,  // 危险函数调用
     ObfuscatedCode,     // 代码混淆
     Other,
+}
+
+/// Skill 扫描结果（用于前端展示）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillScanResult {
+    pub skill_id: String,
+    pub skill_name: String,
+    pub score: i32,
+    pub level: String,
+    pub scanned_at: String,
+    pub report: SecurityReport,
 }
