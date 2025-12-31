@@ -70,12 +70,12 @@ pub async fn scan_repository(
         log::info!("使用本地缓存扫描仓库: {}", repo.name);
 
         let cache_path_buf = std::path::PathBuf::from(cache_path);
-        if cache_path_buf.exists() {
+        if cache_path_buf.exists() && cache_path_buf.is_dir() {
             state.github.scan_cached_repository(&cache_path_buf, &repo.url, repo.scan_subdirs)
                 .map_err(|e| format!("扫描缓存失败: {}", e))?
         } else {
-            // 缓存路径不存在,重新下载
-            log::warn!("缓存路径不存在,重新下载: {:?}", cache_path_buf);
+            // 缓存路径不存在，重新下载
+            log::warn!("缓存路径不存在，重新下载: {:?}", cache_path_buf);
             let extract_dir = state.github
                 .download_repository_archive(&owner, &repo_name, &cache_base_dir)
                 .await
@@ -94,7 +94,7 @@ pub async fn scan_repository(
         }
     } else {
         // 首次扫描: 下载压缩包并缓存(1次API请求)
-        log::info!("首次扫描,下载仓库压缩包: {}", repo.name);
+        log::info!("首次扫描，下载仓库压缩包: {}", repo.name);
 
         let extract_dir = state.github
             .download_repository_archive(&owner, &repo_name, &cache_base_dir)
