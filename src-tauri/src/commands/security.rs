@@ -95,3 +95,21 @@ pub async fn get_scan_results(
 
     Ok(results)
 }
+
+/// 扫描单个 skill 归档文件（用于安装前检查）
+#[tauri::command]
+pub async fn scan_skill_archive(
+    archive_path: String,
+) -> Result<SecurityReport, String> {
+    let scanner = SecurityScanner::new();
+
+    // 读取归档文件内容
+    // 注意：这里假设归档已经解压到临时目录，传入的是 SKILL.md 文件路径
+    let content = std::fs::read_to_string(&archive_path)
+        .map_err(|e| format!("Failed to read skill file: {}", e))?;
+
+    let report = scanner.scan_file(&content, &archive_path)
+        .map_err(|e| format!("Failed to scan skill: {}", e))?;
+
+    Ok(report)
+}

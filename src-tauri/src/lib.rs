@@ -4,7 +4,7 @@ pub mod services;
 pub mod commands;
 
 use commands::AppState;
-use commands::security::{scan_all_installed_skills, get_scan_results};
+use commands::security::{scan_all_installed_skills, get_scan_results, scan_skill_archive};
 use services::{Database, SkillManager};
 use std::sync::Arc;
 use tauri::Manager;
@@ -69,6 +69,7 @@ pub fn run() {
             commands::get_cache_stats,
             scan_all_installed_skills,
             get_scan_results,
+            scan_skill_archive,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
