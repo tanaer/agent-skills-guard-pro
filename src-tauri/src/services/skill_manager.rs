@@ -254,23 +254,11 @@ impl SkillManager {
                 // 读取 SKILL.md 内容
                 match std::fs::read_to_string(&skill_md_path) {
                     Ok(content) => {
-                        // 计算 checksum 用于去重
+                        // 计算 checksum
                         let checksum = self.scanner.calculate_checksum(content.as_bytes());
 
-                        // 检查是否已存在（基于 checksum）
-                        if let Some(existing_skill) = existing_skills.iter()
-                            .find(|s| s.checksum.as_ref() == Some(&checksum)) {
-                            // 已存在的技能，添加到扫描结果
-                            log::debug!("Skill already tracked: {:?}", path);
-                            scanned_skills.push(existing_skill.clone());
-                            continue;
-                        }
-
-                        // 安全扫描
-                        let report = self.scanner.scan_file(&content, "SKILL.md")?;
-
-                        // 解析 frontmatter 获取元数据
-                        let (name, description) = self.parse_frontmatter(&content)
+                        // 解析 frontmatter 获取元数据（用于去重）
+                        let (skill_name, skill_description) = self.parse_frontmatter(&content)
                             .unwrap_or_else(|_| {
                                 (
                                     path.file_name()
@@ -281,11 +269,35 @@ impl SkillManager {
                                 )
                             });
 
-                        // 创建 skill 对象
+                        // 检查是否已存在（基于技能名称）
+                        if let Some(mut existing_skill) = existing_skills.iter()
+                            .find(|s| s.name == skill_name)
+                            .cloned()
+                        {
+                            // 如果已存在但未标记为已安装，更新状态
+                            if !existing_skill.installed {
+                                existing_skill.installed = true;
+                                existing_skill.installed_at = Some(Utc::now());
+                                existing_skill.local_path = Some(path.to_string_lossy().to_string());
+                                existing_skill.checksum = Some(checksum.clone());
+
+                                // 更新数据库
+                                self.db.save_skill(&existing_skill)?;
+                                log::info!("Updated existing skill to installed: {}", skill_name);
+                            }
+
+                            scanned_skills.push(existing_skill);
+                            continue;
+                        }
+
+                        // 安全扫描
+                        let report = self.scanner.scan_file(&content, "SKILL.md")?;
+
+                        // 创建 skill 对象（使用之前解析的元数据）
                         let skill = Skill {
                             id: format!("local::{}", checksum[..16].to_string()),
-                            name,
-                            description,
+                            name: skill_name,
+                            description: skill_description,
                             repository_url: "local".to_string(),
                             repository_owner: Some("local".to_string()),
                             file_path: path.to_string_lossy().to_string(),

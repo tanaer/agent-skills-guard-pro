@@ -85,6 +85,9 @@ impl Database {
         self.migrate_add_cache_fields()?;
         self.migrate_add_security_enhancement_fields()?;
 
+        // 初始化默认仓库
+        self.initialize_default_repositories()?;
+
         Ok(())
     }
 
@@ -385,5 +388,63 @@ impl Database {
         }).optional()?;
 
         Ok(repo)
+    }
+
+    /// 初始化默认仓库
+    fn initialize_default_repositories(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+
+        // 检查是否已有仓库
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM repositories",
+            [],
+            |row| row.get(0),
+        )?;
+
+        // 如果已有仓库，跳过初始化
+        if count > 0 {
+            return Ok(());
+        }
+
+        // 释放锁以便调用 add_repository
+        drop(conn);
+
+        // 添加默认仓库
+        let default_repos = vec![
+            (
+                "https://github.com/anthropics/skills".to_string(),
+                "Anthropic Official Skills".to_string(),
+            ),
+            (
+                "https://github.com/obra/superpowers".to_string(),
+                "Obra's Superpowers".to_string(),
+            ),
+        ];
+
+        for (url, name) in default_repos {
+            let repo = Repository::new(url, name);
+            // 使用 INSERT OR IGNORE 避免重复
+            let conn = self.conn.lock().unwrap();
+            let _ = conn.execute(
+                "INSERT OR IGNORE INTO repositories
+                (id, url, name, description, enabled, scan_subdirs, added_at, last_scanned, cache_path, cached_at, cached_commit_sha)
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                params![
+                    repo.id,
+                    repo.url,
+                    repo.name,
+                    repo.description,
+                    repo.enabled as i32,
+                    repo.scan_subdirs as i32,
+                    repo.added_at.to_rfc3339(),
+                    repo.last_scanned.as_ref().map(|d| d.to_rfc3339()),
+                    repo.cache_path,
+                    repo.cached_at.as_ref().map(|d| d.to_rfc3339()),
+                    repo.cached_commit_sha,
+                ],
+            );
+        }
+
+        Ok(())
     }
 }

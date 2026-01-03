@@ -236,6 +236,12 @@
       "noIssues": "SCAN_COMPLETE: NO_ISSUES",
       "never": "NEVER_SCANNED"
     },
+    "scan": {
+      "localSkillsFound": "FOUND {{count}} LOCAL_SKILLS",
+      "localSkillsFailed": "LOCAL_SCAN_FAILED: {{error}}",
+      "completed": "SECURITY_SCAN_COMPLETE: {{count}} SKILLS_SCANNED",
+      "failed": "SECURITY_SCAN_FAILED: {{error}}"
+    },
     "riskLevels": {
       "critical": "CRITICAL",
       "high": "HIGH_RISK",

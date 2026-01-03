@@ -38,14 +38,35 @@ export function OverviewPage() {
     },
   });
 
-  // 扫描 mutation
+  // 扫描 mutation - 先扫描本地技能，然后进行安全扫描
   const scanMutation = useMutation({
     mutationFn: async () => {
       setIsScanning(true);
+
+      // 第一步：扫描本地技能目录，刷新技能列表
+      try {
+        const localSkills = await api.scanLocalSkills();
+        console.log(`扫描到 ${localSkills.length} 个本地技能`);
+
+        // 重新获取技能列表并等待完成
+        await queryClient.refetchQueries({ queryKey: ["installedSkills"] });
+        await queryClient.refetchQueries({ queryKey: ["skills"] });
+
+        toast.success(t('overview.scan.localSkillsFound', { count: localSkills.length }));
+      } catch (error: any) {
+        console.error('扫描本地技能失败:', error);
+        toast.error(t('overview.scan.localSkillsFailed', { error: error.message }));
+      }
+
+      // 第二步：对所有已安装技能进行安全扫描
       return await invoke<SkillScanResult[]>("scan_all_installed_skills");
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
+      toast.success(t('overview.scan.completed', { count: results.length }));
+    },
+    onError: (error: any) => {
+      toast.error(t('overview.scan.failed', { error: error.message }));
     },
     onSettled: () => {
       setIsScanning(false);

@@ -236,6 +236,12 @@
       "noIssues": "扫描完成，未发现问题",
       "never": "从未扫描"
     },
+    "scan": {
+      "localSkillsFound": "发现 {{count}} 个本地技能",
+      "localSkillsFailed": "扫描本地技能失败：{{error}}",
+      "completed": "安全扫描完成，已扫描 {{count}} 个技能",
+      "failed": "安全扫描失败：{{error}}"
+    },
     "riskLevels": {
       "critical": "严重",
       "high": "高风险",
