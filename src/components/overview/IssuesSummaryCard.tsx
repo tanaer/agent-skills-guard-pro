@@ -10,27 +10,24 @@ interface IssuesSummaryCardProps {
 const levelConfig = {
   Critical: {
     icon: AlertTriangle,
-    bgClass: "bg-card",
-    borderClass: "border-border",
     textClass: "text-terminal-red",
-    labelClass: "text-muted-foreground",
-    accentColor: "terminal-red",
+    accentBar: "bg-terminal-red",
+    hoverBorder: "hover:border-terminal-red/50",
+    hoverShadow: "hover:shadow-terminal-red/20",
   },
   Medium: {
     icon: AlertCircle,
-    bgClass: "bg-card",
-    borderClass: "border-border",
     textClass: "text-terminal-yellow",
-    labelClass: "text-muted-foreground",
-    accentColor: "terminal-yellow",
+    accentBar: "bg-terminal-yellow",
+    hoverBorder: "hover:border-terminal-yellow/50",
+    hoverShadow: "hover:shadow-terminal-yellow/20",
   },
   Safe: {
     icon: CheckCircle,
-    bgClass: "bg-card",
-    borderClass: "border-border",
     textClass: "text-terminal-green",
-    labelClass: "text-muted-foreground",
-    accentColor: "terminal-green",
+    accentBar: "bg-terminal-green",
+    hoverBorder: "hover:border-terminal-green/50",
+    hoverShadow: "hover:shadow-terminal-green/20",
   },
 };
 
@@ -53,32 +50,67 @@ export function IssuesSummaryCard({
             key={level}
             onClick={() => onFilterChange(isSelected ? null : level)}
             className={`
-              ${config.bgClass}
-              border ${config.borderClass}
-              rounded-lg p-4
+              bg-card
+              ${isSelected ? 'border-2 border-terminal-cyan' : 'border border-border'}
+              rounded-lg p-5
               cursor-pointer
-              transition-all duration-200
-              hover:shadow-lg hover:border-${config.accentColor}/50
+              transition-all duration-300
+              ${isSelected ? 'shadow-xl shadow-terminal-cyan/30' : 'hover:shadow-lg'}
+              ${!isSelected && config.hoverBorder} ${!isSelected && config.hoverShadow}
               relative overflow-hidden
-              ${isSelected ? 'ring-2 ring-terminal-cyan ring-offset-2 dark:ring-offset-background scale-105' : ''}
+              ${isSelected ? 'scale-[1.02]' : ''}
             `}
             style={{
               animation: `fadeIn 0.4s ease-out ${index * 0.05}s`,
               animationFillMode: 'backwards'
             }}
           >
-            <div className={`absolute top-0 left-0 w-1 h-full bg-${config.accentColor} ${isSelected ? 'opacity-100' : 'opacity-40'} transition-opacity`}></div>
-            <div className="flex items-start justify-between mb-2">
-              <Icon className={`w-5 h-5 ${config.textClass} opacity-70`} />
-              {isSelected && (
-                <div className="w-2 h-2 rounded-full bg-terminal-cyan animate-pulse" />
-              )}
-            </div>
-            <div className={`text-3xl font-bold font-mono ${config.textClass}`}>
-              {count}
-            </div>
-            <div className={`text-sm font-medium mt-2 ${config.labelClass}`}>
-              {t(`overview.riskLevels.${level.toLowerCase()}`)}
+            {/* 左侧赛博朋克风格竖线 */}
+            <div className={`absolute top-0 left-0 ${isSelected ? 'w-2' : 'w-1'} h-full ${config.accentBar} ${isSelected ? 'opacity-100' : 'opacity-60'} transition-all duration-300`}></div>
+
+            {/* 选中时的四角装饰 */}
+            {isSelected && (
+              <>
+                {/* 左上角 */}
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-terminal-cyan"></div>
+                {/* 右上角 */}
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-terminal-cyan"></div>
+                {/* 左下角 */}
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-terminal-cyan"></div>
+                {/* 右下角 */}
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-terminal-cyan"></div>
+
+                {/* 顶部和底部扫描线 */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-terminal-cyan to-transparent opacity-50 animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-terminal-cyan to-transparent opacity-50 animate-pulse"></div>
+              </>
+            )}
+
+            {/* 顶部角落装饰（非选中时） */}
+            {!isSelected && (
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-border/30 rounded-tr-lg"></div>
+            )}
+
+            {/* 内容区 */}
+            <div className="relative pl-3">
+              <div className="flex items-start justify-between mb-3">
+                <Icon className={`w-6 h-6 ${config.textClass} opacity-80`} />
+                {isSelected && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative">
+                      <div className="w-2 h-2 rounded-full bg-terminal-cyan"></div>
+                      <div className="absolute inset-0 w-2 h-2 rounded-full bg-terminal-cyan animate-ping"></div>
+                    </div>
+                    <div className="text-xs text-terminal-cyan font-mono uppercase tracking-wider font-bold">已选择</div>
+                  </div>
+                )}
+              </div>
+              <div className={`text-4xl font-bold font-mono ${config.textClass} mb-2`}>
+                {count}
+              </div>
+              <div className={`text-sm font-medium text-muted-foreground uppercase tracking-wide`}>
+                {t(`overview.riskLevels.${level.toLowerCase()}`)}
+              </div>
             </div>
           </div>
         );

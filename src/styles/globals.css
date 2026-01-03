@@ -146,6 +146,20 @@
     to { width: 100%; }
   }
 
+  /* Scan line effect */
+  @keyframes scan-line {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-scan-line {
+    animation: scan-line 2s ease-in-out infinite;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Orbitron', 'JetBrains Mono', monospace;
     font-weight: 700;

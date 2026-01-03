@@ -43,27 +43,49 @@ export function OverviewPage() {
     mutationFn: async () => {
       setIsScanning(true);
 
+      let localSkillsCount = 0;
+
       // 第一步：扫描本地技能目录，刷新技能列表
       try {
         const localSkills = await api.scanLocalSkills();
-        console.log(`扫描到 ${localSkills.length} 个本地技能`);
+        localSkillsCount = localSkills.length;
+        console.log(`扫描到 ${localSkillsCount} 个本地技能`);
 
         // 重新获取技能列表并等待完成
         await queryClient.refetchQueries({ queryKey: ["installedSkills"] });
         await queryClient.refetchQueries({ queryKey: ["skills"] });
-
-        toast.success(t('overview.scan.localSkillsFound', { count: localSkills.length }));
       } catch (error: any) {
         console.error('扫描本地技能失败:', error);
         toast.error(t('overview.scan.localSkillsFailed', { error: error.message }));
       }
 
       // 第二步：对所有已安装技能进行安全扫描
-      return await invoke<SkillScanResult[]>("scan_all_installed_skills");
+      const results = await invoke<SkillScanResult[]>("scan_all_installed_skills");
+
+      return { results, localSkillsCount };
     },
-    onSuccess: (results) => {
+    onSuccess: ({ results, localSkillsCount }) => {
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
-      toast.success(t('overview.scan.completed', { count: results.length }));
+
+      // 显示合并的成功提示
+      toast.success(
+        t('overview.scan.allCompleted', {
+          localCount: localSkillsCount,
+          scannedCount: results.length
+        }),
+        {
+          duration: 4000,
+          style: {
+            background: 'rgba(6, 182, 212, 0.1)',
+            border: '2px solid rgb(6, 182, 212)',
+            backdropFilter: 'blur(8px)',
+            color: 'rgb(94, 234, 212)',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)',
+          },
+        }
+      );
     },
     onError: (error: any) => {
       toast.error(t('overview.scan.failed', { error: error.message }));

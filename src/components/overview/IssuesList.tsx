@@ -13,9 +13,24 @@ interface IssuesListProps {
 }
 
 const levelConfig = {
-  Critical: { color: "text-terminal-red", bg: "bg-terminal-red/10", icon: AlertTriangle },
-  Medium: { color: "text-terminal-yellow", bg: "bg-terminal-yellow/10", icon: AlertCircle },
-  Safe: { color: "text-terminal-green", bg: "bg-terminal-green/10", icon: Info },
+  Critical: {
+    color: "text-terminal-red",
+    bg: "bg-terminal-red/10",
+    icon: AlertTriangle,
+    accentBar: "bg-terminal-red"
+  },
+  Medium: {
+    color: "text-terminal-yellow",
+    bg: "bg-terminal-yellow/10",
+    icon: AlertCircle,
+    accentBar: "bg-terminal-yellow"
+  },
+  Safe: {
+    color: "text-terminal-green",
+    bg: "bg-terminal-green/10",
+    icon: Info,
+    accentBar: "bg-terminal-green"
+  },
 };
 
 // 将原始的4级分类映射到3级
@@ -105,14 +120,20 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
         return (
           <div
             key={issue.skill_id}
-            className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300"
+            className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg hover:border-terminal-cyan/30 transition-all duration-300 relative"
             style={{
               animation: `fadeIn 0.4s ease-out ${index * 0.05}s`,
               animationFillMode: 'backwards'
             }}
           >
+            {/* 左侧风险等级指示条 */}
+            <div className={`absolute top-0 left-0 w-1 h-full ${levelConfig[issue.level as keyof typeof levelConfig]?.accentBar} opacity-70`}></div>
+
+            {/* 顶部角落装饰 */}
+            <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-border/20 rounded-tr-lg"></div>
+
             {/* 顶部栏 */}
-            <div className="p-4 border-b border-border">
+            <div className="p-5 border-b border-border/50 relative pl-6">
               <div className="flex flex-col md:flex-row md:items-center gap-4">
                 {/* 左侧：技能名称 + 风险等级 */}
                 <div className="flex-1 min-w-0">
@@ -120,19 +141,20 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                     <h3 className="font-mono font-bold text-lg text-foreground truncate">
                       {issue.skill_name}
                     </h3>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${levelBgClass} ${levelColorClass}`}>
-                      <LevelIcon className="w-3 h-3" />
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${levelBgClass} ${levelColorClass} border border-current/20`}>
+                      <LevelIcon className="w-3.5 h-3.5" />
                       {t(`overview.riskLevels.${issue.level.toLowerCase()}`)}
                     </span>
                   </div>
                 </div>
 
                 {/* 中间：安全评分 */}
-                <div className="flex-shrink-0">
-                  <div className={`text-3xl font-bold font-mono ${getScoreColor(issue.score)}`}>
+                <div className="flex-shrink-0 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-current opacity-5 rounded"></div>
+                  <div className={`text-3xl font-bold font-mono ${getScoreColor(issue.score)} relative z-10`}>
                     {issue.score}
                   </div>
-                  <div className="text-xs text-muted-foreground text-center">
+                  <div className="text-xs text-muted-foreground text-center uppercase tracking-wide mt-1">
                     {t('skills.securityScore')}
                   </div>
                 </div>
@@ -143,75 +165,79 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                     onClick={() => {
                       const skill = issues.find(i => i.skill_id === issue.skill_id);
                       if (skill) {
-                        // 需要从已安装技能中获取 local_path
-                        // 这里暂时使用 skill_id，实际需要查询
                         onOpenDirectory(issue.skill_id);
                       }
                     }}
                     className="
-                      px-3 py-1.5 text-sm
+                      relative overflow-hidden group
+                      px-3 py-2 text-sm
                       bg-terminal-cyan/10
                       text-terminal-cyan
                       border border-terminal-cyan/30
-                      rounded font-medium
-                      hover:bg-terminal-cyan/20 hover:border-terminal-cyan/50
-                      transition-all
-                      flex items-center gap-1
+                      rounded font-medium font-mono
+                      hover:bg-terminal-cyan/20 hover:border-terminal-cyan/60 hover:shadow-lg hover:shadow-terminal-cyan/20
+                      transition-all duration-200
+                      flex items-center gap-1.5
                     "
                     title={t('overview.issues.openDirectory')}
                   >
-                    <FolderOpen className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t('overview.issues.openDirectory')}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-cyan/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
+                    <FolderOpen className="w-4 h-4 relative z-10" />
+                    <span className="hidden sm:inline relative z-10">{t('overview.issues.openDirectory')}</span>
                   </button>
 
                   <button
                     onClick={() => setSelectedSkill(issue)}
                     className="
-                      px-3 py-1.5 text-sm
+                      relative overflow-hidden group
+                      px-3 py-2 text-sm
                       bg-terminal-purple/10
                       text-terminal-purple
                       border border-terminal-purple/30
-                      rounded font-medium
-                      hover:bg-terminal-purple/20 hover:border-terminal-purple/50
-                      transition-all
-                      flex items-center gap-1
+                      rounded font-medium font-mono
+                      hover:bg-terminal-purple/20 hover:border-terminal-purple/60 hover:shadow-lg hover:shadow-terminal-purple/20
+                      transition-all duration-200
+                      flex items-center gap-1.5
                     "
                   >
-                    <Eye className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t('overview.issues.viewDetails')}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-purple/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
+                    <Eye className="w-4 h-4 relative z-10" />
+                    <span className="hidden sm:inline relative z-10">{t('overview.issues.viewDetails')}</span>
                   </button>
 
                   <button
                     onClick={() => handleUninstall(issue.skill_id)}
                     disabled={uninstallMutation.isPending}
                     className="
-                      px-3 py-1.5 text-sm
+                      relative overflow-hidden group
+                      px-3 py-2 text-sm
                       bg-terminal-red/10
                       text-terminal-red
                       border border-terminal-red/30
-                      rounded font-medium
-                      hover:bg-terminal-red/20 hover:border-terminal-red/50
+                      rounded font-medium font-mono
+                      hover:bg-terminal-red/20 hover:border-terminal-red/60 hover:shadow-lg hover:shadow-terminal-red/20
                       disabled:opacity-50 disabled:cursor-not-allowed
-                      transition-all
-                      flex items-center gap-1
+                      transition-all duration-200
+                      flex items-center gap-1.5
                     "
                   >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t('overview.issues.uninstall')}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-red/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
+                    <Trash2 className="w-4 h-4 relative z-10" />
+                    <span className="hidden sm:inline relative z-10">{t('overview.issues.uninstall')}</span>
                   </button>
                 </div>
               </div>
             </div>
 
             {/* 问题预览区 */}
-            <div className="p-4 bg-muted/30">
+            <div className="p-5 bg-muted/20 relative pl-6">
               {!isExpanded ? (
                 // 折叠状态：显示摘要
                 <div
                   onClick={() => toggleExpanded(issue.skill_id)}
-                  className="flex items-center justify-between cursor-pointer hover:bg-muted/50 -m-2 p-2 rounded transition-colors"
+                  className="flex items-center justify-between cursor-pointer hover:bg-muted/40 -m-2 p-3 rounded transition-all duration-200 group"
                 >
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground font-mono group-hover:text-foreground transition-colors">
                     {t('overview.issues.found', {
                       count: issue.report.issues.length,
                       breakdown: Object.entries(issueStats)
@@ -224,22 +250,22 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                         .join('，')
                     })}
                   </div>
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  <ChevronDown className="w-5 h-5 text-terminal-cyan group-hover:translate-y-0.5 transition-transform" />
                 </div>
               ) : (
                 // 展开状态：显示前 3 个问题
                 <div className="space-y-3">
                   <div
                     onClick={() => toggleExpanded(issue.skill_id)}
-                    className="flex items-center justify-between cursor-pointer hover:bg-muted/50 -m-2 p-2 rounded transition-colors mb-2"
+                    className="flex items-center justify-between cursor-pointer hover:bg-muted/40 -m-2 p-3 rounded transition-all duration-200 mb-3 group"
                   >
-                    <div className="text-sm font-medium text-foreground">
+                    <div className="text-sm font-medium text-foreground font-mono">
                       {t('overview.issues.found', {
                         count: issue.report.issues.length,
                         breakdown: ''
                       }).split('：')[0]}
                     </div>
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                    <ChevronUp className="w-5 h-5 text-terminal-cyan group-hover:-translate-y-0.5 transition-transform" />
                   </div>
 
                   {topIssues.map((item, idx) => {
@@ -248,14 +274,14 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                     const issueColor = levelConfig[mappedSeverity]?.color || "";
 
                     return (
-                      <div key={idx} className="flex items-start gap-2 text-sm">
+                      <div key={idx} className="flex items-start gap-3 text-sm p-3 rounded bg-card/50 border border-border/30 hover:border-border/60 transition-all">
                         <IssueIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${issueColor}`} />
                         <div className="flex-1 min-w-0">
-                          <span className="text-foreground line-clamp-2">
+                          <span className="text-foreground line-clamp-2 font-mono text-xs">
                             {item.description}
                           </span>
                           {item.line_number && (
-                            <span className="text-muted-foreground text-xs ml-2">
+                            <span className="text-muted-foreground text-xs ml-2 font-mono">
                               (行 {item.line_number})
                             </span>
                           )}
@@ -267,9 +293,10 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                   {issue.report.issues.length > 3 && (
                     <button
                       onClick={() => setSelectedSkill(issue)}
-                      className="text-sm text-terminal-cyan hover:underline font-medium"
+                      className="text-sm text-terminal-cyan hover:text-terminal-cyan/80 font-medium font-mono uppercase tracking-wide hover:underline transition-all flex items-center gap-2 group"
                     >
-                      {t('overview.issues.viewFullReport')}
+                      <span>{t('overview.issues.viewFullReport')}</span>
+                      <Eye className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                     </button>
                   )}
                 </div>
