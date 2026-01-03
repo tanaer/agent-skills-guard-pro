@@ -4,7 +4,7 @@
     "subtitle": "安全技能管理协议"
   },
   "nav": {
-    "security": "安全扫描",
+    "overview": "概览",
     "installed": "我的技能",
     "marketplace": "技能市场",
     "repositories": "仓库配置"
@@ -51,6 +51,8 @@
     "lowRisk": "低风险",
     "medRisk": "中风险",
     "highRisk": "高风险",
+    "notScanned": "未扫描",
+    "viewSecurityReport": "在概览页面查看完整安全报告",
     "safe": "[安全]",
     "lowRiskLabel": "[低风险]",
     "mediumRiskLabel": "[中等风险]",
@@ -214,6 +216,45 @@
         "medium": "中风险问题",
         "low": "低风险问题"
       }
+    }
+  },
+  "overview": {
+    "title": "系统概览",
+    "statistics": {
+      "installedSkills": "已安装技能",
+      "repositories": "已添加仓库",
+      "scannedSkills": "已扫描技能"
+    },
+    "scanStatus": {
+      "lastScan": "最近扫描",
+      "scanned": "已扫描",
+      "of": "/",
+      "skills": "个技能",
+      "scanAll": "一键扫描",
+      "scanning": "扫描中...",
+      "completed": "扫描完成，发现 {{count}} 个问题",
+      "noIssues": "扫描完成，未发现问题",
+      "never": "从未扫描"
+    },
+    "riskLevels": {
+      "critical": "严重",
+      "high": "高风险",
+      "medium": "中风险",
+      "low": "低风险",
+      "safe": "安全"
+    },
+    "issues": {
+      "found": "发现 {{count}} 个问题：{{breakdown}}",
+      "viewDetails": "查看详情",
+      "viewFullReport": "查看完整报告",
+      "noIssues": "太棒了！所有技能都很安全",
+      "lastScanned": "最近扫描：{{time}}",
+      "openDirectory": "打开目录",
+      "uninstall": "卸载",
+      "confirmUninstall": "确定要卸载此技能吗？",
+      "issueCount": "{{count}} 个{{level}}",
+      "expand": "展开",
+      "collapse": "收起"
     }
   }
 }

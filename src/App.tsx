@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { InstalledSkillsPage } from "./components/InstalledSkillsPage";
 import { MarketplacePage } from "./components/MarketplacePage";
 import { RepositoriesPage } from "./components/RepositoriesPage";
-import { SecurityDashboard } from "./components/SecurityDashboard";
-import { Package, ShoppingCart, Database as DatabaseIcon, Shield } from "lucide-react";
+import { OverviewPage } from "./components/OverviewPage";
+import { Package, ShoppingCart, Database as DatabaseIcon, LayoutDashboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { WindowControls } from "./components/WindowControls";
@@ -18,7 +18,7 @@ const reactQueryClient = new QueryClient();
 
 function AppContent() {
   const { t } = useTranslation();
-  const [currentTab, setCurrentTab] = useState<"security" | "installed" | "marketplace" | "repositories">("security");
+  const [currentTab, setCurrentTab] = useState<"overview" | "installed" | "marketplace" | "repositories">("overview");
   const [platform, setPlatform] = useState<Platform | null>(null);
 
   useEffect(() => {
@@ -102,19 +102,19 @@ function AppContent() {
         <div className="container mx-auto px-6">
           <div className="flex gap-1">
             <button
-              onClick={() => setCurrentTab("security")}
+              onClick={() => setCurrentTab("overview")}
               className={`
                 relative px-6 py-3 font-mono text-sm font-medium transition-all duration-200
-                ${currentTab === "security"
+                ${currentTab === "overview"
                   ? "text-terminal-cyan border-b-2 border-terminal-cyan"
                   : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
                 }
               `}
             >
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>{t('nav.security')}</span>
-                {currentTab === "security" && (
+                <LayoutDashboard className="w-4 h-4" />
+                <span>{t('nav.overview')}</span>
+                {currentTab === "overview" && (
                   <span className="text-terminal-green">●</span>
                 )}
               </div>
@@ -188,8 +188,8 @@ function AppContent() {
               animation: 'fadeIn 0.4s ease-out'
             }}
           >
-            {currentTab === "security" && <SecurityDashboard />}
-            {currentTab === "installed" && <InstalledSkillsPage />}
+            {currentTab === "overview" && <OverviewPage />}
+            {currentTab === "installed" && <InstalledSkillsPage onNavigateToOverview={() => setCurrentTab("overview")} />}
             {currentTab === "marketplace" && <MarketplacePage />}
             {currentTab === "repositories" && <RepositoriesPage />}
           </div>

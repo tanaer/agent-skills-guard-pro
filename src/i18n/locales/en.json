@@ -4,7 +4,7 @@
     "subtitle": "SECURE_SKILL_MANAGEMENT_PROTOCOL"
   },
   "nav": {
-    "security": "Security",
+    "overview": "OVERVIEW",
     "installed": "INSTALLED",
     "marketplace": "MARKETPLACE",
     "repositories": "REPO_CONFIG"
@@ -51,6 +51,8 @@
     "lowRisk": "LOWRISK",
     "medRisk": "MEDRISK",
     "highRisk": "HIGHRISK",
+    "notScanned": "NOT_SCANNED",
+    "viewSecurityReport": "View full security report in Overview",
     "safe": "[SAFE]",
     "lowRiskLabel": "[LOW_RISK]",
     "mediumRiskLabel": "[MEDIUM_RISK]",
@@ -214,6 +216,45 @@
         "medium": "Medium Risk Issues",
         "low": "Low Risk Issues"
       }
+    }
+  },
+  "overview": {
+    "title": "SYSTEM_OVERVIEW",
+    "statistics": {
+      "installedSkills": "INSTALLED_SKILLS",
+      "repositories": "REPOSITORIES",
+      "scannedSkills": "SCANNED_SKILLS"
+    },
+    "scanStatus": {
+      "lastScan": "LAST_SCAN",
+      "scanned": "SCANNED",
+      "of": "/",
+      "skills": "SKILLS",
+      "scanAll": "SCAN_ALL",
+      "scanning": "SCANNING...",
+      "completed": "SCAN_COMPLETE: {{count}} ISSUES_FOUND",
+      "noIssues": "SCAN_COMPLETE: NO_ISSUES",
+      "never": "NEVER_SCANNED"
+    },
+    "riskLevels": {
+      "critical": "CRITICAL",
+      "high": "HIGH_RISK",
+      "medium": "MEDIUM_RISK",
+      "low": "LOW_RISK",
+      "safe": "SAFE"
+    },
+    "issues": {
+      "found": "{{count}} ISSUES_FOUND: {{breakdown}}",
+      "viewDetails": "VIEW_DETAILS",
+      "viewFullReport": "VIEW_FULL_REPORT",
+      "noIssues": "EXCELLENT! ALL_SKILLS_ARE_SAFE",
+      "lastScanned": "LAST_SCANNED: {{time}}",
+      "openDirectory": "OPEN_DIR",
+      "uninstall": "UNINSTALL",
+      "confirmUninstall": "CONFIRM_UNINSTALL_SKILL?",
+      "issueCount": "{{count}} {{level}}",
+      "expand": "EXPAND",
+      "collapse": "COLLAPSE"
     }
   }
 }

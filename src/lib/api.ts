@@ -57,4 +57,9 @@ export const api = {
   async getCacheStats(): Promise<CacheStats> {
     return invoke("get_cache_stats");
   },
+
+  // 打开技能目录
+  async openSkillDirectory(localPath: string): Promise<void> {
+    return invoke("open_skill_directory", { localPath });
+  },
 };

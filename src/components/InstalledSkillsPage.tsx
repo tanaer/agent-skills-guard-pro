@@ -6,7 +6,11 @@ import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { formatRepositoryTag } from "../lib/utils";
 
-export function InstalledSkillsPage() {
+interface InstalledSkillsPageProps {
+  onNavigateToOverview: () => void;
+}
+
+export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPageProps) {
   const { t } = useTranslation();
   const { data: installedSkills, isLoading } = useInstalledSkills();
   const uninstallMutation = useUninstallSkill();
@@ -36,7 +40,13 @@ export function InstalledSkillsPage() {
   }, [installedSkills, searchQuery]);
 
   const getSecurityBadge = (score?: number) => {
-    if (!score) return null;
+    if (score == null) {
+      return (
+        <span className="status-indicator text-muted-foreground border-muted-foreground/30 bg-muted/10">
+          {t('skills.notScanned')}
+        </span>
+      );
+    }
 
     if (score >= 90) {
       return (
@@ -137,6 +147,7 @@ export function InstalledSkillsPage() {
               isDeleting={deletingSkillId === skill.id}
               isAnyOperationPending={uninstallMutation.isPending || deleteMutation.isPending}
               getSecurityBadge={getSecurityBadge}
+              onNavigateToOverview={onNavigateToOverview}
               t={t}
             />
           ))}
@@ -188,6 +199,7 @@ interface SkillCardProps {
   isDeleting: boolean;
   isAnyOperationPending: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
+  onNavigateToOverview: () => void;
   t: (key: string, options?: any) => string;
 }
 
@@ -200,6 +212,7 @@ function SkillCard({
   isDeleting,
   isAnyOperationPending,
   getSecurityBadge,
+  onNavigateToOverview,
   t
 }: SkillCardProps) {
   const [showDetails, setShowDetails] = useState(false);
@@ -348,25 +361,22 @@ function SkillCard({
           {skill.security_score != null && (
             <div className="text-xs font-mono">
               <p className="text-terminal-cyan mb-1">{t('skills.securityAnalysis')}</p>
-              <p className="text-muted-foreground">
-                {skill.security_score}/100 {" "}
-                {skill.security_score >= 90 && t('skills.safe')}
-                {skill.security_score >= 70 && skill.security_score < 90 && t('skills.lowRiskLabel')}
-                {skill.security_score >= 50 && skill.security_score < 70 && t('skills.mediumRiskLabel')}
-                {skill.security_score < 50 && t('skills.highRiskInstallNotRecommended')}
-              </p>
-            </div>
-          )}
-
-          {skill.security_issues && skill.security_issues.length > 0 && (
-            <div className="text-xs font-mono">
-              <p className="text-terminal-red mb-2">{t('skills.securityIssuesDetected')}</p>
-              <div className="space-y-1 pl-4 border-l-2 border-terminal-red/30">
-                {skill.security_issues.map((issue, idx) => (
-                  <p key={idx} className="text-muted-foreground">
-                    <span className="text-terminal-red">[{idx + 1}]</span> {issue}
-                  </p>
-                ))}
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground">
+                  {skill.security_score}/100 {" "}
+                  {skill.security_score >= 90 && t('skills.safe')}
+                  {skill.security_score >= 70 && skill.security_score < 90 && t('skills.lowRiskLabel')}
+                  {skill.security_score >= 50 && skill.security_score < 70 && t('skills.mediumRiskLabel')}
+                  {skill.security_score < 50 && t('skills.highRiskInstallNotRecommended')}
+                </p>
+                {skill.security_issues && skill.security_issues.length > 0 && (
+                  <button
+                    onClick={onNavigateToOverview}
+                    className="text-terminal-cyan hover:text-terminal-cyan/80 underline transition-colors"
+                  >
+                    {t('skills.viewSecurityReport')}
+                  </button>
+                )}
               </div>
             </div>
           )}
