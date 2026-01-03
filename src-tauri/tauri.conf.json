@@ -1,6 +1,6 @@
 {
   "productName": "Agent Skills Guard",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "identifier": "com.agent-skills-guard.app",
   "build": {
     "beforeDevCommand": "pnpm dev:renderer",

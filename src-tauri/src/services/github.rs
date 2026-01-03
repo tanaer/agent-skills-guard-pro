@@ -25,7 +25,7 @@ impl GitHubService {
     pub fn new() -> Self {
         Self {
             client: Client::builder()
-                .user_agent("agent-skills-guard/0.1.0")
+                .user_agent("agent-skills-guard/0.9.0")
                 .build()
                 .unwrap(),
             api_base: "https://api.github.com".to_string(),

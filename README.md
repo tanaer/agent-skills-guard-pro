@@ -81,6 +81,7 @@
 ### 技术栈
 
 **前端**
+
 - React 18
 - TypeScript
 - TailwindCSS 3
@@ -88,6 +89,7 @@
 - Lucide React (图标)
 
 **后端**
+
 - Tauri 2.8
 - Rust
 - SQLite (rusqlite)
@@ -230,12 +232,14 @@ agent-skills-guard/
 ## 🛣️ Roadmap
 
 ### ✅ MVP (v0.1.0)
-- [x] GitHub 仓库扫描
-- [x] 安全代码分析
-- [x] Skills 安装/卸载
-- [x] SQLite 数据持久化
+
+- [X] GitHub 仓库扫描
+- [X] 安全代码分析
+- [X] Skills 安装/卸载
+- [X] SQLite 数据持久化
 
 ### 🔮 未来计划
+
 - [ ] 版本管理和更新检测
 - [ ] Skills 依赖冲突检测
 - [ ] 沙箱隔离运行
@@ -273,6 +277,7 @@ MIT © Bruce
 ## 🙏 致谢
 
 本项目参考了以下项目的技术架构：
+
 - [cc-switch](https://github.com/farion1231/cc-switch) - Tauri + React 架构设计
 - Claude Code - Skills 生态系统
 
