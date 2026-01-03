@@ -56,7 +56,7 @@ function AppContent() {
 
       {/* Header */}
       <header className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur-sm shadow-lg z-40">
-        <div data-tauri-drag-region className="container mx-auto px-6 py-4">
+        <div data-tauri-drag-region className="w-full px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Mac 布局：左侧控件 + 中间标题 + 右侧语言切换 */}
             {platform === 'macos' && (
@@ -99,7 +99,7 @@ function AppContent() {
 
       {/* Navigation Tabs */}
       <nav className="flex-shrink-0 border-b border-border bg-card/30 backdrop-blur-sm z-30">
-        <div className="container mx-auto px-6">
+        <div className="w-full px-6">
           <div className="flex gap-1">
             <button
               onClick={() => setCurrentTab("overview")}
@@ -182,7 +182,7 @@ function AppContent() {
 
       {/* Main Content - Scrollable Area */}
       <main className="flex-1 overflow-y-auto hide-scrollbar">
-        <div className="container mx-auto px-6 py-8">
+        <div className="w-full px-6 py-8">
           <div
             style={{
               animation: 'fadeIn 0.4s ease-out'
@@ -198,7 +198,7 @@ function AppContent() {
 
       {/* Footer - Fixed */}
       <footer className="flex-shrink-0 border-t border-border bg-card/30 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-3">
+        <div className="w-full px-6 py-3">
           <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
             <span className="text-terminal-green">❯</span>
             <span>agent-skills-guard</span>

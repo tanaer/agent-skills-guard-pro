@@ -24,7 +24,7 @@ export function LanguageSwitcher() {
   return (
     <button
       onClick={toggleLanguage}
-      className="flex items-center gap-2 px-3 py-2 rounded font-mono text-sm transition-all duration-200 border border-border text-terminal-cyan hover:border-terminal-cyan hover:bg-terminal-cyan/10 hover:text-glow"
+      className="flex items-center gap-2 px-2 py-1.5 rounded font-mono text-sm transition-all duration-200 border border-border text-terminal-cyan hover:border-terminal-cyan hover:bg-terminal-cyan/10 hover:text-glow"
       title="Switch Language / 切换语言"
     >
       <Languages className="w-4 h-4" />
