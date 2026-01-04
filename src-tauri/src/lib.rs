@@ -2,6 +2,7 @@ pub mod models;
 pub mod security;
 pub mod services;
 pub mod commands;
+mod i18n;
 
 use commands::AppState;
 use commands::security::{scan_all_installed_skills, get_scan_results, scan_skill_archive};
