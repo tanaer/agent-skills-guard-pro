@@ -1,3 +1,6 @@
+// 初始化 i18n，设置 fallback 语言为中文
+rust_i18n::i18n!("locales", fallback = "zh");
+
 pub mod models;
 pub mod security;
 pub mod services;

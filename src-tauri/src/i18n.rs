@@ -1,6 +1,3 @@
-// 初始化 i18n，设置 fallback 语言为中文
-rust_i18n::i18n!("locales", fallback = "zh");
-
 /// 辅助函数：验证 locale 参数
 pub fn validate_locale(locale: &str) -> &str {
     match locale {

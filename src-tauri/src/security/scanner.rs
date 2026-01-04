@@ -2,6 +2,8 @@ use crate::models::security::*;
 use crate::security::rules::{SecurityRules, Category, Severity};
 use anyhow::Result;
 use sha2::{Sha256, Digest};
+use rust_i18n::t;
+use crate::i18n::validate_locale;
 
 /// 匹配结果（包含规则信息）
 #[derive(Debug, Clone)]
@@ -260,13 +262,14 @@ impl SecurityScanner {
     }
 
     /// 生成安全建议（使用 MatchResult）
-    fn generate_recommendations(&self, matches: &[MatchResult], score: i32) -> Vec<String> {
+    fn generate_recommendations(&self, matches: &[MatchResult], score: i32, locale: &str) -> Vec<String> {
+        let locale = validate_locale(locale);
         let mut recommendations = Vec::new();
 
         // 检查是否有硬触发规则匹配
         let has_hard_trigger = matches.iter().any(|m| m.hard_trigger);
         if has_hard_trigger {
-            recommendations.push("⛔ 检测到严重安全威胁，已阻止安装！".to_string());
+            recommendations.push(t!("security.blocked_message", locale = locale).to_string());
             let hard_triggers: Vec<String> = matches.iter()
                 .filter(|m| m.hard_trigger)
                 .map(|m| format!("  - {}", m.description))
@@ -277,9 +280,9 @@ impl SecurityScanner {
 
         // 基于分数的建议
         if score < 50 {
-            recommendations.push("⚠️ 此 skill 存在严重安全风险，建议不要安装".to_string());
+            recommendations.push(t!("security.score_warning_severe", locale = locale).to_string());
         } else if score < 70 {
-            recommendations.push("⚠️ 此 skill 存在中等安全风险，请谨慎使用".to_string());
+            recommendations.push(t!("security.score_warning_medium", locale = locale).to_string());
         }
 
         // 按类别提供建议
@@ -293,32 +296,32 @@ impl SecurityScanner {
         let has_sensitive_file_access = matches.iter().any(|m| matches!(m.category, Category::SensitiveFileAccess));
 
         if has_destructive {
-            recommendations.push("包含破坏性操作（如删除文件），存在极高风险".to_string());
+            recommendations.push(t!("security.recommendations.destructive", locale = locale).to_string());
         }
         if has_remote_exec {
-            recommendations.push("包含远程代码执行，存在极高风险".to_string());
+            recommendations.push(t!("security.recommendations.remote_exec", locale = locale).to_string());
         }
         if has_cmd_injection {
-            recommendations.push("包含命令注入风险，请检查代码逻辑".to_string());
+            recommendations.push(t!("security.recommendations.cmd_injection", locale = locale).to_string());
         }
         if has_network {
-            recommendations.push("包含网络请求操作，请确认目标地址可信".to_string());
+            recommendations.push(t!("security.recommendations.network", locale = locale).to_string());
         }
         if has_secrets {
-            recommendations.push("检测到敏感信息泄露风险（密钥、密码等）".to_string());
+            recommendations.push(t!("security.recommendations.secrets", locale = locale).to_string());
         }
         if has_persistence {
-            recommendations.push("包含持久化操作（如 crontab），请谨慎".to_string());
+            recommendations.push(t!("security.recommendations.persistence", locale = locale).to_string());
         }
         if has_privilege {
-            recommendations.push("包含权限提升操作，请确认必要性".to_string());
+            recommendations.push(t!("security.recommendations.privilege", locale = locale).to_string());
         }
         if has_sensitive_file_access {
-            recommendations.push("包含敏感文件访问操作（如密钥、配置文件），请确认必要性".to_string());
+            recommendations.push(t!("security.recommendations.sensitive_file", locale = locale).to_string());
         }
 
         if recommendations.is_empty() {
-            recommendations.push("✅ 未发现明显安全问题".to_string());
+            recommendations.push(t!("security.no_issues", locale = locale).to_string());
         }
 
         recommendations
