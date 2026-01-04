@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Loader2, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
 
@@ -9,7 +9,6 @@ interface ScanStatusCardProps {
   totalCount: number;
   issueCount: number;
   isScanning: boolean;
-  onScan: () => void;
 }
 
 export function ScanStatusCard({
@@ -18,7 +17,6 @@ export function ScanStatusCard({
   totalCount,
   issueCount,
   isScanning,
-  onScan
 }: ScanStatusCardProps) {
   const { t, i18n } = useTranslation();
 
@@ -63,8 +61,8 @@ export function ScanStatusCard({
           </div>
         </div>
 
-        {/* 中间：进度条 */}
-        <div className="flex-1 min-w-[200px]">
+        {/* 进度条 - 占据剩余全部空间 */}
+        <div className="flex-1">
           <div className="relative w-full h-3 bg-muted/50 rounded-full overflow-hidden border border-border/50">
             {/* 背景扫描线动画 */}
             {isScanning && (
@@ -104,38 +102,6 @@ export function ScanStatusCard({
               </span>
             </div>
           )}
-        </div>
-
-        {/* 右侧：扫描按钮 */}
-        <div className="flex-shrink-0">
-          <button
-            onClick={onScan}
-            disabled={isScanning}
-            className="
-              relative
-              px-6 py-2.5
-              bg-terminal-cyan text-background
-              font-mono font-medium text-sm uppercase tracking-wider
-              rounded
-              hover:bg-terminal-cyan/90 hover:shadow-lg hover:shadow-terminal-cyan/30
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-all duration-200
-              flex items-center gap-2
-              overflow-hidden
-              group
-            "
-          >
-            {/* 按钮扫描线效果 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-            {isScanning && <Loader2 className="w-4 h-4 animate-spin" />}
-            <span className="relative z-10">
-              {isScanning
-                ? t('overview.scanStatus.scanning')
-                : t('overview.scanStatus.scanAll')
-              }
-            </span>
-          </button>
         </div>
       </div>
     </div>

@@ -228,10 +228,42 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* 页面标题 */}
-      <h1 className="text-2xl font-bold text-terminal-cyan tracking-wider uppercase">
-        {t('overview.title')}
-      </h1>
+      {/* 页面标题 - 添加扫描按钮 */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-terminal-cyan tracking-wider uppercase">
+          {t('overview.title')}
+        </h1>
+
+        {/* 一键扫描按钮 */}
+        <button
+          onClick={() => scanMutation.mutate()}
+          disabled={isScanning}
+          className="
+            relative
+            px-6 py-2.5
+            bg-terminal-cyan text-background
+            font-mono font-medium text-sm uppercase tracking-wider
+            rounded
+            hover:bg-terminal-cyan/90 hover:shadow-lg hover:shadow-terminal-cyan/30
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-200
+            flex items-center gap-2
+            overflow-hidden
+            group
+          "
+        >
+          {/* 按钮扫描线效果 */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+          {isScanning && <Loader2 className="w-4 h-4 animate-spin" />}
+          <span className="relative z-10">
+            {isScanning
+              ? t('overview.scanStatus.scanning')
+              : t('overview.scanStatus.scanAll')
+            }
+          </span>
+        </button>
+      </div>
 
       {/* 第一行：统计卡片 */}
       <StatisticsCards
@@ -240,14 +272,13 @@ export function OverviewPage() {
         scannedCount={statistics.scannedCount}
       />
 
-      {/* 第二行：扫描状态卡片 */}
+      {/* 第二行：扫描状态卡片（移除 onScan prop） */}
       <ScanStatusCard
         lastScanTime={lastScanTime}
         scannedCount={statistics.scannedCount}
         totalCount={statistics.installedCount}
         issueCount={issueCount}
         isScanning={isScanning}
-        onScan={() => scanMutation.mutate()}
       />
 
       {/* 第三行：问题汇总卡片 */}
