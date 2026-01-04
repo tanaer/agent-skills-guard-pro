@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, Eye, Trash2, ChevronDown, ChevronUp, AlertTriangle, AlertCircle, Info } from "lucide-react";
+import { FolderOpen, Trash2, ChevronDown, ChevronUp, AlertTriangle, AlertCircle, Info, Eye } from "lucide-react";
 import type { SkillScanResult } from "@/types/security";
 import { SecurityDetailDialog } from "../SecurityDetailDialog";
 import { api } from "@/lib/api";
@@ -76,10 +76,32 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["installedSkills"] });
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
-      toast.success(t('skills.toast.uninstalled'));
+      toast.success(t('skills.toast.uninstalled'), {
+        duration: 3000,
+        style: {
+          background: 'rgba(6, 182, 212, 0.1)',
+          border: '2px solid rgb(6, 182, 212)',
+          backdropFilter: 'blur(8px)',
+          color: 'rgb(94, 234, 212)',
+          fontFamily: 'monospace',
+          fontSize: '14px',
+          boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)',
+        },
+      });
     },
     onError: (error: Error) => {
-      toast.error(t('skills.toast.uninstallFailed') + `: ${error.message}`);
+      toast.error(t('skills.toast.uninstallFailed') + `: ${error.message}`, {
+        duration: 4000,
+        style: {
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '2px solid rgb(239, 68, 68)',
+          backdropFilter: 'blur(8px)',
+          color: 'rgb(252, 165, 165)',
+          fontFamily: 'monospace',
+          fontSize: '14px',
+          boxShadow: '0 0 30px rgba(239, 68, 68, 0.3)',
+        },
+      });
     },
   });
 
@@ -106,8 +128,13 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
           return acc;
         }, {} as Record<string, number>);
 
-        // 获取最严重的前 3 个问题
-        const topIssues = issue.report.issues
+        // 获取最严重的前 3 个问题（先去重）
+        const uniqueIssues = Array.from(
+          new Map(
+            issue.report.issues.map(item => [item.description, item])
+          ).values()
+        );
+        const topIssues = uniqueIssues
           .sort((a, b) => {
             const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3, Safe: 4 };
             return (severityOrder[a.severity as keyof typeof severityOrder] || 999) -
@@ -147,13 +174,9 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                 </div>
 
                 {/* 中间：安全评分 */}
-                <div className="flex-shrink-0 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-current opacity-5 rounded"></div>
-                  <div className={`text-3xl font-bold font-mono ${getScoreColor(issue.score)} relative z-10`}>
-                    {issue.score}
-                  </div>
-                  <div className="text-xs text-muted-foreground text-center uppercase tracking-wide mt-1">
-                    {t('skills.securityScore')}
+                <div className="flex-shrink-0">
+                  <div className={`text-sm font-mono ${getScoreColor(issue.score)}`}>
+                    {t('skills.securityScore')}：<span className="text-xl font-bold">{issue.score}</span>
                   </div>
                 </div>
 
@@ -182,25 +205,6 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-cyan/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
                     <FolderOpen className="w-4 h-4 relative z-10" />
                     <span className="hidden sm:inline relative z-10">{t('overview.issues.openDirectory')}</span>
-                  </button>
-
-                  <button
-                    onClick={() => setSelectedSkill(issue)}
-                    className="
-                      relative overflow-hidden group
-                      px-3 py-2 text-sm
-                      bg-terminal-purple/10
-                      text-terminal-purple
-                      border border-terminal-purple/30
-                      rounded font-medium font-mono
-                      hover:bg-terminal-purple/20 hover:border-terminal-purple/60 hover:shadow-lg hover:shadow-terminal-purple/20
-                      transition-all duration-200
-                      flex items-center gap-1.5
-                    "
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-purple/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
-                    <Eye className="w-4 h-4 relative z-10" />
-                    <span className="hidden sm:inline relative z-10">{t('overview.issues.viewDetails')}</span>
                   </button>
 
                   <button

@@ -259,7 +259,7 @@
       "openDirectory": "打开目录",
       "uninstall": "卸载",
       "confirmUninstall": "确定要卸载此技能吗？",
-      "issueCount": "{{count}} 个{{level}}",
+      "issueCount": "{{count}} 个{{level}}风险",
       "expand": "展开",
       "collapse": "收起"
     }

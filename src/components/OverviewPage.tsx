@@ -56,7 +56,18 @@ export function OverviewPage() {
         await queryClient.refetchQueries({ queryKey: ["skills"] });
       } catch (error: any) {
         console.error('扫描本地技能失败:', error);
-        toast.error(t('overview.scan.localSkillsFailed', { error: error.message }));
+        toast.error(t('overview.scan.localSkillsFailed', { error: error.message }), {
+          duration: 4000,
+          style: {
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '2px solid rgb(239, 68, 68)',
+            backdropFilter: 'blur(8px)',
+            color: 'rgb(252, 165, 165)',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            boxShadow: '0 0 30px rgba(239, 68, 68, 0.3)',
+          },
+        });
       }
 
       // 第二步：对所有已安装技能进行安全扫描
@@ -88,7 +99,18 @@ export function OverviewPage() {
       );
     },
     onError: (error: any) => {
-      toast.error(t('overview.scan.failed', { error: error.message }));
+      toast.error(t('overview.scan.failed', { error: error.message }), {
+        duration: 4000,
+        style: {
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '2px solid rgb(239, 68, 68)',
+          backdropFilter: 'blur(8px)',
+          color: 'rgb(252, 165, 165)',
+          fontFamily: 'monospace',
+          fontSize: '14px',
+          boxShadow: '0 0 30px rgba(239, 68, 68, 0.3)',
+        },
+      });
     },
     onSettled: () => {
       setIsScanning(false);
@@ -165,10 +187,32 @@ export function OverviewPage() {
       if (skill?.local_path) {
         await invoke('open_skill_directory', { localPath: skill.local_path });
       } else {
-        toast.error('无法找到技能路径');
+        toast.error('无法找到技能路径', {
+          duration: 4000,
+          style: {
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '2px solid rgb(239, 68, 68)',
+            backdropFilter: 'blur(8px)',
+            color: 'rgb(252, 165, 165)',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            boxShadow: '0 0 30px rgba(239, 68, 68, 0.3)',
+          },
+        });
       }
     } catch (error: any) {
-      toast.error(t('skills.folder.openFailed', { error: error.message }));
+      toast.error(t('skills.folder.openFailed', { error: error.message }), {
+        duration: 4000,
+        style: {
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '2px solid rgb(239, 68, 68)',
+          backdropFilter: 'blur(8px)',
+          color: 'rgb(252, 165, 165)',
+          fontFamily: 'monospace',
+          fontSize: '14px',
+          boxShadow: '0 0 30px rgba(239, 68, 68, 0.3)',
+        },
+      });
     }
   };
 

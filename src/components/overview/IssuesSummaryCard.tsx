@@ -51,14 +51,13 @@ export function IssuesSummaryCard({
             onClick={() => onFilterChange(isSelected ? null : level)}
             className={`
               bg-card
-              ${isSelected ? 'border-2 border-terminal-cyan' : 'border border-border'}
+              border border-border
               rounded-lg p-5
               cursor-pointer
               transition-all duration-300
-              ${isSelected ? 'shadow-xl shadow-terminal-cyan/30' : 'hover:shadow-lg'}
-              ${!isSelected && config.hoverBorder} ${!isSelected && config.hoverShadow}
+              hover:shadow-lg
+              ${config.hoverBorder} ${config.hoverShadow}
               relative overflow-hidden
-              ${isSelected ? 'scale-[1.02]' : ''}
             `}
             style={{
               animation: `fadeIn 0.4s ease-out ${index * 0.05}s`,
@@ -68,42 +67,13 @@ export function IssuesSummaryCard({
             {/* 左侧赛博朋克风格竖线 */}
             <div className={`absolute top-0 left-0 ${isSelected ? 'w-2' : 'w-1'} h-full ${config.accentBar} ${isSelected ? 'opacity-100' : 'opacity-60'} transition-all duration-300`}></div>
 
-            {/* 选中时的四角装饰 */}
-            {isSelected && (
-              <>
-                {/* 左上角 */}
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-terminal-cyan"></div>
-                {/* 右上角 */}
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-terminal-cyan"></div>
-                {/* 左下角 */}
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-terminal-cyan"></div>
-                {/* 右下角 */}
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-terminal-cyan"></div>
-
-                {/* 顶部和底部扫描线 */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-terminal-cyan to-transparent opacity-50 animate-pulse"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-terminal-cyan to-transparent opacity-50 animate-pulse"></div>
-              </>
-            )}
-
-            {/* 顶部角落装饰（非选中时） */}
-            {!isSelected && (
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-border/30 rounded-tr-lg"></div>
-            )}
+            {/* 顶部角落装饰 */}
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-border/30 rounded-tr-lg"></div>
 
             {/* 内容区 */}
             <div className="relative pl-3">
               <div className="flex items-start justify-between mb-3">
                 <Icon className={`w-6 h-6 ${config.textClass} opacity-80`} />
-                {isSelected && (
-                  <div className="flex items-center gap-1.5">
-                    <div className="relative">
-                      <div className="w-2 h-2 rounded-full bg-terminal-cyan"></div>
-                      <div className="absolute inset-0 w-2 h-2 rounded-full bg-terminal-cyan animate-ping"></div>
-                    </div>
-                    <div className="text-xs text-terminal-cyan font-mono uppercase tracking-wider font-bold">已选择</div>
-                  </div>
-                )}
               </div>
               <div className={`text-4xl font-bold font-mono ${config.textClass} mb-2`}>
                 {count}
