@@ -128,10 +128,13 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
           return acc;
         }, {} as Record<string, number>);
 
-        // 获取最严重的前 3 个问题（先去重）
+        // 获取最严重的前 3 个问题（先去重，使用 description + file_path 作为唯一标识）
         const uniqueIssues = Array.from(
           new Map(
-            issue.report.issues.map(item => [item.description, item])
+            issue.report.issues.map(item => [
+              `${item.file_path || ''}::${item.description}`,
+              item
+            ])
           ).values()
         );
         const topIssues = uniqueIssues
@@ -275,11 +278,20 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                     const IssueIcon = levelConfig[mappedSeverity]?.icon || AlertCircle;
                     const issueColor = levelConfig[mappedSeverity]?.color || "";
 
+                    // 调试日志
+                    if (idx === 0) {
+                      console.log('🔍 Issue item:', item);
+                      console.log('📁 file_path:', item.file_path);
+                    }
+
                     return (
                       <div key={idx} className="flex items-start gap-3 text-sm p-3 rounded bg-card/50 border border-border/30 hover:border-border/60 transition-all">
                         <IssueIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${issueColor}`} />
                         <div className="flex-1 min-w-0">
                           <span className="text-foreground line-clamp-2 font-mono text-xs">
+                            {item.file_path && (
+                              <span className="text-terminal-cyan mr-1.5">[{item.file_path}]</span>
+                            )}
                             {item.description}
                           </span>
                           {item.line_number && (

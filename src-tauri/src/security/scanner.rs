@@ -24,6 +24,112 @@ impl SecurityScanner {
         Self
     }
 
+    /// 扫描目录下的所有文件，生成综合安全报告
+    pub fn scan_directory(&self, dir_path: &str, skill_id: &str) -> Result<SecurityReport> {
+        use std::path::Path;
+        use std::fs;
+
+        let path = Path::new(dir_path);
+        if !path.exists() || !path.is_dir() {
+            anyhow::bail!("Directory does not exist: {}", dir_path);
+        }
+
+        let mut all_issues = Vec::new();
+        let mut all_matches = Vec::new();
+        let mut scanned_files = Vec::new();
+        let mut total_hard_trigger_issues = Vec::new();
+        let mut blocked = false;
+
+        // 遍历目录下的所有文件
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let file_path = entry.path();
+
+            // 只处理文件，跳过子目录
+            if !file_path.is_file() {
+                continue;
+            }
+
+            // 获取文件名
+            let file_name = file_path.file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+
+            // 读取文件内容
+            let content = match fs::read_to_string(&file_path) {
+                Ok(c) => c,
+                Err(e) => {
+                    log::warn!("Failed to read file {:?}: {}", file_path, e);
+                    continue;
+                }
+            };
+
+            scanned_files.push(file_name.to_string());
+
+            // 扫描文件
+            let rules = crate::security::rules::SecurityRules::get_all_patterns();
+            for (line_num, line) in content.lines().enumerate() {
+                for rule in rules.iter() {
+                    if rule.pattern.is_match(line) {
+                        let match_result = MatchResult {
+                            _rule_id: rule.id.to_string(),
+                            rule_name: rule.name.to_string(),
+                            severity: rule.severity,
+                            category: rule.category,
+                            weight: rule.weight,
+                            description: rule.description.to_string(),
+                            hard_trigger: rule.hard_trigger,
+                            line_number: line_num + 1,
+                            code_snippet: line.to_string(),
+                        };
+
+                        // 检查硬触发
+                        if match_result.hard_trigger {
+                            blocked = true;
+                            total_hard_trigger_issues.push(
+                                format!("{} (文件: {}, 行 {}): {}",
+                                    match_result.rule_name,
+                                    file_name,
+                                    match_result.line_number,
+                                    match_result.description)
+                            );
+                        }
+
+                        all_matches.push(match_result.clone());
+
+                        // 转换为 SecurityIssue
+                        all_issues.push(SecurityIssue {
+                            severity: self.map_severity(&match_result.severity),
+                            category: self.map_category(&match_result.category),
+                            description: format!("{}: {}", match_result.rule_name, match_result.description),
+                            line_number: Some(match_result.line_number),
+                            code_snippet: Some(match_result.code_snippet.clone()),
+                            file_path: Some(file_name.to_string()),
+                        });
+                    }
+                }
+            }
+        }
+
+        // 计算安全评分
+        let score = self.calculate_score_weighted(&all_matches);
+        let level = crate::models::security::SecurityLevel::from_score(score);
+
+        // 生成建议
+        let recommendations = self.generate_recommendations(&all_matches, score);
+
+        Ok(SecurityReport {
+            skill_id: skill_id.to_string(),
+            score,
+            level,
+            issues: all_issues,
+            recommendations,
+            blocked,
+            hard_trigger_issues: total_hard_trigger_issues,
+            scanned_files,
+        })
+    }
+
     /// 扫描文件内容，生成安全报告
     pub fn scan_file(&self, content: &str, file_path: &str) -> Result<SecurityReport> {
         let mut matches = Vec::new();
@@ -60,6 +166,7 @@ impl SecurityScanner {
                 description: format!("{}: {}", m.rule_name, m.description),
                 line_number: Some(m.line_number),
                 code_snippet: Some(m.code_snippet.clone()),
+                file_path: Some(file_path.to_string()),
             }
         }).collect();
 
@@ -88,6 +195,7 @@ impl SecurityScanner {
             recommendations,
             blocked,
             hard_trigger_issues,
+            scanned_files: vec![file_path.to_string()],
         })
     }
 

@@ -10,6 +10,7 @@ pub struct SecurityReport {
     pub recommendations: Vec<String>,
     pub blocked: bool,  // 是否被硬触发规则阻止安装
     pub hard_trigger_issues: Vec<String>,  // 触发的硬阻止规则列表
+    pub scanned_files: Vec<String>,  // 已扫描的文件列表
 }
 
 /// 安全等级
@@ -52,6 +53,7 @@ pub struct SecurityIssue {
     pub description: String,
     pub line_number: Option<usize>,
     pub code_snippet: Option<String>,
+    pub file_path: Option<String>,  // 记录哪个文件有风险
 }
 
 /// 问题严重程度

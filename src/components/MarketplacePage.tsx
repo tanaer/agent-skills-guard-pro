@@ -208,14 +208,23 @@ export function MarketplacePage() {
                       level: skill.security_score >= 90 ? "Safe" :
                              skill.security_score >= 70 ? "Low" :
                              skill.security_score >= 50 ? "Medium" : "High",
-                      issues: (skill.security_issues || []).map(issue => ({
-                        severity: "Warning",
-                        category: "Unknown",
-                        description: issue
-                      })),
+                      issues: (skill.security_issues || []).map(issue => {
+                        // 解析格式：[文件名] Severity: description
+                        const filePathMatch = issue.match(/^\[([^\]]+)\]\s*/);
+                        const filePath = filePathMatch ? filePathMatch[1] : undefined;
+                        const descriptionPart = filePathMatch ? issue.slice(filePathMatch[0].length) : issue;
+
+                        return {
+                          severity: "Warning",
+                          category: "Unknown",
+                          description: descriptionPart,
+                          file_path: filePath
+                        };
+                      }),
                       recommendations: [],
                       blocked: false,
-                      hard_trigger_issues: []
+                      hard_trigger_issues: [],
+                      scanned_files: []
                     };
                   }
 

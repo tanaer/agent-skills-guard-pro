@@ -214,7 +214,12 @@ function IssueSection({
         <div className="p-4 space-y-3">
           {issues.map((issue, idx) => (
             <div key={idx} className="p-3 bg-background/50 rounded border border-border">
-              <div className="font-mono text-sm font-bold mb-2">{issue.description}</div>
+              <div className="font-mono text-sm font-bold mb-2">
+                {issue.file_path && (
+                  <span className="text-terminal-cyan mr-2">[{issue.file_path}]</span>
+                )}
+                {issue.description}
+              </div>
               {issue.code_snippet && (
                 <div className="mt-2">
                   <div className="text-xs text-muted-foreground mb-1">

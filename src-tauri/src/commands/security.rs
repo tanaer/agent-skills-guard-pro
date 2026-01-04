@@ -21,39 +21,51 @@ pub async fn scan_all_installed_skills(
 
     for mut skill in installed_skills {
         if let Some(local_path) = &skill.local_path {
-            // local_path 是目录路径，需要拼接 SKILL.md 文件名
-            let skill_file_path = PathBuf::from(local_path).join("SKILL.md");
+            // local_path 是目录路径，扫描整个目录
+            let path = PathBuf::from(local_path);
 
-            if let Ok(content) = std::fs::read_to_string(&skill_file_path) {
-                match scanner.scan_file(&content, &skill.id) {
-                    Ok(report) => {
-                        // 更新 skill 的安全信息
-                        skill.security_score = Some(report.score);
-                        skill.security_level = Some(report.level.as_str().to_string());
-                        skill.security_issues = Some(
-                            report.issues.iter()
-                                .map(|i| i.description.clone())
-                                .collect()
-                        );
-                        skill.scanned_at = Some(chrono::Utc::now());
+            // 检查目录是否存在
+            if !path.exists() || !path.is_dir() {
+                eprintln!("Skill directory does not exist: {:?}", path);
+                continue;
+            }
 
-                        // 保存到数据库
-                        if let Err(e) = state.db.save_skill(&skill) {
-                            eprintln!("Failed to save skill {}: {}", skill.name, e);
-                        }
+            match scanner.scan_directory(
+                path.to_str().unwrap_or(""),
+                &skill.id
+            ) {
+                Ok(report) => {
+                    // 更新 skill 的安全信息
+                    skill.security_score = Some(report.score);
+                    skill.security_level = Some(report.level.as_str().to_string());
+                    skill.security_issues = Some(
+                        report.issues.iter()
+                            .map(|i| {
+                                let file_info = i.file_path.as_ref()
+                                    .map(|f| format!("[{}] ", f))
+                                    .unwrap_or_default();
+                                format!("{}{}", file_info, i.description)
+                            })
+                            .collect()
+                    );
+                    skill.scanned_at = Some(chrono::Utc::now());
 
-                        results.push(SkillScanResult {
-                            skill_id: skill.id.clone(),
-                            skill_name: skill.name.clone(),
-                            score: report.score,
-                            level: report.level.as_str().to_string(),
-                            scanned_at: chrono::Utc::now().to_rfc3339(),
-                            report,
-                        });
+                    // 保存到数据库
+                    if let Err(e) = state.db.save_skill(&skill) {
+                        eprintln!("Failed to save skill {}: {}", skill.name, e);
                     }
-                    Err(e) => {
-                        eprintln!("Failed to scan skill {}: {}", skill.name, e);
-                    }
+
+                    results.push(SkillScanResult {
+                        skill_id: skill.id.clone(),
+                        skill_name: skill.name.clone(),
+                        score: report.score,
+                        level: report.level.as_str().to_string(),
+                        scanned_at: chrono::Utc::now().to_rfc3339(),
+                        report,
+                    });
+                }
+                Err(e) => {
+                    eprintln!("Failed to scan skill {}: {}", skill.name, e);
                 }
             }
         }
@@ -77,8 +89,22 @@ pub async fn get_scan_results(
             // 解析 security_issues 字符串为 SecurityIssue 对象
             let issues = if let Some(issue_strings) = &s.security_issues {
                 issue_strings.iter().filter_map(|issue_str| {
-                    // 解析格式: "Severity: description"
-                    let parts: Vec<&str> = issue_str.splitn(2, ": ").collect();
+                    // 解析格式: "[filename] Severity: description"
+                    // 先提取文件路径
+                    let (file_path, remaining) = if issue_str.starts_with('[') {
+                        if let Some(end_bracket) = issue_str.find(']') {
+                            let file = issue_str[1..end_bracket].to_string();
+                            let rest = issue_str[end_bracket + 1..].trim();
+                            (Some(file), rest)
+                        } else {
+                            (None, issue_str.as_str())
+                        }
+                    } else {
+                        (None, issue_str.as_str())
+                    };
+
+                    // 然后解析 Severity: description
+                    let parts: Vec<&str> = remaining.splitn(2, ": ").collect();
                     if parts.len() == 2 {
                         let severity = match parts[0] {
                             "Critical" => IssueSeverity::Critical,
@@ -86,12 +112,14 @@ pub async fn get_scan_results(
                             "Warning" => IssueSeverity::Warning,
                             _ => IssueSeverity::Info,
                         };
+
                         Some(SecurityIssue {
                             severity,
                             category: IssueCategory::Other,
                             description: parts[1].to_string(),
                             line_number: None,
                             code_snippet: None,
+                            file_path,
                         })
                     } else {
                         None
@@ -109,6 +137,7 @@ pub async fn get_scan_results(
                 recommendations: vec![], // 建议信息暂时为空，未来可以存储到数据库
                 blocked: false,
                 hard_trigger_issues: vec![],
+                scanned_files: vec![], // 缓存结果中没有扫描文件列表
             };
 
             SkillScanResult {

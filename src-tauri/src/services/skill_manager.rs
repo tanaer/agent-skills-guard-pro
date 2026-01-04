@@ -78,31 +78,8 @@ impl SkillManager {
             .find(|s| s.id == skill_id)
             .context("未找到该技能，请检查技能是否存在")?;
 
-        // 下载并分析 SKILL.md（用于安全检查和元数据提取）
+        // 下载并分析 SKILL.md（用于元数据提取）
         let (_skill_md_content, _report) = self.download_and_analyze(&mut skill).await?;
-
-        // [已禁用] 安全扫描功能暂时关闭，方便调试
-        // // 优先检查是否被 hard_trigger 阻止
-        // if report.blocked {
-        //     let mut error_msg = format!(
-        //         "⛔ 安全检测发现严重威胁，禁止安装！\n\n检测到以下高危操作：\n"
-        //     );
-        //     for (idx, issue) in report.hard_trigger_issues.iter().enumerate() {
-        //         error_msg.push_str(&format!("{}. {}\n", idx + 1, issue));
-        //     }
-        //     error_msg.push_str("\n这些操作可能对您的系统造成严重危害，强烈建议不要安装此技能。");
-        //     anyhow::bail!(error_msg);
-        // }
-
-        // // 检查安全评分
-        // if let Some(score) = skill.security_score {
-        //     if score < 50 {
-        //         anyhow::bail!(
-        //             "技能安全评分过低 ({}分)，为保护您的安全已阻止安装。建议评分至少为 50 分以上。",
-        //             score
-        //         );
-        //     }
-        // }
 
         // 确保目标目录存在
         std::fs::create_dir_all(&self.skills_dir)
@@ -127,7 +104,7 @@ impl SkillManager {
 
         log::info!("Found {} files in skill directory", skill_files.len());
 
-        // 下载并扫描每个文件
+        // 下载每个文件
         for file_info in &skill_files {
             if file_info.content_type != "file" {
                 continue; // 跳过子目录
@@ -140,20 +117,6 @@ impl SkillManager {
             let file_content = self.github.download_file(download_url).await
                 .context(format!("下载文件失败: {}", file_info.name))?;
 
-            // [已禁用] 安全扫描功能暂时关闭，方便调试
-            // // 对所有文本文件进行安全扫描
-            // if let Ok(content_str) = String::from_utf8(file_content.clone()) {
-            //     let file_report = self.scanner.scan_file(&content_str, &file_info.name)?;
-            //
-            //     // 如果任何文件触发 hard_trigger，阻止安装
-            //     if file_report.blocked {
-            //         anyhow::bail!(
-            //             "⛔ 文件 {} 包含严重安全威胁，已阻止安装！",
-            //             file_info.name
-            //         );
-            //     }
-            // }
-
             // 写入文件到本地
             let local_file_path = skill_dir.join(&file_info.name);
             std::fs::write(&local_file_path, file_content)
@@ -161,6 +124,62 @@ impl SkillManager {
 
             log::info!("Saved file: {}", file_info.name);
         }
+
+        // 扫描整个技能目录
+        let scan_report = self.scanner.scan_directory(
+            skill_dir.to_str().context("技能目录路径无效")?,
+            &skill.id
+        )?;
+
+        log::info!("Security scan completed: score={}, scanned {} files",
+            scan_report.score, scan_report.scanned_files.len());
+
+        // 检查是否被 hard_trigger 阻止
+        if scan_report.blocked {
+            // 先删除已下载的文件
+            if skill_dir.exists() {
+                std::fs::remove_dir_all(&skill_dir)?;
+            }
+
+            let mut error_msg = format!(
+                "⛔ 安全检测发现严重威胁，禁止安装！\n\n检测到以下高危操作：\n"
+            );
+            for (idx, issue) in scan_report.hard_trigger_issues.iter().enumerate() {
+                error_msg.push_str(&format!("{}. {}\n", idx + 1, issue));
+            }
+            error_msg.push_str("\n这些操作可能对您的系统造成严重危害，强烈建议不要安装此技能。");
+            anyhow::bail!(error_msg);
+        }
+
+        // 检查安全评分
+        if scan_report.score < 50 {
+            // 先删除已下载的文件
+            if skill_dir.exists() {
+                std::fs::remove_dir_all(&skill_dir)?;
+            }
+
+            anyhow::bail!(
+                "技能安全评分过低 ({}分)，为保护您的安全已阻止安装。建议评分至少为 50 分以上。\n\n扫描了 {} 个文件：{}",
+                scan_report.score,
+                scan_report.scanned_files.len(),
+                scan_report.scanned_files.join(", ")
+            );
+        }
+
+        // 更新 skill 安全信息
+        skill.security_score = Some(scan_report.score);
+        skill.security_level = Some(scan_report.level.as_str().to_string());
+        skill.security_issues = Some(
+            scan_report.issues.iter()
+                .map(|i| {
+                    let file_info = i.file_path.as_ref()
+                        .map(|f| format!("[{}] ", f))
+                        .unwrap_or_default();
+                    format!("{}{:?}: {}", file_info, i.severity, i.description)
+                })
+                .collect()
+        );
+        skill.scanned_at = Some(Utc::now());
 
         // 更新数据库
         skill.installed = true;
@@ -290,12 +309,21 @@ impl SkillManager {
                             continue;
                         }
 
-                        // 安全扫描
-                        let report = self.scanner.scan_file(&content, "SKILL.md")?;
+                        // 生成技能 ID
+                        let skill_id = format!("local::{}", checksum[..16].to_string());
+
+                        // 扫描整个技能目录
+                        let report = self.scanner.scan_directory(
+                            path.to_str().unwrap_or(""),
+                            &skill_id
+                        )?;
+
+                        log::info!("Scanned local skill '{}': score={}, files={:?}",
+                            skill_name, report.score, report.scanned_files);
 
                         // 创建 skill 对象（使用之前解析的元数据）
                         let skill = Skill {
-                            id: format!("local::{}", checksum[..16].to_string()),
+                            id: skill_id,
                             name: skill_name,
                             description: skill_description,
                             repository_url: "local".to_string(),
@@ -310,7 +338,12 @@ impl SkillManager {
                             security_score: Some(report.score),
                             security_issues: Some(
                                 report.issues.iter()
-                                    .map(|i| format!("{:?}: {}", i.severity, i.description))
+                                    .map(|i| {
+                                        let file_info = i.file_path.as_ref()
+                                            .map(|f| format!("[{}] ", f))
+                                            .unwrap_or_default();
+                                        format!("{}{:?}: {}", file_info, i.severity, i.description)
+                                    })
                                     .collect()
                             ),
                             security_level: Some(match report.level {
