@@ -84,9 +84,7 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
   });
 
   const handleUninstall = (skillId: string) => {
-    if (window.confirm(t('overview.issues.confirmUninstall'))) {
-      uninstallMutation.mutate(skillId);
-    }
+    uninstallMutation.mutate(skillId);
   };
 
   if (issues.length === 0) {

@@ -26,6 +26,8 @@ impl GitHubService {
         Self {
             client: Client::builder()
                 .user_agent("agent-skills-guard/0.9.0")
+                .timeout(std::time::Duration::from_secs(30))  // 30秒超时
+                .connect_timeout(std::time::Duration::from_secs(10))  // 10秒连接超时
                 .build()
                 .unwrap(),
             api_base: "https://api.github.com".to_string(),

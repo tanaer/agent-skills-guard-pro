@@ -703,15 +703,15 @@ function InstallConfirmDialog({
 }: InstallConfirmDialogProps) {
   const { t } = useTranslation();
 
-  if (!report) return null;
-
-  const isMediumRisk = report.score >= 50 && report.score < 70;
-  const isHighRisk = report.score < 50 || report.blocked;
+  const isMediumRisk = report ? report.score >= 50 && report.score < 70 : false;
+  const isHighRisk = report ? report.score < 50 || report.blocked : false;
 
   const issueCounts = useMemo(
-    () => countIssuesBySeverity(report.issues),
-    [report.issues]
+    () => report ? countIssuesBySeverity(report.issues) : { critical: 0, error: 0, warning: 0 },
+    [report]
   );
+
+  if (!report) return null;
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
@@ -728,7 +728,7 @@ function InstallConfirmDialog({
             {t('skills.marketplace.install.scanResult')}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <div>
                 {t('skills.marketplace.install.preparingInstall')}: <span className="font-mono font-bold">{skillName}</span>
               </div>
