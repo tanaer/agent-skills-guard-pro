@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useInstalledSkills, useUninstallSkill, useDeleteSkill } from "../hooks/useSkills";
+import { useInstalledSkills, useUninstallSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
 import { Trash2, Loader2, FolderOpen, Package, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -14,12 +14,10 @@ export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPag
   const { t } = useTranslation();
   const { data: installedSkills, isLoading } = useInstalledSkills();
   const uninstallMutation = useUninstallSkill();
-  const deleteMutation = useDeleteSkill();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [uninstallingSkillId, setUninstallingSkillId] = useState<string | null>(null);
-  const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -141,22 +139,8 @@ export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPag
                   },
                 });
               }}
-              onDelete={() => {
-                setDeletingSkillId(skill.id);
-                deleteMutation.mutate(skill.id, {
-                  onSuccess: () => {
-                    setDeletingSkillId(null);
-                    showToast(t('skills.toast.deleted'));
-                  },
-                  onError: (error: any) => {
-                    setDeletingSkillId(null);
-                    showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
-                  },
-                });
-              }}
               isUninstalling={uninstallingSkillId === skill.id}
-              isDeleting={deletingSkillId === skill.id}
-              isAnyOperationPending={uninstallMutation.isPending || deleteMutation.isPending}
+              isAnyOperationPending={uninstallMutation.isPending}
               getSecurityBadge={getSecurityBadge}
               onNavigateToOverview={onNavigateToOverview}
               t={t}
@@ -205,9 +189,7 @@ interface SkillCardProps {
   skill: Skill;
   index: number;
   onUninstall: () => void;
-  onDelete: () => void;
   isUninstalling: boolean;
-  isDeleting: boolean;
   isAnyOperationPending: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
   onNavigateToOverview: () => void;
@@ -218,9 +200,7 @@ function SkillCard({
   skill,
   index,
   onUninstall,
-  onDelete,
   isUninstalling,
-  isDeleting,
   isAnyOperationPending,
   getSecurityBadge,
   onNavigateToOverview,
@@ -294,24 +274,18 @@ function SkillCard({
           <button
             onClick={onUninstall}
             disabled={isAnyOperationPending}
-            className="neon-button text-terminal-red border-terminal-red hover:bg-terminal-red disabled:opacity-50 disabled:cursor-not-allowed"
+            className="neon-button text-terminal-red border-terminal-red hover:bg-terminal-red disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             {isUninstalling ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('skills.uninstalling')}
+              </>
             ) : (
-              t('skills.uninstall')
-            )}
-          </button>
-
-          <button
-            onClick={onDelete}
-            disabled={isAnyOperationPending}
-            className="px-3 py-2 rounded border border-border bg-card text-muted-foreground hover:border-terminal-red hover:text-terminal-red transition-all duration-200 disabled:opacity-50"
-          >
-            {isDeleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
+              <>
+                <Trash2 className="w-4 h-4" />
+                {t('skills.uninstall')}
+              </>
             )}
           </button>
         </div>
