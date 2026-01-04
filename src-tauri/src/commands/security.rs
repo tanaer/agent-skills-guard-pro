@@ -2,7 +2,9 @@ use crate::commands::AppState;
 use crate::models::security::{SecurityReport, SkillScanResult, SecurityLevel};
 use crate::models::Skill;
 use crate::security::SecurityScanner;
+use crate::i18n::validate_locale;
 use anyhow::Result;
+use rust_i18n::t;
 use std::path::PathBuf;
 use tauri::State;
 
@@ -10,7 +12,9 @@ use tauri::State;
 #[tauri::command]
 pub async fn scan_all_installed_skills(
     state: State<'_, AppState>,
+    locale: String,
 ) -> Result<Vec<SkillScanResult>, String> {
+    let locale = validate_locale(&locale);
     let skills = state.db.get_skills().map_err(|e| e.to_string())?;
     let installed_skills: Vec<Skill> = skills.into_iter()
         .filter(|s| s.installed && s.local_path.is_some())
@@ -32,7 +36,8 @@ pub async fn scan_all_installed_skills(
 
             match scanner.scan_directory(
                 path.to_str().unwrap_or(""),
-                &skill.id
+                &skill.id,
+                &locale
             ) {
                 Ok(report) => {
                     // 更新 skill 的安全信息
@@ -166,24 +171,34 @@ pub async fn get_scan_results(
 #[tauri::command]
 pub async fn scan_skill_archive(
     archive_path: String,
+    locale: String,
 ) -> Result<SecurityReport, String> {
+    let locale = validate_locale(&locale);
     let scanner = SecurityScanner::new();
 
     // 验证文件存在性
     let path = std::path::Path::new(&archive_path);
     if !path.exists() {
-        return Err(format!("Skill file not found: {}", archive_path));
+        return Err(t!("common.errors.file_not_found", locale = locale, path = &archive_path).to_string());
     }
     if !path.is_file() {
-        return Err(format!("Path is not a file: {}", archive_path));
+        return Err(t!("common.errors.path_not_file", locale = locale, path = &archive_path).to_string());
     }
 
     // 读取文件内容
     let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read skill file '{}': {}", archive_path, e))?;
+        .map_err(|e| t!("common.errors.read_failed",
+            locale = locale,
+            path = &archive_path,
+            error = e.to_string()
+        ).to_string())?;
 
-    let report = scanner.scan_file(&content, &archive_path)
-        .map_err(|e| format!("Failed to scan skill '{}': {}", archive_path, e))?;
+    let report = scanner.scan_file(&content, &archive_path, &locale)
+        .map_err(|e| t!("common.errors.scan_failed",
+            locale = locale,
+            path = &archive_path,
+            error = e.to_string()
+        ).to_string())?;
 
     Ok(report)
 }

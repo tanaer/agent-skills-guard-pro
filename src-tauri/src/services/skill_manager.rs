@@ -54,7 +54,7 @@ impl SkillManager {
 
         // 安全扫描
         let content_str = String::from_utf8_lossy(&content);
-        let report = self.scanner.scan_file(&content_str, "SKILL.md")?;
+        let report = self.scanner.scan_file(&content_str, "SKILL.md", "zh")?;
 
         // 更新 skill 信息
         skill.security_score = Some(report.score);
@@ -128,7 +128,8 @@ impl SkillManager {
         // 扫描整个技能目录
         let scan_report = self.scanner.scan_directory(
             skill_dir.to_str().context("技能目录路径无效")?,
-            &skill.id
+            &skill.id,
+            "zh"
         )?;
 
         log::info!("Security scan completed: score={}, scanned {} files",
@@ -315,7 +316,8 @@ impl SkillManager {
                         // 扫描整个技能目录
                         let report = self.scanner.scan_directory(
                             path.to_str().unwrap_or(""),
-                            &skill_id
+                            &skill_id,
+                            "zh"
                         )?;
 
                         log::info!("Scanned local skill '{}': score={}, files={:?}",
