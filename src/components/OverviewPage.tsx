@@ -13,7 +13,7 @@ import { IssuesList } from "./overview/IssuesList";
 import { toast } from "sonner";
 
 export function OverviewPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
   const [filterLevel, setFilterLevel] = useState<string | null>(null);
@@ -71,7 +71,9 @@ export function OverviewPage() {
       }
 
       // 第二步：对所有已安装技能进行安全扫描
-      const results = await invoke<SkillScanResult[]>("scan_all_installed_skills");
+      const results = await invoke<SkillScanResult[]>("scan_all_installed_skills", {
+        locale: i18n.language,
+      });
 
       return { results, localSkillsCount };
     },

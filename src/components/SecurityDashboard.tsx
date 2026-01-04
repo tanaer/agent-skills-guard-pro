@@ -9,7 +9,7 @@ import type { SkillScanResult } from "@/types/security";
 import { countIssuesBySeverity } from "@/lib/security-utils";
 
 export function SecurityDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
   const [filterLevel, setFilterLevel] = useState<string>("all");
@@ -52,7 +52,9 @@ export function SecurityDashboard() {
   const handleScan = async () => {
     setIsScanning(true);
     try {
-      const results = await invoke<SkillScanResult[]>("scan_all_installed_skills");
+      const results = await invoke<SkillScanResult[]>("scan_all_installed_skills", {
+        locale: i18n.language,
+      });
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
       showToast(t("security.dashboard.scanSuccess", { count: results.length }));
     } catch (error) {

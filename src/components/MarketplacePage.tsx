@@ -193,7 +193,8 @@ export function MarketplacePage() {
                   if (skill.local_path) {
                     try {
                       report = await invoke<SecurityReport>("scan_skill_archive", {
-                        archivePath: skill.local_path
+                        archivePath: skill.local_path,
+                        locale: i18n.language,
                       });
                     } catch (scanError) {
                       console.warn("扫描失败，将继续安装:", scanError);
