@@ -26,8 +26,7 @@ const MENU_QUIT: &str = "quit";
 /// 返回值：(显示窗口文本, 隐藏窗口文本, 退出文本)
 fn get_menu_texts() -> (&'static str, &'static str, &'static str) {
     // 简化版：使用中英文双语显示
-    // 可以根据系统语言环境判断，这里默认使用双语，为未来的完整国际化做准备
-    ("显示窗口 / Show", "隐藏窗口 / Hide", "退出 / Quit")
+    ("显示 / Show", "隐藏 / Hide", "退出 / Quit")
 }
 
 fn create_tray_menu(app: &tauri::AppHandle) -> Result<tauri::menu::Menu<tauri::Wry>, tauri::Error> {
