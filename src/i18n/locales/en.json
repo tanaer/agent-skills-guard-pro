@@ -135,8 +135,10 @@
     "enabled": "ENABLED",
     "url": "URL:",
     "lastScan": "LAST_SCAN:",
-    "scan": "SCAN",
-    "scanning": "SCANNING",
+    "scan": "Quick Scan",
+    "scanning": "Scanning...",
+    "rescan": "Rescan",
+    "rescanning": "Rescanning...",
     "noReposFound": "No_Repositories_Found",
     "clickAddRepo": "Click \"ADD_REPO\" to configure your first repository",
     "cache": {
