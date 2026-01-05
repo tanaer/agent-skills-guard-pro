@@ -5,7 +5,7 @@ import {
   useDeleteRepository,
   useScanRepository,
 } from "../hooks/useRepositories";
-import { Search, Plus, Trash2, GitBranch, Loader2, Database, X, Terminal, RefreshCw, Trash } from "lucide-react";
+import { Search, Plus, Trash2, GitBranch, Loader2, Database, X, Terminal, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
@@ -53,17 +53,6 @@ export function RepositoriesPage() {
     refetchInterval: 30000, // 每30秒刷新
   });
 
-  // 清理缓存mutation
-  const clearCacheMutation = useMutation({
-    mutationFn: api.clearRepositoryCache,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['repositories'] });
-      showToast(t('repositories.cache.cleared'));
-    },
-    onError: (error: any) => {
-      showToast(t('repositories.cache.clearFailed', { error: error.message || error }));
-    },
-  });
 
   // 刷新缓存mutation
   const refreshCacheMutation = useMutation({
@@ -145,9 +134,6 @@ export function RepositoriesPage() {
     }
   };
 
-  const handleClearCache = (repoId: string) => {
-    clearCacheMutation.mutate(repoId);
-  };
 
   const handleRefreshCache = (repoId: string) => {
     refreshCacheMutation.mutate(repoId);
@@ -445,7 +431,7 @@ export function RepositoriesPage() {
                     <>
                       <button
                         onClick={() => handleRefreshCache(repo.id)}
-                        disabled={refreshCacheMutation.isPending || clearCacheMutation.isPending}
+                        disabled={refreshCacheMutation.isPending}
                         title={t('repositories.cache.refreshTooltip')}
                         className="px-3 py-2 rounded font-mono text-xs border border-terminal-purple text-terminal-purple hover:bg-terminal-purple hover:text-background hover:shadow-[0_0_10px_rgba(168,85,247,0.4)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                       >
@@ -462,21 +448,7 @@ export function RepositoriesPage() {
                         )}
                       </button>
 
-                      <button
-                        onClick={() => handleClearCache(repo.id)}
-                        disabled={refreshCacheMutation.isPending || clearCacheMutation.isPending}
-                        title={t('repositories.cache.clearTooltip')}
-                        className="px-3 py-2 rounded font-mono text-xs border-2 border-terminal-red text-terminal-red hover:bg-terminal-red hover:text-background hover:shadow-[0_0_10px_rgba(239,68,68,0.4)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                      >
-                        {clearCacheMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Trash className="w-4 h-4" />
-                            {t('repositories.cache.clear')}
-                          </>
-                        )}
-                      </button>
+                      {/* TODO: Task 5 - 实现新的智能扫描按钮替换清除缓存功能 */}
                     </>
                   )}
 
