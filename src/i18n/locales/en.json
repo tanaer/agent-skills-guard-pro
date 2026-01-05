@@ -33,6 +33,8 @@
     "uninstalling": "UNINSTALLING",
     "scanning": "SCANNING",
     "delete": "DELETE",
+    "deleting": "DELETING",
+    "deleteRecord": "DELETE_RECORD",
     "empty": "[ EMPTY ]",
     "noSkillsFound": "NO_SKILLS_FOUND",
     "navigateToRepo": "Navigate to REPO_CONFIG to scan repositories",

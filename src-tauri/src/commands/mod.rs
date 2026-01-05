@@ -149,6 +149,12 @@ pub async fn scan_repository(
 
     // 保存到数据库
     for skill in &skills {
+        // 验证 file_path 不为空（注意："." 表示根目录，是有效路径）
+        if skill.file_path.trim().is_empty() {
+            log::warn!("跳过无效技能记录：名称={}, 路径为空", skill.name);
+            continue;
+        }
+
         state.db.save_skill(skill)
             .map_err(|e| e.to_string())?;
     }

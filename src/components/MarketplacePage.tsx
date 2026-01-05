@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useSkills, useInstallSkill, useUninstallSkill } from "../hooks/useSkills";
+import { useSkills, useInstallSkill, useUninstallSkill, useDeleteSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
 import { SecurityReport } from "../types/security";
 import { Download, Trash2, AlertTriangle, Loader2, Package, Search, ChevronDown, ChevronUp, FolderOpen, XCircle, CheckCircle } from "lucide-react";
@@ -24,6 +24,7 @@ export function MarketplacePage() {
   const { data: allSkills, isLoading } = useSkills();
   const installMutation = useInstallSkill();
   const uninstallMutation = useUninstallSkill();
+  const deleteMutation = useDeleteSkill();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRepository, setSelectedRepository] = useState("all");
@@ -34,6 +35,7 @@ export function MarketplacePage() {
     report: SecurityReport;
   } | null>(null);
   const [preparingSkillId, setPreparingSkillId] = useState<string | null>(null);
+  const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -260,10 +262,24 @@ export function MarketplacePage() {
                   },
                 });
               }}
+              onDelete={() => {
+                setDeletingSkillId(skill.id);
+                deleteMutation.mutate(skill.id, {
+                  onSuccess: () => {
+                    setDeletingSkillId(null);
+                    showToast(t('skills.toast.deleted'));
+                  },
+                  onError: (error: any) => {
+                    setDeletingSkillId(null);
+                    showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
+                  },
+                });
+              }}
               isInstalling={installMutation.isPending && installMutation.variables === skill.id}
               isUninstalling={uninstallMutation.isPending && uninstallMutation.variables === skill.id}
+              isDeleting={deletingSkillId === skill.id}
               isPreparing={preparingSkillId === skill.id}
-              isAnyOperationPending={installMutation.isPending || uninstallMutation.isPending || preparingSkillId !== null}
+              isAnyOperationPending={installMutation.isPending || uninstallMutation.isPending || preparingSkillId !== null || deletingSkillId !== null}
               getSecurityBadge={getSecurityBadge}
               t={t}
             />
@@ -354,8 +370,10 @@ interface SkillCardProps {
   index: number;
   onInstall: () => void;
   onUninstall: () => void;
+  onDelete: () => void;
   isInstalling: boolean;
   isUninstalling: boolean;
+  isDeleting: boolean;
   isPreparing: boolean;
   isAnyOperationPending: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
@@ -367,8 +385,10 @@ function SkillCard({
   index,
   onInstall,
   onUninstall,
+  onDelete,
   isInstalling,
   isUninstalling,
+  isDeleting,
   isPreparing,
   isAnyOperationPending,
   getSecurityBadge,
@@ -466,28 +486,48 @@ function SkillCard({
               )}
             </button>
           ) : (
-            <button
-              onClick={handleInstallClick}
-              disabled={isAnyOperationPending}
-              className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-            >
-              {isPreparing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t('skills.scanning')}
-                </>
-              ) : isInstalling ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t('skills.installing')}
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  {t('skills.install')}
-                </>
-              )}
-            </button>
+            <>
+              <button
+                onClick={handleInstallClick}
+                disabled={isAnyOperationPending}
+                className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+              >
+                {isPreparing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('skills.scanning')}
+                  </>
+                ) : isInstalling ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('skills.installing')}
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    {t('skills.install')}
+                  </>
+                )}
+              </button>
+              <button
+                onClick={onDelete}
+                disabled={isAnyOperationPending}
+                className="neon-button text-terminal-orange border-terminal-orange hover:bg-terminal-orange disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                title={t('skills.deleteRecord')}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('skills.deleting')}
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4" />
+                    {t('skills.delete')}
+                  </>
+                )}
+              </button>
+            </>
           )}
         </div>
       </div>

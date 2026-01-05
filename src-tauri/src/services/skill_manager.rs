@@ -86,12 +86,18 @@ impl SkillManager {
             .context("无法创建技能目录，请检查磁盘权限")?;
 
         // 创建 skill 文件夹（使用 skill 的文件夹名）
-        let skill_folder_name = PathBuf::from(&skill.file_path)
-            .file_name()
-            .context("技能路径格式无效")?
-            .to_str()
-            .context("技能文件夹名称包含无效字符")?
-            .to_string();
+        // 如果 file_path 是 "."（位于仓库根目录），使用技能名称作为文件夹名
+        let skill_folder_name = if skill.file_path == "." {
+            log::info!("技能位于仓库根目录，使用技能名称作为文件夹名: {}", skill.name);
+            skill.name.clone()
+        } else {
+            PathBuf::from(&skill.file_path)
+                .file_name()
+                .context("技能路径格式无效")?
+                .to_str()
+                .context("技能文件夹名称包含无效字符")?
+                .to_string()
+        };
 
         let skill_dir = self.skills_dir.join(&skill_folder_name);
         std::fs::create_dir_all(&skill_dir)
@@ -99,7 +105,9 @@ impl SkillManager {
 
         // 下载整个 skill 目录的所有文件
         let (owner, repo) = crate::models::Repository::from_github_url(&skill.repository_url)?;
-        let skill_files = self.github.get_directory_files(&owner, &repo, &skill.file_path).await
+        // 如果 file_path 是 "."，转换为空字符串以获取根目录内容
+        let api_path = if skill.file_path == "." { "" } else { &skill.file_path };
+        let skill_files = self.github.get_directory_files(&owner, &repo, api_path).await
             .context("获取技能目录文件列表失败")?;
 
         log::info!("Found {} files in skill directory", skill_files.len());
@@ -215,12 +223,18 @@ impl SkillManager {
             .context("无法创建技能目录")?;
 
         // 创建 skill 文件夹
-        let skill_folder_name = PathBuf::from(&skill.file_path)
-            .file_name()
-            .context("技能路径格式无效")?
-            .to_str()
-            .context("技能文件夹名称包含无效字符")?
-            .to_string();
+        // 如果 file_path 是 "."（位于仓库根目录），使用技能名称作为文件夹名
+        let skill_folder_name = if skill.file_path == "." {
+            log::info!("技能位于仓库根目录，使用技能名称作为文件夹名: {}", skill.name);
+            skill.name.clone()
+        } else {
+            PathBuf::from(&skill.file_path)
+                .file_name()
+                .context("技能路径格式无效")?
+                .to_str()
+                .context("技能文件夹名称包含无效字符")?
+                .to_string()
+        };
 
         let skill_dir = self.skills_dir.join(&skill_folder_name);
         std::fs::create_dir_all(&skill_dir)
@@ -228,7 +242,9 @@ impl SkillManager {
 
         // 下载整个 skill 目录的所有文件
         let (owner, repo) = crate::models::Repository::from_github_url(&skill.repository_url)?;
-        let skill_files = self.github.get_directory_files(&owner, &repo, &skill.file_path).await
+        // 如果 file_path 是 "."，转换为空字符串以获取根目录内容
+        let api_path = if skill.file_path == "." { "" } else { &skill.file_path };
+        let skill_files = self.github.get_directory_files(&owner, &repo, api_path).await
             .context("获取技能目录文件列表失败")?;
 
         log::info!("Found {} files in skill directory", skill_files.len());

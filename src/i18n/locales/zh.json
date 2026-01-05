@@ -33,6 +33,8 @@
     "uninstalling": "卸载中",
     "scanning": "扫描中",
     "delete": "删除",
+    "deleting": "删除中",
+    "deleteRecord": "删除记录",
     "empty": "[ 空 ]",
     "noSkillsFound": "未发现技能",
     "navigateToRepo": "前往仓库配置以扫描仓库",

@@ -55,10 +55,18 @@ impl GitHubService {
                         }
                     };
 
+                    // 如果路径为空（在根目录），设置为 "."
+                    let file_path = if item.path.trim().is_empty() {
+                        log::info!("技能 {} 位于仓库根目录，设置 file_path 为 '.'", name);
+                        ".".to_string()
+                    } else {
+                        item.path.clone()
+                    };
+
                     let mut skill = Skill::new(
                         name,
                         repo.url.clone(),
-                        item.path.clone(),
+                        file_path,
                     );
                     skill.description = description;
                     skills.push(skill);
@@ -100,10 +108,18 @@ impl GitHubService {
                             }
                         };
 
+                        // 如果路径为空（在根目录），设置为 "."
+                        let file_path = if item.path.trim().is_empty() {
+                            log::info!("技能 {} 位于仓库根目录，设置 file_path 为 '.'", name);
+                            ".".to_string()
+                        } else {
+                            item.path.clone()
+                        };
+
                         let mut skill = Skill::new(
                             name,
                             repo_url.to_string(),
-                            item.path.clone(),
+                            file_path,
                         );
                         skill.description = description;
                         skills.push(skill);
@@ -508,7 +524,13 @@ impl GitHubService {
         let relative_path = skill_dir.strip_prefix(repo_root)
             .context("无法计算相对路径")?;
 
-        let file_path = relative_path.to_string_lossy().to_string();
+        let mut file_path = relative_path.to_string_lossy().to_string();
+
+        // 如果 file_path 为空（SKILL.md 在仓库根目录），设置为 "."
+        if file_path.trim().is_empty() {
+            log::info!("技能位于仓库根目录，设置 file_path 为 '.'");
+            file_path = ".".to_string();
+        }
 
         // 计算checksum
         let checksum = self.calculate_checksum(&content);
