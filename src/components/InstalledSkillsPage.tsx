@@ -88,16 +88,6 @@ export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPag
 
     let skills = installedSkills;
 
-    // 搜索过滤
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      skills = skills.filter(
-        (skill) =>
-          skill.name.toLowerCase().includes(query) ||
-          skill.description?.toLowerCase().includes(query)
-      );
-    }
-
     // 仓库过滤
     if (selectedRepository !== "all") {
       skills = skills.filter(
@@ -105,12 +95,37 @@ export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPag
       );
     }
 
-    // 按安装时间排序，最近安装的在前
-    return [...skills].sort((a, b) => {
-      const timeA = a.installed_at ? new Date(a.installed_at).getTime() : 0;
-      const timeB = b.installed_at ? new Date(b.installed_at).getTime() : 0;
-      return timeB - timeA; // 降序排列
-    });
+    // 搜索过滤
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const nameMatches: Skill[] = [];
+      const descriptionMatches: Skill[] = [];
+
+      skills.forEach((skill) => {
+        const nameMatch = skill.name.toLowerCase().includes(query);
+        const descriptionMatch = skill.description?.toLowerCase().includes(query);
+
+        if (nameMatch) {
+          nameMatches.push(skill);
+        } else if (descriptionMatch) {
+          descriptionMatches.push(skill);
+        }
+      });
+
+      // 名称匹配的在前，描述匹配的在后
+      skills = [...nameMatches, ...descriptionMatches];
+    }
+
+    // 如果没有搜索关键词，按安装时间排序，最近安装的在前
+    if (!searchQuery) {
+      skills = [...skills].sort((a, b) => {
+        const timeA = a.installed_at ? new Date(a.installed_at).getTime() : 0;
+        const timeB = b.installed_at ? new Date(b.installed_at).getTime() : 0;
+        return timeB - timeA; // 降序排列
+      });
+    }
+
+    return skills;
   }, [installedSkills, searchQuery, selectedRepository]);
 
   const getSecurityBadge = (score?: number) => {

@@ -81,12 +81,10 @@ export function MarketplacePage() {
   const filteredSkills = useMemo(() => {
     if (!repositorySkills) return [];
 
-    return repositorySkills.filter((skill) => {
-      // 搜索过滤
-      const matchesSearch = !searchQuery ||
-        skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        skill.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase();
 
+    // 先过滤出所有符合条件的技能
+    let filtered = repositorySkills.filter((skill) => {
       // 仓库过滤
       const matchesRepo = selectedRepository === "all" ||
         skill.repository_owner === selectedRepository;
@@ -94,8 +92,33 @@ export function MarketplacePage() {
       // 安装状态过滤
       const matchesInstalled = !hideInstalled || !skill.installed;
 
+      // 搜索过滤
+      const matchesSearch = !searchQuery ||
+        skill.name.toLowerCase().includes(query) ||
+        skill.description?.toLowerCase().includes(query);
+
       return matchesSearch && matchesRepo && matchesInstalled;
     });
+
+    // 如果有搜索关键词，按匹配优先级排序
+    if (searchQuery) {
+      const nameMatches: Skill[] = [];
+      const descriptionMatches: Skill[] = [];
+
+      filtered.forEach((skill) => {
+        const nameMatch = skill.name.toLowerCase().includes(query);
+        if (nameMatch) {
+          nameMatches.push(skill);
+        } else {
+          descriptionMatches.push(skill);
+        }
+      });
+
+      // 名称匹配的在前，描述匹配的在后
+      filtered = [...nameMatches, ...descriptionMatches];
+    }
+
+    return filtered;
   }, [repositorySkills, searchQuery, selectedRepository, hideInstalled]);
 
   const getSecurityBadge = (score?: number) => {
