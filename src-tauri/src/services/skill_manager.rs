@@ -152,20 +152,21 @@ impl SkillManager {
             anyhow::bail!(error_msg);
         }
 
-        // 检查安全评分
-        if scan_report.score < 50 {
-            // 先删除已下载的文件
-            if skill_dir.exists() {
-                std::fs::remove_dir_all(&skill_dir)?;
-            }
-
-            anyhow::bail!(
-                "技能安全评分过低 ({}分)，为保护您的安全已阻止安装。建议评分至少为 50 分以上。\n\n扫描了 {} 个文件：{}",
-                scan_report.score,
-                scan_report.scanned_files.len(),
-                scan_report.scanned_files.join(", ")
-            );
-        }
+        // 注释掉评分检查，允许用户在前端确认后安装低分技能
+        // 只有硬触发的技能会被后端强制阻止
+        // if scan_report.score < 50 {
+        //     // 先删除已下载的文件
+        //     if skill_dir.exists() {
+        //         std::fs::remove_dir_all(&skill_dir)?;
+        //     }
+        //
+        //     anyhow::bail!(
+        //         "技能安全评分过低 ({}分)，为保护您的安全已阻止安装。建议评分至少为 50 分以上。\n\n扫描了 {} 个文件：{}",
+        //         scan_report.score,
+        //         scan_report.scanned_files.len(),
+        //         scan_report.scanned_files.join(", ")
+        //     );
+        // }
 
         // 更新 skill 安全信息
         skill.security_score = Some(scan_report.score);
@@ -190,6 +191,153 @@ impl SkillManager {
         self.db.save_skill(&skill)?;
 
         log::info!("Skill installed successfully: {}", skill.name);
+        Ok(())
+    }
+
+    /// 准备安装技能：下载并扫描，但不标记为已安装
+    /// 返回扫描报告供前端判断是否需要用户确认
+    pub async fn prepare_skill_installation(&self, skill_id: &str, locale: &str) -> Result<crate::models::security::SecurityReport> {
+        use anyhow::Context;
+
+        log::info!("Preparing installation for skill: {}", skill_id);
+
+        // 从数据库获取 skill
+        let mut skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        // 下载并分析 SKILL.md
+        let (_skill_md_content, _report) = self.download_and_analyze(&mut skill).await?;
+
+        // 确保目标目录存在
+        std::fs::create_dir_all(&self.skills_dir)
+            .context("无法创建技能目录")?;
+
+        // 创建 skill 文件夹
+        let skill_folder_name = PathBuf::from(&skill.file_path)
+            .file_name()
+            .context("技能路径格式无效")?
+            .to_str()
+            .context("技能文件夹名称包含无效字符")?
+            .to_string();
+
+        let skill_dir = self.skills_dir.join(&skill_folder_name);
+        std::fs::create_dir_all(&skill_dir)
+            .context("无法创建技能子目录")?;
+
+        // 下载整个 skill 目录的所有文件
+        let (owner, repo) = crate::models::Repository::from_github_url(&skill.repository_url)?;
+        let skill_files = self.github.get_directory_files(&owner, &repo, &skill.file_path).await
+            .context("获取技能目录文件列表失败")?;
+
+        log::info!("Found {} files in skill directory", skill_files.len());
+
+        // 下载每个文件
+        for file_info in &skill_files {
+            if file_info.content_type != "file" {
+                continue;
+            }
+
+            let download_url = file_info.download_url.as_ref()
+                .context(format!("文件 {} 缺少下载链接", file_info.name))?;
+
+            let file_content = self.github.download_file(download_url).await
+                .context(format!("下载文件失败: {}", file_info.name))?;
+
+            let local_file_path = skill_dir.join(&file_info.name);
+            std::fs::write(&local_file_path, file_content)
+                .context(format!("无法写入文件: {}", file_info.name))?;
+
+            log::info!("Saved file: {}", file_info.name);
+        }
+
+        // 扫描整个技能目录
+        let scan_report = self.scanner.scan_directory(
+            skill_dir.to_str().context("技能目录路径无效")?,
+            &skill.id,
+            locale
+        )?;
+
+        log::info!("Security scan completed: score={}, scanned {} files",
+            scan_report.score, scan_report.scanned_files.len());
+
+        // 更新 skill 安全信息到数据库（但不标记为已安装）
+        skill.security_score = Some(scan_report.score);
+        skill.security_level = Some(scan_report.level.as_str().to_string());
+        skill.security_issues = Some(
+            scan_report.issues.iter()
+                .map(|i| {
+                    let file_info = i.file_path.as_ref()
+                        .map(|f| format!("[{}] ", f))
+                        .unwrap_or_default();
+                    format!("{}{:?}: {}", file_info, i.severity, i.description)
+                })
+                .collect()
+        );
+        skill.scanned_at = Some(Utc::now());
+        skill.local_path = Some(skill_dir.to_string_lossy().to_string());
+
+        // 保存安全信息到数据库，但不标记为已安装
+        self.db.save_skill(&skill)?;
+
+        log::info!("Skill prepared successfully, awaiting user confirmation");
+        Ok(scan_report)
+    }
+
+    /// 确认安装技能：标记为已安装
+    pub fn confirm_skill_installation(&self, skill_id: &str) -> Result<()> {
+        use anyhow::Context;
+
+        log::info!("Confirming installation for skill: {}", skill_id);
+
+        let mut skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        // 标记为已安装
+        skill.installed = true;
+        skill.installed_at = Some(Utc::now());
+
+        self.db.save_skill(&skill)?;
+
+        log::info!("Skill installation confirmed: {}", skill.name);
+        Ok(())
+    }
+
+    /// 取消安装技能：删除已下载的文件
+    pub fn cancel_skill_installation(&self, skill_id: &str) -> Result<()> {
+        use anyhow::Context;
+
+        log::info!("Canceling installation for skill: {}", skill_id);
+
+        let skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        // 删除已下载的文件
+        if let Some(local_path) = &skill.local_path {
+            let path = PathBuf::from(local_path);
+            if path.exists() {
+                std::fs::remove_dir_all(&path)
+                    .context("无法删除技能文件")?;
+                log::info!("Deleted skill files: {}", local_path);
+            }
+        }
+
+        // 清除数据库中的安全信息和本地路径
+        let mut skill = skill;
+        skill.local_path = None;
+        skill.security_score = None;
+        skill.security_level = None;
+        skill.security_issues = None;
+        skill.scanned_at = None;
+
+        self.db.save_skill(&skill)?;
+
+        log::info!("Skill installation canceled: {}", skill.name);
         Ok(())
     }
 

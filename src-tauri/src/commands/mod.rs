@@ -156,6 +156,40 @@ pub async fn install_skill(
         .map_err(|e| e.to_string())
 }
 
+/// 准备安装技能：下载并扫描，但不标记为已安装
+#[tauri::command]
+pub async fn prepare_skill_installation(
+    state: State<'_, AppState>,
+    skill_id: String,
+    locale: String,
+) -> Result<crate::models::security::SecurityReport, String> {
+    let manager = state.skill_manager.lock().await;
+    manager.prepare_skill_installation(&skill_id, &locale).await
+        .map_err(|e| e.to_string())
+}
+
+/// 确认安装技能：标记为已安装
+#[tauri::command]
+pub async fn confirm_skill_installation(
+    state: State<'_, AppState>,
+    skill_id: String,
+) -> Result<(), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.confirm_skill_installation(&skill_id)
+        .map_err(|e| e.to_string())
+}
+
+/// 取消安装技能：删除已下载的文件
+#[tauri::command]
+pub async fn cancel_skill_installation(
+    state: State<'_, AppState>,
+    skill_id: String,
+) -> Result<(), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.cancel_skill_installation(&skill_id)
+        .map_err(|e| e.to_string())
+}
+
 /// 卸载 skill
 #[tauri::command]
 pub async fn uninstall_skill(

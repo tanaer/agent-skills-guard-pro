@@ -31,6 +31,7 @@
     "uninstall": "卸载",
     "installing": "安装中",
     "uninstalling": "卸载中",
+    "scanning": "扫描中",
     "delete": "删除",
     "empty": "[ 空 ]",
     "noSkillsFound": "未发现技能",

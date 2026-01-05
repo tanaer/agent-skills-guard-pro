@@ -262,7 +262,7 @@ function SkillCard({
   };
 
   const handleInstallClick = () => {
-    if ((skill.security_score != null && skill.security_score < 50) ||
+    if ((skill.security_score != null && skill.security_score < 70) ||
         (skill.security_issues && skill.security_issues.length > 0)) {
       setShowConfirm(true);
     } else {

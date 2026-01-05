@@ -33,6 +33,7 @@ export function MarketplacePage() {
     skill: Skill;
     report: SecurityReport;
   } | null>(null);
+  const [preparingSkillId, setPreparingSkillId] = useState<string | null>(null);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -214,76 +215,39 @@ export function MarketplacePage() {
               index={index}
               onInstall={async () => {
                 try {
-                  // 扫描 Skill（使用已有的 security_score 或进行实时扫描）
-                  let report: SecurityReport | null = null;
+                  console.log('[INFO] 开始安装技能:', skill.name);
+                  setPreparingSkillId(skill.id);
 
-                  // 如果 skill 已有 local_path，说明已下载，可以直接扫描
-                  if (skill.local_path) {
-                    try {
-                      report = await invoke<SecurityReport>("scan_skill_archive", {
-                        archivePath: skill.local_path,
-                        locale: i18n.language,
-                      });
-                    } catch (scanError) {
-                      console.warn("扫描失败，将继续安装:", scanError);
-                    }
-                  }
+                  // 第一阶段：下载并扫描技能
+                  const report = await invoke<SecurityReport>("prepare_skill_installation", {
+                    skillId: skill.id,
+                    locale: i18n.language,
+                  });
 
-                  // 如果没有扫描报告但有缓存的评分，构造一个简单的报告
-                  if (!report && skill.security_score != null) {
-                    report = {
-                      skill_id: skill.id,
-                      score: skill.security_score,
-                      level: skill.security_score >= 90 ? "Safe" :
-                             skill.security_score >= 70 ? "Low" :
-                             skill.security_score >= 50 ? "Medium" : "High",
-                      issues: (skill.security_issues || []).map(issue => {
-                        // 解析格式：[文件名] Severity: description
-                        const filePathMatch = issue.match(/^\[([^\]]+)\]\s*/);
-                        const filePath = filePathMatch ? filePathMatch[1] : undefined;
-                        const descriptionPart = filePathMatch ? issue.slice(filePathMatch[0].length) : issue;
-
-                        return {
-                          severity: "Warning",
-                          category: "Unknown",
-                          description: descriptionPart,
-                          file_path: filePath
-                        };
-                      }),
-                      recommendations: [],
-                      blocked: false,
-                      hard_trigger_issues: [],
-                      scanned_files: []
-                    };
-                  }
+                  console.log('[INFO] 扫描完成，评分:', report.score);
+                  setPreparingSkillId(null);
 
                   // 判断是否需要用户确认
-                  if (report) {
-                    // 如果被阻止，显示错误
-                    if (report.blocked) {
-                      showToast(t('skills.marketplace.install.blocked'));
-                      setPendingInstall({ skill, report });
-                      return;
-                    }
-
-                    // 如果评分低于 70，显示确认对话框
-                    if (report.score < 70) {
-                      setPendingInstall({ skill, report });
-                      return;
-                    }
+                  if (report.score < 70 || report.blocked) {
+                    console.log('[INFO] 需要用户确认，显示安全警告弹窗');
+                    setPendingInstall({ skill, report });
+                    return;
                   }
 
-                  // 安全评分 >= 70 或无扫描结果，直接安装
-                  installMutation.mutate(skill.id, {
-                    onSuccess: () => {
-                      showToast(t('skills.toast.installed'));
-                    },
-                    onError: (error: any) => {
-                      showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
-                    },
+                  // 第二阶段：评分 >= 70 且未被阻止，直接确认安装
+                  console.log('[INFO] 安全评分良好，直接确认安装');
+                  await invoke("confirm_skill_installation", {
+                    skillId: skill.id,
                   });
+
+                  showToast(t('skills.toast.installed'));
+
+                  // 刷新技能列表
+                  installMutation.mutate(skill.id);
                 } catch (error: any) {
-                  showToast(`${t('skills.marketplace.install.preparationFailed')}: ${error.message || error}`);
+                  console.error('[ERROR] 安装失败:', error);
+                  setPreparingSkillId(null);
+                  showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
                 }
               }}
               onUninstall={() => {
@@ -298,7 +262,8 @@ export function MarketplacePage() {
               }}
               isInstalling={installMutation.isPending && installMutation.variables === skill.id}
               isUninstalling={uninstallMutation.isPending && uninstallMutation.variables === skill.id}
-              isAnyOperationPending={installMutation.isPending || uninstallMutation.isPending}
+              isPreparing={preparingSkillId === skill.id}
+              isAnyOperationPending={installMutation.isPending || uninstallMutation.isPending || preparingSkillId !== null}
               getSecurityBadge={getSecurityBadge}
               t={t}
             />
@@ -344,19 +309,38 @@ export function MarketplacePage() {
       {/* Install Confirmation Dialog */}
       <InstallConfirmDialog
         open={pendingInstall !== null}
-        onClose={() => setPendingInstall(null)}
-        onConfirm={() => {
+        onClose={async () => {
+          // 用户点击"取消"，删除已下载的文件
           if (pendingInstall) {
-            setPendingInstall(null);
-            installMutation.mutate(pendingInstall.skill.id, {
-              onSuccess: () => {
-                showToast(t('skills.toast.installed'));
-              },
-              onError: (error: any) => {
-                showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
-              },
-            });
+            try {
+              await invoke("cancel_skill_installation", {
+                skillId: pendingInstall.skill.id,
+              });
+              console.log('[INFO] 已取消安装并删除文件');
+            } catch (error: any) {
+              console.error('[ERROR] 取消安装失败:', error);
+            }
           }
+          setPendingInstall(null);
+        }}
+        onConfirm={async () => {
+          // 用户点击"继续"，确认安装
+          if (pendingInstall) {
+            try {
+              await invoke("confirm_skill_installation", {
+                skillId: pendingInstall.skill.id,
+              });
+              console.log('[INFO] 用户确认安装');
+              showToast(t('skills.toast.installed'));
+
+              // 刷新技能列表
+              installMutation.mutate(pendingInstall.skill.id);
+            } catch (error: any) {
+              console.error('[ERROR] 确认安装失败:', error);
+              showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
+            }
+          }
+          setPendingInstall(null);
         }}
         report={pendingInstall?.report || null}
         skillName={pendingInstall?.skill.name || ""}
@@ -372,6 +356,7 @@ interface SkillCardProps {
   onUninstall: () => void;
   isInstalling: boolean;
   isUninstalling: boolean;
+  isPreparing: boolean;
   isAnyOperationPending: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
   t: (key: string, options?: any) => string;
@@ -384,12 +369,12 @@ function SkillCard({
   onUninstall,
   isInstalling,
   isUninstalling,
+  isPreparing,
   isAnyOperationPending,
   getSecurityBadge,
   t
 }: SkillCardProps) {
   const [showDetails, setShowDetails] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const showLocalToast = (message: string) => {
@@ -410,16 +395,6 @@ function SkillCard({
   };
 
   const handleInstallClick = () => {
-    if ((skill.security_score != null && skill.security_score < 50) ||
-        (skill.security_issues && skill.security_issues.length > 0)) {
-      setShowConfirm(true);
-    } else {
-      onInstall();
-    }
-  };
-
-  const confirmInstall = () => {
-    setShowConfirm(false);
     onInstall();
   };
 
@@ -496,7 +471,12 @@ function SkillCard({
               disabled={isAnyOperationPending}
               className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
-              {isInstalling ? (
+              {isPreparing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('skills.scanning')}
+                </>
+              ) : isInstalling ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   {t('skills.installing')}
@@ -600,78 +580,6 @@ function SkillCard({
               value={new Date(skill.installed_at).toLocaleString('zh-CN')}
             />
           )}
-        </div>
-      )}
-
-      {/* Risk Confirmation Dialog */}
-      {showConfirm && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          style={{ animation: 'fadeIn 0.2s ease-out' }}
-        >
-          <div className="bg-card border-2 border-terminal-orange rounded-lg p-6 max-w-md w-full shadow-2xl"
-            style={{ boxShadow: '0 0 30px rgba(251, 146, 60, 0.3)' }}
-          >
-            <div className="flex items-start gap-4 mb-6">
-              <AlertTriangle className="w-8 h-8 text-terminal-orange flex-shrink-0 animate-pulse" />
-              <div>
-                <h3 className="text-xl font-bold text-terminal-orange mb-2 tracking-wider uppercase">
-                  {t('skills.securityWarning')}
-                </h3>
-                <p className="text-sm text-muted-foreground font-mono">
-                  {t('skills.highRiskSkillDetected')}
-                </p>
-              </div>
-            </div>
-
-            {skill.security_score != null && (
-              <div className="mb-4 p-3 bg-terminal-orange/10 border border-terminal-orange/30 rounded">
-                <p className="text-xs font-mono text-terminal-orange mb-1">{t('skills.securityScore')}</p>
-                <p className="text-sm font-mono text-foreground">
-                  {skill.security_score}/100
-                  {skill.security_score < 50 && ` ${t('skills.criticalRisk')}`}
-                  {skill.security_score >= 50 && skill.security_score < 70 && ` ${t('skills.elevatedRisk')}`}
-                </p>
-              </div>
-            )}
-
-            {skill.security_issues && skill.security_issues.length > 0 && (
-              <div className="mb-4 p-3 bg-muted border border-border rounded max-h-40 overflow-y-auto">
-                <p className="text-xs font-mono text-terminal-red mb-2">{t('skills.detectedIssues')}</p>
-                <ul className="text-xs space-y-1 font-mono">
-                  {skill.security_issues.slice(0, 5).map((issue, idx) => (
-                    <li key={idx} className="text-muted-foreground">
-                      <span className="text-terminal-red">[{idx + 1}]</span> {issue}
-                    </li>
-                  ))}
-                  {skill.security_issues.length > 5 && (
-                    <li className="text-muted-foreground italic">
-                      ... +{skill.security_issues.length - 5} {t('skills.moreIssues')}
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
-
-            <p className="text-xs text-muted-foreground font-mono mb-6 p-3 bg-muted/50 rounded border border-border">
-              <span className="text-terminal-orange">[!]</span> {t('skills.installWarning')}
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 px-4 py-3 rounded bg-card border border-border text-foreground hover:border-terminal-cyan transition-all font-mono text-sm"
-              >
-                {t('skills.abort')}
-              </button>
-              <button
-                onClick={confirmInstall}
-                className="flex-1 px-4 py-3 rounded bg-terminal-orange border border-terminal-orange text-background hover:bg-terminal-orange/90 transition-all font-mono text-sm font-bold"
-              >
-                {t('skills.proceedAnyway')}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -786,16 +694,24 @@ function InstallConfirmDialog({
                 </div>
               )}
 
-              {/* 建议 */}
-              {report.recommendations.length > 0 && (
+              {/* 具体问题列表 */}
+              {report.issues.length > 0 && (
                 <div className={`p-3 rounded-lg ${
                   isHighRisk ? 'bg-red-500/10 border border-red-500/50' :
                   isMediumRisk ? 'bg-yellow-500/10 border border-yellow-500/50' :
                   'bg-green-500/10 border border-green-500/50'
                 }`}>
-                  <ul className="space-y-1 text-sm">
-                    {report.recommendations.slice(0, 3).map((rec, idx) => (
-                      <li key={idx}>• {rec}</li>
+                  <ul className="space-y-1 text-sm font-mono">
+                    {report.issues.slice(0, 3).map((issue, idx) => (
+                      <li key={idx} className="text-xs">
+                        {issue.file_path && (
+                          <span className="text-terminal-cyan mr-1.5">[{issue.file_path}]</span>
+                        )}
+                        {issue.description}
+                        {issue.line_number && (
+                          <span className="text-muted-foreground ml-2">(行 {issue.line_number})</span>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -814,18 +730,16 @@ function InstallConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onClose}>{t('skills.marketplace.install.cancel')}</AlertDialogCancel>
-          {!report.blocked && (
-            <button
-              onClick={onConfirm}
-              className={`px-4 py-2 rounded font-mono ${
-                isHighRisk ? 'bg-red-500 hover:bg-red-600' :
-                isMediumRisk ? 'bg-yellow-500 hover:bg-yellow-600' :
-                'bg-green-500 hover:bg-green-600'
-              } text-white`}
-            >
-              {isHighRisk ? t('skills.marketplace.install.installAnyway') : isMediumRisk ? t('skills.marketplace.install.installCautiously') : t('skills.marketplace.install.install')}
-            </button>
-          )}
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 rounded font-mono ${
+              isHighRisk ? 'bg-red-500 hover:bg-red-600' :
+              isMediumRisk ? 'bg-yellow-500 hover:bg-yellow-600' :
+              'bg-green-500 hover:bg-green-600'
+            } text-white`}
+          >
+            {isHighRisk ? t('skills.marketplace.install.installAnyway') : isMediumRisk ? t('skills.marketplace.install.installCautiously') : t('skills.marketplace.install.install')}
+          </button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
