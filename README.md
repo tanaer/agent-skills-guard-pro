@@ -1,233 +1,134 @@
 # Agent Skills Guard
 
-<div align="center">
+## 让你的 Claude Code 技能探索之旅 安全又安心
 
-**为 Claude Code Agent 打造的智能技能安全管理器**
-
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/yourusername/agent-skills-guard)
+[![Version](https://img.shields.io/badge/version-0.9.1-blue.svg)](https://github.com/yourusername/agent-skills-guard)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.70+-orange.svg)](https://www.rust-lang.org)
-[![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://reactjs.org)
-[![Tauri](https://img.shields.io/badge/Tauri-2.8-ffc131.svg)](https://tauri.app)
 
-</div>
+**一个懂你的 Claude Code 技能管家**
 
 ---
 
-## 📖 项目简介
+## ✨ 为什么需要它？
 
-**Agent Skills Guard** 是一个专为 [Claude Code](https://claude.com/claude-code) Agent 设计的开源安全管理工具。它通过先进的静态分析和基于规则的扫描引擎，为你的 Claude Code 技能（Skills）提供全方位的安全防护，让你放心地安装和使用第三方技能。
+当你用 Claude Code 进行 vibe coding 时，是不是经常：
 
-### 🎯 核心价值
+📦 **安装了很多技能**，却不知道它们都在哪里、都是做什么的？
 
-- **🛡️ 安全第一**：60+ 条安全规则，覆盖破坏性操作、命令注入、权限提升等 8 大类别
-- **🔍 智能扫描**：自动扫描本地和远程技能，生成详细的安全报告和修复建议
-- **📦 技能市场**：集成 GitHub 仓库，一键安装社区优质技能
-- **🌐 多语言支持**：中英文界面，适应全球开发者
-- **🎨 Cyber 主题**：科技感十足的终端风格 UI，操作体验极佳
-- **⚡ 高性能**：Rust 后端 + React 前端，原生性能，轻量级安装包
+🔍 **想试试新技能**，却担心安全问题，不知道从哪开始？
 
----
+🤔 **技能多了之后**，管理混乱，不知道哪些该保留、哪些该卸载？
 
-## ✨ 核心功能
+**Agent Skills Guard** 就是为这些问题而生的。
 
-### 1️⃣ 安全仪表盘（Overview）
-
-实时监控你的技能安全状态：
-
-- **统计卡片**：已安装技能数、总问题数、高危问题数
-- **扫描状态**：最近扫描时间、扫描进度、快速操作
-- **问题汇总**：按严重程度分类的问题统计（Critical/High/Medium/Low）
-- **问题列表**：详细的安全问题清单，支持点击查看详情和源代码
-
-### 2️⃣ 已安装技能（Installed Skills）
-
-管理你本地的所有技能：
-
-- 查看技能详情（名称、描述、作者、版本、仓库地址）
-- 查看安全评分和风险等级（Safe / Low Risk / Medium Risk / High Risk）
-- 一键卸载或删除技能
-- 批量扫描所有已安装技能
-- 快速打开技能目录
-
-### 3️⃣ 技能市场（Marketplace）
-
-发现并安装优质技能：
-
-- 浏览来自不同仓库的技能
-- 实时搜索和过滤
-- 查看技能详细信息和安全评估
-- 安装前自动安全扫描
-- 风险提示和确认机制（检测到高风险时需确认）
-
-### 4️⃣ 仓库管理（Repositories）
-
-灵活管理你的技能来源：
-
-- 添加/删除 GitHub 仓库
-- 扫描仓库中的所有技能
-- 查看缓存统计（文件数、大小、更新时间）
-- 清理缓存、刷新缓存
-- 支持多仓库同时管理
+它让原本隐藏在 `~/.claude/skills/` 目录下的技能变得**可见、可管、可控**，让你像逛应用商店一样管理 Claude Code 技能。
 
 ---
 
-## 🔒 安全扫描引擎
+## 🎯 核心功能
 
-### 规则类别
+### 📊 一目了然的可视化管理
 
-Agent Skills Guard 内置 **60+ 条安全规则**，覆盖以下类别：
+告别命令行和文件夹，用直观的界面管理所有技能：
 
-| 类别                          | 说明           | 示例                                        |
-| ----------------------------- | -------------- | ------------------------------------------- |
-| **Destructive**         | 破坏性操作     | `rm -rf /`, `dd if=/dev/zero`, `mkfs` |
-| **RemoteExec**          | 远程代码执行   | `curl \| sh`, `wget \| bash`              |
-| **CmdInjection**        | 命令注入       | `eval`, `exec`, `system()`            |
-| **Network**             | 未授权网络请求 | 未经许可的 HTTP 请求、数据外传              |
-| **Privilege**           | 权限提升       | `sudo`, `su`, `setuid`                |
-| **Secrets**             | 敏感信息泄露   | API keys, tokens, passwords                 |
-| **Persistence**         | 持久化         | cron, systemd, 启动项                       |
-| **SensitiveFileAccess** | 敏感文件访问   | `/etc/passwd`, SSH keys, `.env`         |
+- **概览页面**：一眼看清所有技能的安全状态
+  ![概览页面](screen-shot/overview.png)
+- **我的技能**：查看已安装技能的详细信息，一键卸载
+  ![我的技能](screen-shot/myskills.png)
+- **技能市场**：从 GitHub 仓库探索和安装社区技能
+  ![技能市场](screen-shot/skillsmarket.png)
+- **仓库配置**：添加和管理技能来源
+  ![仓库配置](screen-shot/repositories.png)
 
-### 风险等级
+### 🛡️ 智能安全扫描
 
-- **Critical**（严重）：立即阻止安装，需要修复
-- **High**（高危）：强烈建议修复
-- **Medium**（中危）：建议审查和修复
-- **Low**（低危）：提示注意
+在安装前帮你把关，在使用时给你提醒：
 
-### 安全评分系统
+- **60+条安全规则**：覆盖破坏性操作、远程代码执行、命令注入等风险
+- **直观的安全评分**：0-100分，一眼看穿技能安全性
+- **详细的扫描报告**：告诉你哪里有风险、为什么有风险、如何修复
 
-- **90-100 分**：✅ 安全（Safe / Green）
-- **70-89 分**：⚠️ 低风险（Low Risk / Yellow）
-- **50-69 分**：🔶 中风险（Medium Risk / Orange）
-- **0-49 分**：🚨 高风险（High Risk / Red）
+![扫描结果](screen-shot/scanresult.png)
 
-### 扫描报告内容
+### 🌐 中英双语界面
 
-每次扫描生成详细报告：
-
-- 问题描述和位置（文件路径、行号）
-- 严重程度和类别
-- 代码片段（高亮显示问题代码）
-- 修复建议（Remediation）
-- 是否阻止安装（Blocked）
+中文界面，让使用更亲切
 
 ---
 
 ## 🚀 快速开始
 
-### 前置要求
+### 安装
 
-确保你已安装以下环境：
-
-- **Node.js** 20+
-- **pnpm** 10.10.0+（推荐使用 pnpm）
-- **Rust** 1.70+（通过 [rustup](https://rustup.rs/) 安装）
-- **系统依赖**：
-  - macOS: Xcode Command Line Tools
-  - Windows: Visual Studio Build Tools
-
-### 安装步骤
-
-1. **克隆仓库**
+GitHub release 界面下载安装包，支持Mac/Windows 或自行编译：
 
 ```bash
+# 1. 克隆项目
 git clone https://github.com/yourusername/agent-skills-guard.git
 cd agent-skills-guard
-```
 
-2. **安装依赖**
-
-```bash
+# 2. 安装依赖
 pnpm install
-```
 
-3. **运行开发环境**
-
-```bash
+# 3. 启动应用
 pnpm dev
 ```
 
-应用会自动打开，Vite 开发服务器运行在 `http://localhost:5173`。
+就这么简单！应用会自动打开。
+
+### 使用流程
+
+**第一次使用？**
+
+1. 点击「仓库配置」添加你喜欢的技能仓库
+2. 等待自动扫描完成
+3. 在「技能市场」浏览和安装技能
+4. 安装前会自动进行安全检查
+
+**已有技能？**
+
+1. 点击「概览」页面的「一键扫描」
+2. 查看所有技能的安全评分
+3. 根据报告决定哪些技能需要卸载
 
 ---
 
-## 🛠️ 开发指南
+## 💡 典型场景
 
-### 可用脚本
+### 场景一：发现一个超酷的技能
 
-| 命令                     | 说明                                   |
-| ------------------------ | -------------------------------------- |
-| `pnpm dev`             | 启动 Tauri + Vite 开发服务器（热重载） |
-| `pnpm dev:renderer`    | 仅启动 Vite 前端开发服务器             |
-| `pnpm build`           | 构建生产环境应用（生成安装包）         |
-| `pnpm build:renderer`  | 仅构建前端（输出到 `dist/`）         |
-| `pnpm typecheck`       | 运行 TypeScript 类型检查               |
-| `pnpm format`          | 格式化代码（Prettier）                 |
-| `pnpm format:check`    | 检查代码格式                           |
-| `pnpm test:unit`       | 运行单元测试（Vitest）                 |
-| `pnpm test:unit:watch` | 监视模式运行测试                       |
+你在 GitHub 上看到一个能自动生成代码注释的技能，想试试但又担心安全。
 
-### 构建生产版本
+**使用 Agent Skills Guard：**
 
-```bash
-pnpm build
-```
+1. 在「技能市场」搜索这个技能
+2. 点击「安装」，系统自动扫描
+3. 看到安全评分是 85 分，有 2 个低风险提示
+4. 查看详情后觉得可以接受，点击「仍然安装」
+5. ✅ 安装成功，安心使用
 
-构建产物位置：
+### 场景二：定期技能整理
 
-- **Windows**: `src-tauri/target/release/bundle/msi/Agent Skills Guard_0.9.0_x64_en-US.msi`
-- **macOS**: `src-tauri/target/release/bundle/dmg/Agent Skills Guard_0.9.0_aarch64.dmg`
+每个月，你想清理一下不再使用的技能。
+
+**使用 Agent Skills Guard：**
+
+1. 打开「我的技能」页面
+2. 浏览所有已安装技能及其功能描述
+3. 看到有几个技能早已忘记用途，安全评分也不高
+4. 点击「卸载」，轻松清理
+5. ✅ 技能库焕然一新
 
 ---
 
-## 📁 项目结构
+## 🗺️ 后续规划
 
-```
-agent-skills-guard/
-├── src/                          # 前端源代码（React + TypeScript）
-│   ├── components/              # React 组件
-│   │   ├── ui/                  # UI 基础组件（Radix UI）
-│   │   ├── overview/            # Overview 页面子组件
-│   │   ├── OverviewPage.tsx     # 安全仪表盘
-│   │   ├── InstalledSkillsPage.tsx  # 已安装技能
-│   │   ├── MarketplacePage.tsx  # 技能市场
-│   │   ├── RepositoriesPage.tsx # 仓库配置
-│   │   ├── WindowControls.tsx   # 窗口控制
-│   │   └── LanguageSwitcher.tsx # 语言切换
-│   ├── hooks/                   # React Hooks
-│   ├── lib/                     # 工具函数和 API 调用
-│   ├── i18n/                    # 国际化（中英文）
-│   ├── types/                   # TypeScript 类型定义
-│   ├── styles/                  # 全局样式（Cyber 主题）
-│   ├── App.tsx                  # 主应用组件
-│   └── main.tsx                 # 入口文件
-│
-├── src-tauri/                   # Tauri 后端（Rust）
-│   ├── src/
-│   │   ├── models/              # 数据模型（Skill, Repository, Security）
-│   │   ├── services/            # 业务服务
-│   │   │   ├── database.rs      # SQLite 数据库
-│   │   │   ├── github.rs        # GitHub API
-│   │   │   └── skill_manager.rs # 技能管理（下载、安装、扫描）
-│   │   ├── security/            # 安全扫描模块 ⭐
-│   │   │   ├── rules.rs         # 安全规则引擎（60+ 规则）
-│   │   │   └── scanner.rs       # 安全扫描器
-│   │   ├── commands/            # Tauri 命令（前后端通信）
-│   │   ├── lib.rs               # 库入口（托盘、菜单）
-│   │   └── main.rs              # 主入口
-│   ├── icons/                   # 应用图标
-│   ├── Cargo.toml               # Rust 依赖配置
-│   └── tauri.conf.json          # Tauri 应用配置
-│
-├── test-skills/                 # 测试用技能样例
-├── docs/                        # 文档
-├── package.json                 # 前端依赖配置
-├── vite.config.mts              # Vite 配置
-├── tailwind.config.js           # Tailwind 配置
-└── tsconfig.json                # TypeScript 配置
-```
+- [ ] **技能在线更新**：GitHub 有更新时自动提醒
+- [ ] **程序自动更新**：应用本身支持在线升级
+- [ ] **精选技能仓库**：内置官方精选的优质技能
+- [ ] **同名技能管理**：智能处理同名技能的兼容性
+- [ ] **增强安全扫描**：更多维度的安全检测
+- [ ] **界面优化**：更美观的交互体验
 
 ---
 
@@ -235,99 +136,41 @@ agent-skills-guard/
 
 ### 前端
 
-- **框架**: React 18.3 + TypeScript 5.9
-- **构建工具**: Vite 5.0
-- **UI 组件**: Radix UI（无障碍组件库）
-- **样式**: Tailwind CSS 3.4 + Cyber 主题
-- **动画**: Framer Motion 12.23
-- **图标**: Lucide React
-- **状态管理**: TanStack Query v5.90（数据获取和缓存）
-- **表单**: React Hook Form 7.65 + Zod 4.1
-- **国际化**: i18next 25.5 + react-i18next 16.0
-- **通知**: Sonner 2.0
-- **测试**: Vitest 2.0 + Testing Library
+- React 18.3 + TypeScript
+- Tailwind CSS（酷炫的 Cyber 主题）
+- Radix UI（无障碍组件）
+- Framer Motion（流畅动画）
+- i18next（国际化）
 
 ### 后端
 
-- **框架**: Tauri 2.8（Rust 跨平台桌面应用）
-- **数据库**: rusqlite 0.32（SQLite）
-- **HTTP 客户端**: reqwest 0.12
-- **异步运行时**: tokio 1.40
-- **序列化**: serde + serde_json + serde_yaml
-- **错误处理**: thiserror + anyhow
-- **文件系统**: walkdir 2.5 + tempfile 3.13
-- **加密和哈希**: sha2 0.10 + hex 0.4
-- **正则表达式**: regex 1.11
-- **压缩**: zip 2.2
+- Tauri 2.8（Rust 跨平台桌面应用）
+- SQLite（本地数据库）
+- 基于规则的安全扫描引擎
 
 ---
 
-## 🗂️ 技能存储
+## ⚠️ 免责声明
 
-默认技能目录：`~/.claude/skills/`
+**重要提示：请在使用前仔细阅读以下内容**
 
-目录结构：
-
-```
-~/.claude/skills/
-├── skill-name-1/
-│   └── SKILL.md
-├── skill-name-2/
-│   └── SKILL.md
-└── ...
-```
-
-每个技能由一个 `SKILL.md` 文件定义。
-
----
-
-## 🌍 国际化
-
-支持语言：
-
-- 🇺🇸 English
-- 🇨🇳 简体中文
-
-切换方式：点击右上角的语言切换器
-
-翻译文件位置：
-
-- `src/i18n/locales/en.json`
-- `src/i18n/locales/zh.json`
-
----
-
-## 📋 路线图
-
-- [X] 核心安全扫描引擎
-- [X] 技能市场和仓库管理
-- [X] Cyber 主题 UI
-- [X] 中英文双语支持
-- [X] 跨平台支持（Windows / macOS ）
-- [ ] 技能仓库的增量更新
-- [ ] 安全扫描增强
-- [ ] 程序本身的自动更新
-- [ ] ...
+1. **安全检测仅供参考**：本程序提供的安全扫描基于预设规则，旨在帮助用户识别潜在风险。但安全检测不能保证 100% 准确，可能存在误报或漏报的情况。
+2. **用户自行承担风险**：安装、使用或卸载任何技能所带来的所有后果（包括但不限于数据丢失、系统损坏、安全漏洞等）均由用户自行承担。开发者不对因使用本程序或任何技能而导致的任何损失或损害承担责任。
+3. **审查技能代码**：建议在安装任何技能前，仔细阅读并理解其源代码。对于来自不可信来源的技能，请格外谨慎。
+4. **免费使用**：本程序免费提供给用户使用，但不提供任何形式的明示或暗示担保。
+5. **操作需谨慎**：使用本程序进行技能卸载、仓库管理等操作时，请确保理解操作的含义和后果。建议在操作前备份重要数据。
 
 ---
 
 ## 📜 许可证
 
-本项目基于 [MIT License](LICENSE) 开源。
+MIT License - 自由使用，自由分享
 
 ---
 
-## 📧 联系方式
+## 📧 反馈与建议
 
-如有问题或建议，请通过以下方式联系：
+有问题或建议？欢迎通过以下方式联系：
 
-- GitHub Issues
-- Email: brucevanfdm@gmail.com
-
----
-
-<div align="center">
-
-**⭐ 如果这个项目对你有帮助，请给它一个 Star！⭐**
-
-</div>
+- [GitHub Issues](https://github.com/yourusername/agent-skills-guard/issues)
+- [X/Twitter](https://x.com/brucevanfdm)
