@@ -135,8 +135,10 @@
     "enabled": "已启用",
     "url": "链接：",
     "lastScan": "上次扫描：",
-    "scan": "扫描",
-    "scanning": "扫描中",
+    "scan": "一键扫描",
+    "scanning": "扫描中...",
+    "rescan": "重新扫描",
+    "rescanning": "重新扫描中...",
     "noReposFound": "未发现仓库",
     "clickAddRepo": "点击「添加仓库」以配置您的第一个仓库",
     "cache": {
