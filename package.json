@@ -1,6 +1,6 @@
 {
   "name": "agent-skills-guard",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "A secure manager for Claude Code agent skills with safety checks and cross-platform support",
   "type": "module",
   "scripts": {
