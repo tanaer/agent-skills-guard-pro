@@ -135,9 +135,6 @@ export function RepositoriesPage() {
   };
 
 
-  const handleRefreshCache = (repoId: string) => {
-    refreshCacheMutation.mutate(repoId);
-  };
 
   return (
     <div className="space-y-6">
@@ -396,62 +393,51 @@ export function RepositoriesPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 ml-4">
+                  {/* 智能扫描按钮 */}
                   <button
                     onClick={() => {
-                      setScanningRepoId(repo.id);
-                      scanMutation.mutate(repo.id, {
-                        onSuccess: (skills) => {
-                          setScanningRepoId(null);
-                          showToast(t('repositories.toast.foundSkills', { count: skills.length }));
-                        },
-                        onError: (error: any) => {
-                          setScanningRepoId(null);
-                          showToast(`${t('repositories.toast.scanError')}${error.message || error}`);
-                        },
-                      });
+                      if (repo.cache_path) {
+                        // 已缓存：重新扫描
+                        refreshCacheMutation.mutate(repo.id, {
+                          onSuccess: (skills) => {
+                            showToast(t('repositories.toast.foundSkills', { count: skills.length }));
+                          },
+                          onError: (error: any) => {
+                            showToast(`${t('repositories.toast.scanError')}${error.message || error}`);
+                          },
+                        });
+                      } else {
+                        // 未缓存：一键扫描
+                        setScanningRepoId(repo.id);
+                        scanMutation.mutate(repo.id, {
+                          onSuccess: (skills) => {
+                            setScanningRepoId(null);
+                            showToast(t('repositories.toast.foundSkills', { count: skills.length }));
+                          },
+                          onError: (error: any) => {
+                            setScanningRepoId(null);
+                            showToast(`${t('repositories.toast.scanError')}${error.message || error}`);
+                          },
+                        });
+                      }
                     }}
-                    disabled={scanMutation.isPending || deleteMutation.isPending}
+                    disabled={scanMutation.isPending || refreshCacheMutation.isPending || deleteMutation.isPending}
                     className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 text-xs"
                   >
-                    {scanningRepoId === repo.id ? (
+                    {(scanningRepoId === repo.id && scanMutation.isPending) || refreshCacheMutation.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        {t('repositories.scanning')}
+                        {repo.cache_path ? t('repositories.rescanning') : t('repositories.scanning')}
                       </>
                     ) : (
                       <>
-                        <Search className="w-4 h-4" />
-                        {t('repositories.scan')}
+                        {repo.cache_path ? <RefreshCw className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                        {repo.cache_path ? t('repositories.rescan') : t('repositories.scan')}
                       </>
                     )}
                   </button>
 
-                  {/* Cache Management Buttons */}
-                  {repo.cache_path && (
-                    <>
-                      <button
-                        onClick={() => handleRefreshCache(repo.id)}
-                        disabled={refreshCacheMutation.isPending}
-                        title={t('repositories.cache.refreshTooltip')}
-                        className="px-3 py-2 rounded font-mono text-xs border border-terminal-purple text-terminal-purple hover:bg-terminal-purple hover:text-background hover:shadow-[0_0_10px_rgba(168,85,247,0.4)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                      >
-                        {refreshCacheMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            {t('repositories.cache.refreshing')}
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-4 h-4" />
-                            {t('repositories.cache.refresh')}
-                          </>
-                        )}
-                      </button>
-
-                      {/* TODO: Task 5 - 实现新的智能扫描按钮替换清除缓存功能 */}
-                    </>
-                  )}
-
+                  {/* 删除按钮 */}
                   <button
                     onClick={() => {
                       setDeletingRepoId(repo.id);
