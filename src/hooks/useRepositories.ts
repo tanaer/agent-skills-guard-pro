@@ -27,6 +27,7 @@ export function useDeleteRepository() {
     mutationFn: (repoId: string) => api.deleteRepository(repoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["repositories"] });
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
     },
   });
 }
