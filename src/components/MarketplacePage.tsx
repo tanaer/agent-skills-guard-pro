@@ -39,12 +39,18 @@ export function MarketplacePage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // 只显示从仓库扫描的技能，排除本地技能
+  const repositorySkills = useMemo(() => {
+    if (!allSkills) return [];
+    return allSkills.filter(skill => skill.repository_owner !== "local");
+  }, [allSkills]);
+
   // 提取所有仓库及其技能数量
   const repositories = useMemo(() => {
-    if (!allSkills) return [];
+    if (!repositorySkills) return [];
     const ownerMap = new Map<string, number>();
 
-    allSkills.forEach((skill) => {
+    repositorySkills.forEach((skill) => {
       const owner = skill.repository_owner || "unknown";
       ownerMap.set(owner, (ownerMap.get(owner) || 0) + 1);
     });
@@ -53,15 +59,15 @@ export function MarketplacePage() {
       .map(([owner, count]) => ({
         owner,
         count,
-        displayName: owner === "local" ? t('skills.marketplace.localRepo') : `@${owner}`
+        displayName: `@${owner}`
       }))
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
     return [
-      { owner: "all", count: allSkills.length, displayName: t('skills.marketplace.allRepos') },
+      { owner: "all", count: repositorySkills.length, displayName: t('skills.marketplace.allRepos') },
       ...repos
     ];
-  }, [allSkills, i18n.language, t]);
+  }, [repositorySkills, i18n.language, t]);
 
   // 转换为 CyberSelect 选项格式
   const repositoryOptions: CyberSelectOption[] = useMemo(() => {
@@ -73,9 +79,9 @@ export function MarketplacePage() {
 
   // 筛选逻辑
   const filteredSkills = useMemo(() => {
-    if (!allSkills) return [];
+    if (!repositorySkills) return [];
 
-    return allSkills.filter((skill) => {
+    return repositorySkills.filter((skill) => {
       // 搜索过滤
       const matchesSearch = !searchQuery ||
         skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,7 +96,7 @@ export function MarketplacePage() {
 
       return matchesSearch && matchesRepo && matchesInstalled;
     });
-  }, [allSkills, searchQuery, selectedRepository, hideInstalled]);
+  }, [repositorySkills, searchQuery, selectedRepository, hideInstalled]);
 
   const getSecurityBadge = (score?: number) => {
     if (!score) return null;
