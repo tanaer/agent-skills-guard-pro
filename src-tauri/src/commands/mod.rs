@@ -35,14 +35,45 @@ pub async fn get_repositories(
         .map_err(|e| e.to_string())
 }
 
-/// 删除仓库
+/// 删除仓库（同时删除未安装的技能和清理缓存）
 #[tauri::command]
 pub async fn delete_repository(
     state: State<'_, AppState>,
     repo_id: String,
 ) -> Result<(), String> {
+    // 1. 获取仓库信息
+    let repo = state.db.get_repository(&repo_id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "仓库不存在".to_string())?;
+
+    let repository_url = repo.url.clone();
+    let cache_path = repo.cache_path.clone();
+
+    // 2. 删除未安装的技能（使用事务）
+    let deleted_skills_count = state.db.delete_uninstalled_skills_by_repository_url(&repository_url)
+        .map_err(|e| e.to_string())?;
+
+    log::info!("删除仓库 {} 的 {} 个未安装技能", repo.name, deleted_skills_count);
+
+    // 3. 清理缓存目录（失败不中断）
+    if let Some(cache_path_str) = cache_path {
+        let cache_path_buf = std::path::PathBuf::from(&cache_path_str);
+        if cache_path_buf.exists() {
+            match std::fs::remove_dir_all(&cache_path_buf) {
+                Ok(_) => log::info!("成功删除缓存目录: {:?}", cache_path_buf),
+                Err(e) => log::warn!("删除缓存目录失败，但不影响仓库删除: {:?}, 错误: {}", cache_path_buf, e),
+            }
+        } else {
+            log::info!("缓存目录不存在，跳过清理: {:?}", cache_path_buf);
+        }
+    }
+
+    // 4. 删除仓库记录
     state.db.delete_repository(&repo_id)
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+    log::info!("成功删除仓库: {}", repo.name);
+    Ok(())
 }
 
 /// 扫描仓库中的 skills
