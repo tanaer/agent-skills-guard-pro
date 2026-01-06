@@ -64,7 +64,7 @@ GitHub release 界面下载安装包，支持Mac/Windows 或自行编译：
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/yourusername/agent-skills-guard.git
+git clone https://github.com/brucevanfdm/agent-skills-guard.git
 cd agent-skills-guard
 
 # 2. 安装依赖
@@ -172,5 +172,5 @@ MIT License - 自由使用，自由分享
 
 有问题或建议？欢迎通过以下方式联系：
 
-- [GitHub Issues](https://github.com/yourusername/agent-skills-guard/issues)
+- [GitHub Issues](https://github.com/brucevanfdm/agent-skills-guard/issues)
 - [X/Twitter](https://x.com/brucevanfdm)
