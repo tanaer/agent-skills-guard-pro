@@ -189,7 +189,7 @@ function AppContent() {
             }}
           >
             {currentTab === "overview" && <OverviewPage />}
-            {currentTab === "installed" && <InstalledSkillsPage onNavigateToOverview={() => setCurrentTab("overview")} />}
+            {currentTab === "installed" && <InstalledSkillsPage />}
             {currentTab === "marketplace" && <MarketplacePage />}
             {currentTab === "repositories" && <RepositoriesPage />}
           </div>

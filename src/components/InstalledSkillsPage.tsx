@@ -1,19 +1,15 @@
 import { useState, useMemo } from "react";
 import { useInstalledSkills, useUninstallSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
-import { Trash2, Loader2, FolderOpen, Package, Search, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { Trash2, Loader2, FolderOpen, Package, Search, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
 import { formatRepositoryTag } from "../lib/utils";
 import { CyberSelect, type CyberSelectOption } from "./ui/CyberSelect";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "../lib/api";
 
-interface InstalledSkillsPageProps {
-  onNavigateToOverview: () => void;
-}
-
-export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPageProps) {
+export function InstalledSkillsPage() {
   const { t, i18n } = useTranslation();
   const { data: installedSkills, isLoading } = useInstalledSkills();
   const uninstallMutation = useUninstallSkill();
@@ -252,7 +248,6 @@ export function InstalledSkillsPage({ onNavigateToOverview }: InstalledSkillsPag
               isUninstalling={uninstallingSkillId === skill.id}
               isAnyOperationPending={uninstallMutation.isPending}
               getSecurityBadge={getSecurityBadge}
-              onNavigateToOverview={onNavigateToOverview}
               t={t}
             />
           ))}
@@ -302,7 +297,6 @@ interface SkillCardProps {
   isUninstalling: boolean;
   isAnyOperationPending: boolean;
   getSecurityBadge: (score?: number) => React.ReactNode;
-  onNavigateToOverview: () => void;
   t: (key: string, options?: any) => string;
 }
 
@@ -313,10 +307,8 @@ function SkillCard({
   isUninstalling,
   isAnyOperationPending,
   getSecurityBadge,
-  onNavigateToOverview,
   t
 }: SkillCardProps) {
-  const [showDetails, setShowDetails] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const showLocalToast = (message: string) => {
@@ -328,7 +320,7 @@ function SkillCard({
     if (!skill.local_path) return;
 
     try {
-      await openPath(skill.local_path);
+      await invoke('open_skill_directory', { localPath: skill.local_path });
       showLocalToast(t('skills.folder.opened'));
     } catch (error: any) {
       console.error('[ERROR] Failed to open folder:', error);
@@ -402,88 +394,42 @@ function SkillCard({
       </div>
 
       {/* Description */}
-      <p className="text-sm text-muted-foreground mb-3 font-mono">
+      <p className="text-sm text-muted-foreground mb-4 font-mono">
         {skill.description || t('skills.noDescription')}
       </p>
 
-      {/* Repository Info */}
-      <div className="flex items-center gap-4 mb-3 text-xs font-mono flex-wrap">
-        <span className="text-muted-foreground">
-          <span className="text-terminal-purple">{t('skills.path')}</span> {skill.file_path}
-        </span>
-      </div>
-
-      {/* Details Toggle */}
-      <button
-        onClick={() => setShowDetails(!showDetails)}
-        className="flex items-center gap-2 text-xs font-mono text-terminal-cyan hover:text-terminal-cyan/80 transition-colors mt-4 group/details"
-      >
-        {showDetails ? (
-          <>
-            <ChevronUp className="w-4 h-4 transition-transform group-hover/details:translate-y-[-2px]" />
-            {t('skills.collapseDetails')}
-          </>
-        ) : (
-          <>
-            <ChevronDown className="w-4 h-4 transition-transform group-hover/details:translate-y-[2px]" />
-            {t('skills.expandDetails')}
-          </>
+      {/* Skill Info */}
+      <div className="space-y-2">
+        {/* Local Path - Clickable to open folder */}
+        {skill.local_path && (
+          <div className="flex items-start gap-2 text-xs font-mono">
+            <span className="text-terminal-cyan whitespace-nowrap">{t('skills.localPath')}:</span>
+            <button
+              onClick={handleOpenFolder}
+              className="text-muted-foreground break-all hover:text-terminal-cyan transition-colors flex items-center gap-2 group flex-1 text-left"
+            >
+              <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 group-hover:text-terminal-cyan" />
+              <span>{skill.local_path}</span>
+            </button>
+          </div>
         )}
-      </button>
 
-      {/* Details Panel */}
-      {showDetails && (
-        <div
-          className="mt-4 p-4 bg-muted/50 border border-border rounded space-y-3"
-          style={{ animation: 'fadeIn 0.3s ease-out' }}
-        >
-          <DetailItem label={t('skills.fullRepository')} value={skill.repository_url} />
-          {skill.version && <DetailItem label={t('skills.version')} value={skill.version} />}
-          {skill.author && <DetailItem label={t('skills.author')} value={skill.author} />}
-          {skill.local_path && (
-            <div className="text-xs font-mono">
-              <p className="text-terminal-cyan mb-1">{t('skills.localPath')}:</p>
-              <button
-                onClick={handleOpenFolder}
-                className="text-muted-foreground break-all hover:text-terminal-cyan transition-colors flex items-center gap-2 group"
-              >
-                <FolderOpen className="w-4 h-4 flex-shrink-0 group-hover:text-terminal-cyan" />
-                <span className="text-left">{skill.local_path}</span>
-              </button>
-            </div>
-          )}
-
-          {skill.security_score != null && (
-            <div className="text-xs font-mono">
-              <p className="text-terminal-cyan mb-1">{t('skills.securityAnalysis')}</p>
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">
-                  {skill.security_score}/100 {" "}
-                  {skill.security_score >= 90 && t('skills.safe')}
-                  {skill.security_score >= 70 && skill.security_score < 90 && t('skills.lowRiskLabel')}
-                  {skill.security_score >= 50 && skill.security_score < 70 && t('skills.mediumRiskLabel')}
-                  {skill.security_score < 50 && t('skills.highRiskInstallNotRecommended')}
-                </p>
-                {skill.security_issues && skill.security_issues.length > 0 && (
-                  <button
-                    onClick={onNavigateToOverview}
-                    className="text-terminal-cyan hover:text-terminal-cyan/80 underline transition-colors"
-                  >
-                    {t('skills.viewSecurityReport')}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {skill.installed_at && (
-            <DetailItem
-              label={t('skills.installedAt')}
-              value={new Date(skill.installed_at).toLocaleString('zh-CN')}
-            />
-          )}
-        </div>
-      )}
+        {/* Installed Time */}
+        {skill.installed_at && (
+          <div className="flex items-center gap-2 text-xs font-mono">
+            <span className="text-terminal-cyan">{t('skills.installedAt')}:</span>
+            <span className="text-muted-foreground">
+              {new Date(skill.installed_at).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Local Toast for Folder Open Feedback */}
       {toast && (
@@ -500,15 +446,6 @@ function SkillCard({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-xs font-mono">
-      <p className="text-terminal-cyan mb-1">{label}:</p>
-      <p className="text-muted-foreground break-all">{value}</p>
     </div>
   );
 }

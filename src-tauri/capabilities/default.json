@@ -9,6 +9,7 @@
     "process:default",
     "store:default",
     "shell:allow-open",
+    "shell:allow-execute",
     "opener:default",
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
