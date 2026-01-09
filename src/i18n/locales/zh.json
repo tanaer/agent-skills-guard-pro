@@ -189,6 +189,11 @@
       "error": "错误：",
       "foundSkills": "发现 {{count}} 个技能",
       "scanError": "扫描错误："
+    },
+    "featured": {
+      "title": "精选仓库",
+      "add": "添加",
+      "added": "已添加"
     }
   },
   "language": {

@@ -39,6 +39,11 @@ export enum SecurityLevel {
 }
 
 export type { CacheStats, ClearAllCachesResult } from './cache';
+export type {
+  FeaturedRepositoriesConfig,
+  FeaturedRepository,
+  FeaturedRepositoryCategory
+} from './featured';
 
 export interface InstallPathSelection {
   type: 'user' | 'recent' | 'custom';

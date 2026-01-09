@@ -189,6 +189,11 @@
       "error": "ERROR:",
       "foundSkills": "FOUND_{{count}}_SKILLS",
       "scanError": "SCAN_ERROR:"
+    },
+    "featured": {
+      "title": "FEATURED_REPOSITORIES",
+      "add": "ADD",
+      "added": "ADDED"
     }
   },
   "language": {

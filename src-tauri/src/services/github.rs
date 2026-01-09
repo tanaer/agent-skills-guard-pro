@@ -336,22 +336,49 @@ impl GitHubService {
         fs::create_dir_all(&repo_cache_dir)
             .context("无法创建缓存目录")?;
 
-        // 2. 下载压缩包
-        let url = format!("{}/repos/{}/{}/zipball/main", self.api_base, owner, repo);
-        log::info!("正在下载仓库压缩包: {}", url);
+        // 2. 尝试下载压缩包（先尝试 main，如果 404 则尝试 master）
+        let branches = ["main", "master"];
+        let mut last_error = None;
+        let mut response = None;
 
-        let response = self.client.get(&url).send().await
-            .context("下载压缩包失败")?;
+        for branch in branches.iter() {
+            let url = format!("{}/repos/{}/{}/zipball/{}", self.api_base, owner, repo, branch);
+            log::info!("正在尝试下载仓库压缩包 (分支: {}): {}", branch, url);
 
-        // 检查API限流
-        self.check_rate_limit(&response)?;
+            match self.client.get(&url).send().await {
+                Ok(resp) => {
+                    // 检查API限流
+                    if let Err(e) = self.check_rate_limit(&resp) {
+                        return Err(e);
+                    }
 
-        if !response.status().is_success() {
-            return Err(anyhow::anyhow!(
-                "下载失败，HTTP状态码: {}",
-                response.status()
-            ));
+                    if resp.status().is_success() {
+                        log::info!("成功找到分支: {}", branch);
+                        response = Some(resp);
+                        break;
+                    } else if resp.status() == reqwest::StatusCode::NOT_FOUND {
+                        log::info!("分支 {} 不存在，尝试下一个分支", branch);
+                        last_error = Some(anyhow::anyhow!("分支 {} 不存在", branch));
+                        continue;
+                    } else {
+                        last_error = Some(anyhow::anyhow!(
+                            "下载失败，HTTP状态码: {}",
+                            resp.status()
+                        ));
+                        continue;
+                    }
+                }
+                Err(e) => {
+                    log::warn!("请求分支 {} 时发生错误: {}", branch, e);
+                    last_error = Some(anyhow::anyhow!("请求失败: {}", e));
+                    continue;
+                }
+            }
         }
+
+        let response = response.ok_or_else(|| {
+            last_error.unwrap_or_else(|| anyhow::anyhow!("所有分支均下载失败"))
+        })?;
 
         // 3. 保存压缩包到本地
         let archive_path = repo_cache_dir.join("archive.zip");

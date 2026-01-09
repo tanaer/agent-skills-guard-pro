@@ -1,0 +1,51 @@
+# Featured Repositories Configuration
+# 精选仓库配置
+#
+# This file contains curated skill repositories recommended for Agent Skills Guard users.
+# 本文件包含为 Agent Skills Guard 用户推荐的精选技能仓库。
+
+version: "1.0"
+last_updated: "2026-01-09"
+
+categories:
+  # Official repositories
+  - id: "official"
+    name:
+      en: "Official"
+      zh: "官方推荐"
+    description:
+      en: "Official and verified skill repositories"
+      zh: "官方认证的技能仓库"
+    repositories:
+      - url: "https://github.com/anthropics/skills"
+        name: "anthropics"
+        description:
+          en: "Official Anthropic skills repository for Claude Code"
+          zh: "Anthropic 官方 Claude Code 技能仓库"
+        tags: ["official", "verified", "claude-code"]
+        featured: true
+
+  # Community repositories
+  - id: "community"
+    name:
+      en: "Community"
+      zh: "社区精选"
+    description:
+      en: "High-quality community-contributed skill repositories"
+      zh: "社区贡献的高质量技能仓库"
+    repositories:
+      - url: "https://github.com/obra/superpowers"
+        name: "obra"
+        description:
+          en: "Community superpowers collection for Claude Code"
+          zh: "社区超能力技能集合"
+        tags: ["community", "popular", "superpowers"]
+        featured: true
+
+      - url: "https://github.com/ComposioHQ/awesome-claude-skills"
+        name: "ComposioHQ"
+        description:
+          en: "Awesome list of Claude skills and resources"
+          zh: "精选 Claude 技能和资源列表"
+        tags: ["community", "awesome", "resources"]
+        featured: true

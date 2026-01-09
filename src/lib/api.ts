@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Repository, Skill, CacheStats } from "../types";
+import type { Repository, Skill, CacheStats, FeaturedRepositoriesConfig, ClearAllCachesResult } from "../types";
 
 export const api = {
   // Repository APIs
@@ -65,5 +65,14 @@ export const api = {
   // 打开技能目录
   async openSkillDirectory(localPath: string): Promise<void> {
     return invoke("open_skill_directory", { localPath });
+  },
+
+  // Featured repositories
+  async getFeaturedRepositories(): Promise<FeaturedRepositoriesConfig> {
+    return invoke("get_featured_repositories");
+  },
+
+  async isRepositoryAdded(url: string): Promise<boolean> {
+    return invoke("is_repository_added", { url });
   },
 };

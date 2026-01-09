@@ -219,6 +219,8 @@ pub fn run() {
             commands::open_skill_directory,
             commands::get_default_install_path,
             commands::select_custom_install_path,
+            commands::get_featured_repositories,
+            commands::is_repository_added,
             scan_all_installed_skills,
             get_scan_results,
             scan_skill_archive,

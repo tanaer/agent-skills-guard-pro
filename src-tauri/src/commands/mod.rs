@@ -1,6 +1,6 @@
 pub mod security;
 
-use crate::models::{Repository, Skill};
+use crate::models::{Repository, Skill, FeaturedRepositoriesConfig};
 use crate::services::{Database, GitHubService, SkillManager};
 use std::sync::Arc;
 use tauri::State;
@@ -535,4 +535,39 @@ pub async fn select_custom_install_path(app: tauri::AppHandle) -> Result<Option<
     } else {
         Ok(None)
     }
+}
+
+/// 获取精选仓库列表
+#[tauri::command]
+pub async fn get_featured_repositories() -> Result<FeaturedRepositoriesConfig, String> {
+    use std::fs;
+    use std::path::PathBuf;
+
+    // 获取项目根目录下的 YAML 文件路径
+    let yaml_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .ok_or("Failed to get parent directory")?
+        .join("featured-repositories.yaml");
+
+    // 读取 YAML 文件
+    let yaml_content = fs::read_to_string(&yaml_path)
+        .map_err(|e| format!("Failed to read featured repositories: {}", e))?;
+
+    // 解析 YAML
+    let config: FeaturedRepositoriesConfig = serde_yaml::from_str(&yaml_content)
+        .map_err(|e| format!("Failed to parse featured repositories: {}", e))?;
+
+    Ok(config)
+}
+
+/// 检查仓库是否已添加
+#[tauri::command]
+pub async fn is_repository_added(
+    state: State<'_, AppState>,
+    url: String,
+) -> Result<bool, String> {
+    let repos = state.db.get_repositories()
+        .map_err(|e| e.to_string())?;
+
+    Ok(repos.iter().any(|r| r.url == url))
 }

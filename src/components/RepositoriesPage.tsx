@@ -9,6 +9,7 @@ import { Search, Plus, Trash2, GitBranch, Loader2, Database, X, Terminal, Refres
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
+import { FeaturedRepositories } from "./FeaturedRepositories";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -254,6 +255,16 @@ export function RepositoriesPage() {
           </div>
         </div>
       )}
+
+      {/* Featured Repositories */}
+      <FeaturedRepositories
+        onAdd={(url, name) => {
+          setNewRepoUrl(url);
+          setNewRepoName(name);
+          handleAddRepository();
+        }}
+        isAdding={addMutation.isPending}
+      />
 
       {/* Add Repository Form */}
       {showAddForm && (
