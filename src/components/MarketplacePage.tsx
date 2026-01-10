@@ -351,11 +351,13 @@ export function MarketplacePage() {
 
               console.log('[INFO] 用户确认安装');
 
-              // 刷新技能列表
-              await queryClient.invalidateQueries({ queryKey: ["skills"] });
+                  // 刷新技能列表
+                  await queryClient.invalidateQueries({ queryKey: ["skills"] });
+                  await queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+                  await queryClient.invalidateQueries({ queryKey: ["scanResults"] });
 
-              // 数据刷新完成后显示 toast
-              showToast(t('skills.toast.installed'));
+                  // 数据刷新完成后显示 toast
+                  showToast(t('skills.toast.installed'));
             } catch (error: any) {
               console.error('[ERROR] 确认安装失败:', error);
               showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
@@ -396,6 +398,8 @@ export function MarketplacePage() {
 
               // 刷新技能列表
               await queryClient.invalidateQueries({ queryKey: ["skills"] });
+              await queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+              await queryClient.invalidateQueries({ queryKey: ["scanResults"] });
 
               // 数据刷新完成后显示 toast
               showToast(t('skills.toast.installed'));

@@ -34,8 +34,9 @@ export function InstalledSkillsPage() {
       return localSkills;
     },
     onSuccess: (localSkills) => {
-      queryClient.invalidateQueries({ queryKey: ["installedSkills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
       queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["scanResults"] });
       showToast(t('skills.installedPage.scanCompleted', { count: localSkills.length }));
     },
     onError: (error: any) => {

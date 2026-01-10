@@ -49,7 +49,7 @@ pub async fn scan_all_installed_skills(
                                 let file_info = i.file_path.as_ref()
                                     .map(|f| format!("[{}] ", f))
                                     .unwrap_or_default();
-                                format!("{}{}", file_info, i.description)
+                                format!("{}{:?}: {}", file_info, i.severity, i.description)
                             })
                             .collect()
                     );
@@ -112,22 +112,43 @@ pub async fn get_scan_results(
                     let parts: Vec<&str> = remaining.splitn(2, ": ").collect();
                     if parts.len() == 2 {
                         let severity = match parts[0] {
-                            "Critical" => IssueSeverity::Critical,
-                            "Error" => IssueSeverity::Error,
-                            "Warning" => IssueSeverity::Warning,
-                            _ => IssueSeverity::Info,
+                            "Critical" => Some(IssueSeverity::Critical),
+                            "Error" => Some(IssueSeverity::Error),
+                            "Warning" => Some(IssueSeverity::Warning),
+                            "Info" => Some(IssueSeverity::Info),
+                            _ => None,
                         };
 
+                        if let Some(severity) = severity {
+                            Some(SecurityIssue {
+                                severity,
+                                category: IssueCategory::Other,
+                                description: parts[1].to_string(),
+                                line_number: None,
+                                code_snippet: None,
+                                file_path,
+                            })
+                        } else {
+                            // 兼容旧格式（没有 Severity 前缀）：保留原始文本，避免丢失规则名等信息
+                            Some(SecurityIssue {
+                                severity: IssueSeverity::Info,
+                                category: IssueCategory::Other,
+                                description: remaining.to_string(),
+                                line_number: None,
+                                code_snippet: None,
+                                file_path,
+                            })
+                        }
+                    } else {
+                        // 兼容无法解析的格式：保留原始文本
                         Some(SecurityIssue {
-                            severity,
+                            severity: IssueSeverity::Info,
                             category: IssueCategory::Other,
-                            description: parts[1].to_string(),
+                            description: remaining.to_string(),
                             line_number: None,
                             code_snippet: None,
                             file_path,
                         })
-                    } else {
-                        None
                     }
                 }).collect()
             } else {

@@ -74,7 +74,8 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
       return await api.uninstallSkill(skillId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["installedSkills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
       toast.success(t('skills.toast.uninstalled'), {
         duration: 3000,

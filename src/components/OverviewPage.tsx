@@ -20,7 +20,7 @@ export function OverviewPage() {
 
   // 获取已安装技能
   const { data: installedSkills = [] } = useQuery<Skill[]>({
-    queryKey: ["installedSkills"],
+    queryKey: ["skills", "installed"],
     queryFn: api.getInstalledSkills,
   });
 
@@ -52,7 +52,7 @@ export function OverviewPage() {
         console.log(`扫描到 ${localSkillsCount} 个本地技能`);
 
         // 重新获取技能列表并等待完成
-        await queryClient.refetchQueries({ queryKey: ["installedSkills"] });
+        await queryClient.refetchQueries({ queryKey: ["skills", "installed"] });
         await queryClient.refetchQueries({ queryKey: ["skills"] });
       } catch (error: any) {
         console.error('扫描本地技能失败:', error);
@@ -79,6 +79,8 @@ export function OverviewPage() {
     },
     onSuccess: ({ results, localSkillsCount }) => {
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
 
       // 显示合并的成功提示
       toast.success(

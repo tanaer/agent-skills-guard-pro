@@ -28,6 +28,8 @@ export function useInstallSkill() {
       api.installSkill(skillId, installPath),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+      queryClient.invalidateQueries({ queryKey: ["scanResults"] });
     },
   });
 }
@@ -39,6 +41,8 @@ export function useUninstallSkill() {
     mutationFn: (skillId: string) => api.uninstallSkill(skillId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+      queryClient.invalidateQueries({ queryKey: ["scanResults"] });
     },
   });
 }
@@ -50,6 +54,8 @@ export function useDeleteSkill() {
     mutationFn: (skillId: string) => api.deleteSkill(skillId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+      queryClient.invalidateQueries({ queryKey: ["scanResults"] });
     },
   });
 }

@@ -645,7 +645,7 @@ impl SkillManager {
                         // 计算 checksum
                         let checksum = self.scanner.calculate_checksum(content.as_bytes());
 
-                        // 解析 frontmatter 获取元数据（用于去重）
+                        // 解析 frontmatter 获取元数据（用于展示/更新）
                         let (skill_name, skill_description) = self.parse_frontmatter(&content)
                             .unwrap_or_else(|_| {
                                 (
@@ -657,23 +657,77 @@ impl SkillManager {
                                 )
                             });
 
-                        // 检查是否已存在（基于技能名称）
-                        if let Some(mut existing_skill) = existing_skills.iter()
-                            .find(|s| s.name == skill_name)
+                        // 检查是否已存在（按 local_path 去重，避免目录不变但名称变化导致重复导入）
+                        let local_path_str = path.to_string_lossy().to_string();
+                        let existing_by_path = existing_skills
+                            .iter()
+                            .filter(|s| s.local_path.as_deref() == Some(local_path_str.as_str()))
                             .cloned()
-                        {
-                            // 如果已存在但未标记为已安装，更新状态
+                            .collect::<Vec<_>>();
+
+                        if existing_by_path.len() > 1 {
+                            log::warn!(
+                                "Found {} duplicated skills with same local_path={}, will update the first one",
+                                existing_by_path.len(),
+                                local_path_str
+                            );
+                        }
+
+                        if let Some(mut existing_skill) = existing_by_path.into_iter().next() {
+                            // 确保安装状态/路径一致
                             if !existing_skill.installed {
                                 existing_skill.installed = true;
                                 existing_skill.installed_at = Some(Utc::now());
-                                existing_skill.local_path = Some(path.to_string_lossy().to_string());
-                                existing_skill.checksum = Some(checksum.clone());
-
-                                // 更新数据库
-                                self.db.save_skill(&existing_skill)?;
-                                log::info!("Updated existing skill to installed: {}", skill_name);
+                            }
+                            if existing_skill.local_path.as_deref() != Some(local_path_str.as_str()) {
+                                existing_skill.local_path = Some(local_path_str.clone());
                             }
 
+                            // 更新 checksum（基于 SKILL.md 内容）
+                            if existing_skill.checksum.as_deref() != Some(checksum.as_str()) {
+                                existing_skill.checksum = Some(checksum.clone());
+                            }
+
+                            // 仅对本地导入的技能（repository_url == local）更新 name/description/file_path
+                            // 避免覆盖市场技能的元数据来源（仓库扫描/市场配置）
+                            if existing_skill.repository_url == "local" {
+                                existing_skill.name = skill_name;
+                                existing_skill.description = skill_description;
+                                existing_skill.file_path = local_path_str.clone();
+                            }
+
+                            // 命中已有 local_path：刷新安全扫描信息，避免安全结果陈旧
+                            let report = self.scanner.scan_directory(
+                                path.to_str().unwrap_or(""),
+                                &existing_skill.id,
+                                "zh",
+                            )?;
+
+                            existing_skill.security_score = Some(report.score);
+                            existing_skill.security_issues = Some(
+                                report
+                                    .issues
+                                    .iter()
+                                    .map(|i| {
+                                        let file_info = i
+                                            .file_path
+                                            .as_ref()
+                                            .map(|f| format!("[{}] ", f))
+                                            .unwrap_or_default();
+                                        format!("{}{:?}: {}", file_info, i.severity, i.description)
+                                    })
+                                    .collect(),
+                            );
+                            existing_skill.security_level = Some(match report.level {
+                                crate::models::security::SecurityLevel::Safe => "Safe".to_string(),
+                                crate::models::security::SecurityLevel::Low => "Low".to_string(),
+                                crate::models::security::SecurityLevel::Medium => "Medium".to_string(),
+                                crate::models::security::SecurityLevel::High => "High".to_string(),
+                                crate::models::security::SecurityLevel::Critical => "Critical".to_string(),
+                            });
+                            existing_skill.scanned_at = Some(Utc::now());
+
+                            self.db.save_skill(&existing_skill)?;
                             scanned_skills.push(existing_skill);
                             continue;
                         }
