@@ -312,5 +312,17 @@
       "expand": "EXPAND",
       "collapse": "COLLAPSE"
     }
+  },
+  "update": {
+    "available": "Update Available",
+    "check": "Check for Updates",
+    "checking": "Checking...",
+    "upToDate": "You're up to date",
+    "newVersionAvailable": "New version available",
+    "downloadAndInstall": "Download & Install",
+    "downloading": "Downloading...",
+    "installing": "Installing...",
+    "failed": "Update failed, please try again later",
+    "checkFailed": "Failed to check for updates"
   }
 }

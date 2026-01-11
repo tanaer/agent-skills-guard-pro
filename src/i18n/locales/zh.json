@@ -312,5 +312,17 @@
       "expand": "展开",
       "collapse": "收起"
     }
+  },
+  "update": {
+    "available": "发现新版本",
+    "check": "检查更新",
+    "checking": "检查中...",
+    "upToDate": "已是最新版本",
+    "newVersionAvailable": "发现新版本",
+    "downloadAndInstall": "下载并安装",
+    "downloading": "下载中...",
+    "installing": "安装中...",
+    "failed": "更新失败，请稍后重试",
+    "checkFailed": "检查更新失败"
   }
 }

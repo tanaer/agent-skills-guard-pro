@@ -8,6 +8,7 @@ import { Package, ShoppingCart, Database as DatabaseIcon, LayoutDashboard } from
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { WindowControls } from "./components/WindowControls";
+import { UpdateBadge } from "./components/UpdateBadge";
 import { Toaster } from "sonner";
 import { getPlatform, type Platform } from "./lib/platform";
 
@@ -81,8 +82,9 @@ function AppContent() {
                 {/* 中间：Logo 和标题 */}
                 {renderLogoTitle(true)}
 
-                {/* 右侧：语言切换器 */}
-                <div className="pointer-events-auto">
+                {/* 右侧：更新徽章 + 语言切换器 */}
+                <div className="flex items-center gap-3 pointer-events-auto">
+                  <UpdateBadge />
                   <LanguageSwitcher />
                 </div>
               </>
@@ -94,8 +96,11 @@ function AppContent() {
                 {/* 左侧：Logo 和标题 */}
                 {renderLogoTitle(false)}
 
-                {/* 右侧：语言切换器和窗口控件 */}
+                {/* 右侧：更新徽章 + 语言切换器和窗口控件 */}
                 <div className="flex items-center gap-4">
+                  <div className="pointer-events-auto">
+                    <UpdateBadge />
+                  </div>
                   <div className="pointer-events-auto">
                     <LanguageSwitcher />
                   </div>
