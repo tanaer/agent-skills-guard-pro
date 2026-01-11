@@ -191,7 +191,7 @@ export function InstalledSkillsPage() {
           <p className="text-sm font-mono text-terminal-cyan terminal-cursor">{t('skills.loading')}</p>
         </div>
       ) : filteredSkills && filteredSkills.length > 0 ? (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredSkills.map((skill, index) => (
             <SkillCard
               key={skill.id}

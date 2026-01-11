@@ -215,7 +215,7 @@ export function MarketplacePage() {
           <p className="text-sm font-mono text-terminal-cyan terminal-cursor">{t('skills.loading')}</p>
         </div>
       ) : filteredSkills && filteredSkills.length > 0 ? (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredSkills.map((skill, index) => (
             <SkillCard
               key={skill.id}
@@ -561,7 +561,7 @@ function SkillCard({
               <button
                 onClick={onDelete}
                 disabled={isAnyOperationPending}
-                className="neon-button text-terminal-orange border-terminal-orange hover:bg-terminal-orange disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                className="neon-button text-terminal-red border-terminal-red hover:bg-terminal-red disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 title={t('skills.deleteRecord')}
               >
                 {isDeleting ? (
@@ -571,7 +571,7 @@ function SkillCard({
                   </>
                 ) : (
                   <>
-                    <XCircle className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                     {t('skills.delete')}
                   </>
                 )}
@@ -598,9 +598,6 @@ function SkillCard({
           >
             {skill.repository_url}
           </a>
-        </span>
-        <span className="text-muted-foreground">
-          <span className="text-terminal-purple">{t('skills.path')}</span> {skill.file_path}
         </span>
         {skill.local_path && (
           <button
