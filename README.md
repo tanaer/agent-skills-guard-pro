@@ -1,5 +1,13 @@
 # Agent Skills Guard
 
+<div align="center">
+
+![Version](https://img.shields.io/badge/version-0.9.3-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)
+
+</div>
+
 ## 让你的 Claude Code 技能探索之旅 安全又安心
 
 **一个懂你的 Claude Code 技能管家**
@@ -34,22 +42,33 @@
   ![我的技能](screen-shot/myskills.png)
 - **技能市场**：从 GitHub 仓库探索和安装社区技能
   ![技能市场](screen-shot/skillsmarket.png)
-- **仓库配置**：添加和管理技能来源
+- **仓库配置**：添加和管理技能来源(内置精选社区技能，不断更新)
   ![仓库配置](screen-shot/repositories.png)
+  ![仓库配置](screen-shot/featuredrepositories.png)
 
 ### 🛡️ 智能安全扫描
 
 在安装前帮你把关，在使用时给你提醒：
 
 - **60+条安全规则**：覆盖破坏性操作、远程代码执行、命令注入等风险
+- **符号链接检测**：自动识别潜在的符号链接风险
+- **目录扫描限制**：防止扫描陷入过深的目录结构
 - **直观的安全评分**：0-100分，一眼看穿技能安全性
 - **详细的扫描报告**：告诉你哪里有风险、为什么有风险、如何修复
 
 ![扫描结果](screen-shot/scanresult.png)
 
-### 🌐 中英双语界面
+### 🔄 自动更新
 
-中文界面，让使用更亲切
+- **应用自动更新**：集成 GitHub Actions，自动检测并安装新版本
+- **无缝升级体验**：后台下载，一键更新
+
+### 🎨 现代化界面
+
+- **Cyberpunk 风格设计**：赛博朋克主题，科技感十足
+- **响应式布局**：完美适配各种屏幕尺寸
+- **流畅动画**：精心打磨的交互体验
+- **中英双语界面**：支持中文和英文切换
 
 ---
 
@@ -57,36 +76,46 @@
 
 ### 安装
 
-GitHub release 界面下载安装包，支持Mac/Windows 或自行编译：
+#### 方式一：下载安装包（推荐）
+
+访问 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) 下载最新版本：
+
+- **macOS**：下载 `.dmg` 或 `.app.tar.gz` 文件
+- **Windows**：下载 `.msi` 或 `.exe` 安装包
+
+#### 方式二：自行编译
 
 ```bash
 # 1. 克隆项目
 git clone https://github.com/brucevanfdm/agent-skills-guard.git
 cd agent-skills-guard
 
-# 2. 安装依赖
+# 2. 安装依赖（需要 pnpm）
 pnpm install
 
-# 3. 启动应用
+# 3. 开发模式运行
 pnpm dev
-```
 
-就这么简单！应用会自动打开。
+# 或者构建生产版本
+pnpm build
+```
 
 ### 使用流程
 
 **第一次使用？**
 
-1. 点击「仓库配置」添加你喜欢的技能仓库
-2. 等待自动扫描完成
+1. 查看「推荐仓库」或点击「仓库配置」添加你喜欢的技能仓库
+2. 等待自动扫描完成（支持刷新和缓存管理）
 3. 在「技能市场」浏览和安装技能
-4. 安装前会自动进行安全检查
+4. 安装时可选择自定义路径或使用默认路径
+5. 安装前会自动进行安全检查
 
 **已有技能？**
 
 1. 点击「概览」页面的「一键扫描」
-2. 查看所有技能的安全评分
+2. 查看所有技能的安全评分和状态
 3. 根据报告决定哪些技能需要卸载
+4. 一键打开技能文件夹进行管理
 
 ---
 
@@ -118,14 +147,39 @@ pnpm dev
 
 ---
 
+## 📝 更新日志
+
+### v0.9.3 (最新版本)
+
+#### 🔒 安全性改进
+
+- 重新生成带密码保护的签名密钥
+- 优化 CI/CD 工作流，修复 pnpm 版本冲突
+
+### v0.9.2
+
+#### ✨ 核心功能
+
+- 🎉 **新增自动更新功能**：集成 GitHub Actions 自动更新机制
+- 📚 **推荐仓库系统**：内置精选仓库配置，支持刷新和缓存管理
+- 🎨 **界面全面升级**：强化 Cyberpunk 风格，优化字体和布局
+- 📦 **多路径安装支持**：支持自定义安装路径和最近路径选择
+- 🔍 **安全扫描增强**：新增符号链接检测和目录扫描限制
+- ⚡ **性能优化**：添加缓存机制，提升响应速度
+
+[查看完整更新日志](https://github.com/brucevanfdm/agent-skills-guard/releases)
+
+---
+
 ## 🗺️ 后续规划
 
+- [X] **程序自动更新**：应用本身支持在线升级 ✅
+- [X] **精选技能仓库**：内置官方精选的优质技能 ✅
+- [X] **多路径安装**：支持自定义技能安装路径 ✅
 - [ ] **技能在线更新**：GitHub 有更新时自动提醒
-- [ ] **程序自动更新**：应用本身支持在线升级
-- [ ] **精选技能仓库**：内置官方精选的优质技能
 - [ ] **同名技能管理**：智能处理同名技能的兼容性
 - [ ] **增强安全扫描**：更多维度的安全检测
-- [ ] **界面优化**：更美观的交互体验
+- [ ] **技能依赖管理**：自动处理技能之间的依赖关系
 
 ---
 
@@ -133,17 +187,20 @@ pnpm dev
 
 ### 前端
 
-- React 18.3 + TypeScript
-- Tailwind CSS（酷炫的 Cyber 主题）
-- Radix UI（无障碍组件）
-- Framer Motion（流畅动画）
-- i18next（国际化）
+- **React 18.3** + **TypeScript** - 现代化前端框架
+- **Tailwind CSS** - 酷炫的 Cyberpunk 主题定制
+- **Radix UI** - 无障碍组件库
+- **Framer Motion** - 流畅的交互动画
+- **TanStack Query** - 强大的数据状态管理
+- **i18next** - 完整的国际化支持
+- **React Hook Form** + **Zod** - 类型安全的表单验证
 
 ### 后端
 
-- Tauri 2.8（Rust 跨平台桌面应用）
-- SQLite（本地数据库）
-- 基于规则的安全扫描引擎
+- **Tauri 2.9** - Rust 驱动的跨平台桌面应用框架
+- **SQLite** - 轻量级本地数据库
+- **基于规则的安全扫描引擎** - 60+ 条安全规则
+- **GitHub Actions** - 自动化构建和更新发布
 
 ---
 
@@ -165,9 +222,28 @@ MIT License - 自由使用，自由分享
 
 ---
 
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+如果你喜欢这个项目，请给个 ⭐️ Star 支持一下！
+
+---
+
 ## 📧 反馈与建议
 
 有问题或建议？欢迎通过以下方式联系：
 
-- [GitHub Issues](https://github.com/brucevanfdm/agent-skills-guard/issues)
-- [X/Twitter](https://x.com/brucevanfdm)
+- 💬 [GitHub Issues](https://github.com/brucevanfdm/agent-skills-guard/issues) - 报告问题或提出功能建议
+- 🐦 [X/Twitter](https://x.com/brucevanfdm) - 关注项目动态
+- 📦 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) - 下载最新版本
+
+---
+
+<div align="center">
+
+Made with ❤️ by [Bruce](https://github.com/brucevanfdm)
+
+[⬆ 回到顶部](#agent-skills-guard)
+
+</div>
