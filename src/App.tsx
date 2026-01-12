@@ -259,6 +259,12 @@ function App() {
               "!bg-[rgba(6,182,212,0.1)] !border-[rgb(6,182,212)] !text-[rgb(94,234,212)] !shadow-[0_0_30px_rgba(6,182,212,0.3)]",
             success:
               "!bg-[rgba(6,182,212,0.1)] !border-[rgb(6,182,212)] !text-[rgb(94,234,212)] !shadow-[0_0_30px_rgba(6,182,212,0.3)]",
+            info:
+              "!bg-[rgba(6,182,212,0.1)] !border-[rgb(6,182,212)] !text-[rgb(94,234,212)] !shadow-[0_0_30px_rgba(6,182,212,0.3)]",
+            loading:
+              "!bg-[rgba(6,182,212,0.1)] !border-[rgb(6,182,212)] !text-[rgb(94,234,212)] !shadow-[0_0_30px_rgba(6,182,212,0.3)]",
+            warning:
+              "!bg-[rgba(234,179,8,0.12)] !border-[rgb(234,179,8)] !text-[rgb(253,224,71)] !shadow-[0_0_30px_rgba(234,179,8,0.25)]",
             error:
               "!bg-[rgba(239,68,68,0.1)] !border-[rgb(239,68,68)] !text-[rgb(252,165,165)] !shadow-[0_0_30px_rgba(239,68,68,0.3)]",
           },

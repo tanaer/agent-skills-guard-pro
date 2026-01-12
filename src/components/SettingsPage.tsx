@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Settings, Info, Github, RefreshCw, ExternalLink, Package } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import { useUpdate } from "../contexts/UpdateContext";
 
 declare const __APP_VERSION__: string;
@@ -16,13 +16,13 @@ export function SettingsPage() {
       const hasNewUpdate = await updateContext.checkUpdate();
       if (hasNewUpdate) {
         updateContext.resetDismiss(); // 重置已忽略状态，让用户看到更新
-        toast.success(t("update.newVersionAvailable") + ": " + updateContext.updateInfo?.availableVersion);
+        appToast.success(t("update.newVersionAvailable") + ": " + updateContext.updateInfo?.availableVersion);
       } else {
-        toast.success(t("update.upToDate"));
+        appToast.success(t("update.upToDate"));
       }
     } catch (error) {
       console.error("Check update error:", error);
-      toast.error(t("update.checkFailed"));
+      appToast.error(t("update.checkFailed"));
     }
   };
 
@@ -30,7 +30,7 @@ export function SettingsPage() {
     if (!updateContext.updateHandle) return;
 
     setUpdateStatus("downloading");
-    toast.info(t("update.downloading"));
+    appToast.info(t("update.downloading"));
 
     try {
       await updateContext.updateHandle.downloadAndInstall((progress) => {
@@ -38,12 +38,12 @@ export function SettingsPage() {
           setUpdateStatus("downloading");
         } else if (progress.event === "Finished") {
           setUpdateStatus("installing");
-          toast.success(t("update.installing"));
+          appToast.success(t("update.installing"));
         }
       });
     } catch (error) {
       console.error("Install update error:", error);
-      toast.error(t("update.failed"));
+      appToast.error(t("update.failed"));
       setUpdateStatus("idle");
     }
   };

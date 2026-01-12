@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { FeaturedRepositories } from "./FeaturedRepositories";
+import { appToast } from "../lib/toast";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -53,7 +54,6 @@ export function RepositoriesPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newRepoUrl, setNewRepoUrl] = useState("");
   const [newRepoName, setNewRepoName] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
   const [scanningRepoId, setScanningRepoId] = useState<string | null>(null);
   const [refreshingRepoId, setRefreshingRepoId] = useState<string | null>(null);
   const [deletingRepoId, setDeletingRepoId] = useState<string | null>(null);
@@ -73,10 +73,10 @@ export function RepositoriesPage() {
     onSuccess: (skills) => {
       queryClient.invalidateQueries({ queryKey: ["repositories"] });
       queryClient.invalidateQueries({ queryKey: ["skills"] });
-      showToast(t("repositories.cache.refreshed", { count: skills.length }));
+      appToast.success(t("repositories.cache.refreshed", { count: skills.length }));
     },
     onError: (error: any) => {
-      showToast(t("repositories.cache.refreshFailed", { error: error.message || error }));
+      appToast.error(t("repositories.cache.refreshFailed", { error: error.message || error }));
     },
   });
 
@@ -86,7 +86,7 @@ export function RepositoriesPage() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["repositories"] });
       queryClient.invalidateQueries({ queryKey: ["cache-stats"] });
-      showToast(
+      appToast.success(
         t("repositories.cache.clearedAll", {
           cleared: result.clearedCount,
           failed: result.failedCount,
@@ -95,14 +95,9 @@ export function RepositoriesPage() {
       );
     },
     onError: (error: any) => {
-      showToast(t("repositories.cache.clearAllFailed", { error: error.message || error }));
+      appToast.error(t("repositories.cache.clearAllFailed", { error: error.message || error }));
     },
   });
-
-  const showToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
 
   // 添加从 GitHub URL 提取用户名的函数
   const extractRepoNameFromUrl = (url: string): string => {
@@ -143,23 +138,23 @@ export function RepositoriesPage() {
             setNewRepoUrl("");
             setNewRepoName("");
             setShowAddForm(false);
-            showToast(t("repositories.toast.added"));
+            appToast.success(t("repositories.toast.added"));
 
             // 自动触发扫描
             setScanningRepoId(repoId);
             scanMutation.mutate(repoId, {
               onSuccess: (skills) => {
                 setScanningRepoId(null);
-                showToast(t("repositories.toast.foundSkills", { count: skills.length }));
+                appToast.success(t("repositories.toast.foundSkills", { count: skills.length }));
               },
               onError: (error: any) => {
                 setScanningRepoId(null);
-                showToast(`${t("repositories.toast.scanError")}${error.message || error}`);
+                appToast.error(`${t("repositories.toast.scanError")}${error.message || error}`);
               },
             });
           },
           onError: (error: any) => {
-            showToast(`${t("repositories.toast.error")}${error.message || error}`);
+            appToast.error(`${t("repositories.toast.error")}${error.message || error}`);
           },
         }
       );
@@ -372,20 +367,6 @@ export function RepositoriesPage() {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className="fixed bottom-6 right-6 px-6 py-4 rounded-lg bg-terminal-cyan/10 border-2 border-terminal-cyan backdrop-blur-sm shadow-lg z-50 font-mono text-sm text-terminal-cyan"
-          style={{
-            animation: "slideInLeft 0.3s ease-out",
-            boxShadow: "0 0 30px rgba(94, 234, 212, 0.3)",
-          }}
-        >
-          <span className="text-terminal-green mr-2">❯</span>
-          {toast}
-        </div>
-      )}
-
       {/* Repository List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
@@ -440,13 +421,13 @@ export function RepositoriesPage() {
                           refreshCacheMutation.mutate(repo.id, {
                             onSuccess: (skills) => {
                               setRefreshingRepoId(null);
-                              showToast(
+                              appToast.success(
                                 t("repositories.toast.foundSkills", { count: skills.length })
                               );
                             },
                             onError: (error: any) => {
                               setRefreshingRepoId(null);
-                              showToast(
+                              appToast.error(
                                 `${t("repositories.toast.scanError")}${error.message || error}`
                               );
                             },
@@ -457,13 +438,13 @@ export function RepositoriesPage() {
                           scanMutation.mutate(repo.id, {
                             onSuccess: (skills) => {
                               setScanningRepoId(null);
-                              showToast(
+                              appToast.success(
                                 t("repositories.toast.foundSkills", { count: skills.length })
                               );
                             },
                             onError: (error: any) => {
                               setScanningRepoId(null);
-                              showToast(
+                              appToast.error(
                                 `${t("repositories.toast.scanError")}${error.message || error}`
                               );
                             },

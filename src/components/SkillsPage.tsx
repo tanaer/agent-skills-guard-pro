@@ -4,6 +4,7 @@ import { Skill } from "../types";
 import { Download, Trash2, AlertTriangle, ChevronDown, ChevronUp, Package, Loader2, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
+import { appToast } from "../lib/toast";
 
 export function SkillsPage() {
   const { t } = useTranslation();
@@ -13,15 +14,9 @@ export function SkillsPage() {
   const deleteMutation = useDeleteSkill();
 
   const [filter, setFilter] = useState<"all" | "installed" | "not-installed">("all");
-  const [toast, setToast] = useState<string | null>(null);
   const [installingSkillId, setInstallingSkillId] = useState<string | null>(null);
   const [uninstallingSkillId, setUninstallingSkillId] = useState<string | null>(null);
   const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
-
-  const showToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const filteredSkills = skills?.filter((skill) => {
     if (filter === "installed") return skill.installed;
@@ -132,11 +127,11 @@ export function SkillsPage() {
                 installMutation.mutate({ skillId: skill.id }, {
                   onSuccess: () => {
                     setInstallingSkillId(null);
-                    showToast(t('skills.toast.installed'));
+                    appToast.success(t('skills.toast.installed'));
                   },
                   onError: (error: any) => {
                     setInstallingSkillId(null);
-                    showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
+                    appToast.error(`${t('skills.toast.installFailed')}: ${error.message || error}`);
                   },
                 });
               }}
@@ -145,11 +140,11 @@ export function SkillsPage() {
                 uninstallMutation.mutate(skill.id, {
                   onSuccess: () => {
                     setUninstallingSkillId(null);
-                    showToast(t('skills.toast.uninstalled'));
+                    appToast.success(t('skills.toast.uninstalled'));
                   },
                   onError: (error: any) => {
                     setUninstallingSkillId(null);
-                    showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
+                    appToast.error(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
                   },
                 });
               }}
@@ -158,11 +153,11 @@ export function SkillsPage() {
                 deleteMutation.mutate(skill.id, {
                   onSuccess: () => {
                     setDeletingSkillId(null);
-                    showToast(t('skills.toast.deleted'));
+                    appToast.success(t('skills.toast.deleted'));
                   },
                   onError: (error: any) => {
                     setDeletingSkillId(null);
-                    showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
+                    appToast.error(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
                   },
                 });
               }}
@@ -185,21 +180,6 @@ export function SkillsPage() {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className="fixed bottom-6 right-6 px-6 py-4 rounded border border-terminal-cyan bg-card/95 backdrop-blur-sm shadow-2xl z-50"
-          style={{
-            animation: 'slideInLeft 0.3s ease-out',
-            boxShadow: '0 0 20px rgba(94, 234, 212, 0.3), 0 0 40px rgba(94, 234, 212, 0.1)'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-terminal-cyan animate-pulse"></div>
-            <span className="font-mono text-sm text-terminal-cyan">{toast}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -233,12 +213,6 @@ function SkillCard({
 }: SkillCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showLocalToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 5000);
-  };
 
   const handleOpenFolder = async () => {
     if (!skill.local_path) return;
@@ -250,14 +224,17 @@ function SkillCard({
       await openPath(skill.local_path);
 
       console.log('[DEBUG] openPath() succeeded without error');
-      showLocalToast(`已打开文件夹`);
+      appToast.success(t('skills.folder.opened'), { duration: 5000 });
     } catch (error: any) {
       console.error('[ERROR] Failed to open folder:', error);
       console.error('[ERROR] Error type:', typeof error);
       console.error('[ERROR] Error message:', error?.message);
       console.error('[ERROR] Error stack:', error?.stack);
 
-      showLocalToast(`打开文件夹失败：${error?.message || String(error)}`);
+      appToast.error(
+        t('skills.folder.openFailed', { error: error?.message || String(error) }),
+        { duration: 5000 }
+      );
     }
   };
 
@@ -521,21 +498,6 @@ function SkillCard({
         </div>
       )}
 
-      {/* Local Toast for Folder Open Feedback */}
-      {toast && (
-        <div
-          className="fixed bottom-6 right-6 px-6 py-4 rounded border border-terminal-cyan bg-card/95 backdrop-blur-sm shadow-2xl z-50"
-          style={{
-            animation: 'slideInLeft 0.3s ease-out',
-            boxShadow: '0 0 20px rgba(94, 234, 212, 0.3), 0 0 40px rgba(94, 234, 212, 0.1)'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-terminal-cyan animate-pulse"></div>
-            <span className="font-mono text-sm text-terminal-cyan">{toast}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

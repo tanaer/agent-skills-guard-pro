@@ -13,6 +13,7 @@ import { addRecentInstallPath } from "@/lib/storage";
 import { CyberSelect, type CyberSelectOption } from "./ui/CyberSelect";
 import { SimplePathSelectionDialog } from "./SimplePathSelectionDialog";
 import { InstallPathSelector } from "./InstallPathSelector";
+import { appToast } from "@/lib/toast";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -35,7 +36,6 @@ export function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRepository, setSelectedRepository] = useState("all");
   const [hideInstalled, setHideInstalled] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const [pendingInstall, setPendingInstall] = useState<{
     skill: Skill;
     report: SecurityReport;
@@ -43,11 +43,6 @@ export function MarketplacePage() {
   const [preparingSkillId, setPreparingSkillId] = useState<string | null>(null);
   const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
   const [pathSelectionPending, setPathSelectionPending] = useState<Skill | null>(null);
-
-  const showToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
 
   // 只显示从仓库扫描的技能，排除本地技能
   const repositorySkills = useMemo(() => {
@@ -218,26 +213,26 @@ export function MarketplacePage() {
                 } catch (error: any) {
                   console.error('[ERROR] 安装失败:', error);
                   setPreparingSkillId(null);
-                  showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
+                  appToast.error(`${t('skills.toast.installFailed')}: ${error.message || error}`);
                 }
               }}
               onUninstall={() => {
                 uninstallMutation.mutate(skill.id, {
                   onSuccess: () => {
-                    showToast(t('skills.toast.uninstalled'));
+                    appToast.success(t('skills.toast.uninstalled'));
                   },
                   onError: (error: any) => {
-                    showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
+                    appToast.error(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
                   },
                 });
               }}
               onUninstallPath={(path: string) => {
                 uninstallPathMutation.mutate({ skillId: skill.id, path }, {
                   onSuccess: () => {
-                    showToast(t('skills.toast.uninstalled'));
+                    appToast.success(t('skills.toast.uninstalled'));
                   },
                   onError: (error: any) => {
-                    showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
+                    appToast.error(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
                   },
                 });
               }}
@@ -246,11 +241,11 @@ export function MarketplacePage() {
                 deleteMutation.mutate(skill.id, {
                   onSuccess: () => {
                     setDeletingSkillId(null);
-                    showToast(t('skills.toast.deleted'));
+                    appToast.success(t('skills.toast.deleted'));
                   },
                   onError: (error: any) => {
                     setDeletingSkillId(null);
-                    showToast(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
+                    appToast.error(`${t('skills.toast.deleteFailed')}: ${error.message || error}`);
                   },
                 });
               }}
@@ -281,22 +276,6 @@ export function MarketplacePage() {
           >
             {t('skills.marketplace.clearFilters')}
           </button>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className="fixed bottom-6 right-6 px-6 py-4 rounded border border-terminal-cyan bg-card/95 backdrop-blur-sm shadow-2xl z-50"
-          style={{
-            animation: 'slideInLeft 0.3s ease-out',
-            boxShadow: '0 0 20px rgba(94, 234, 212, 0.3), 0 0 40px rgba(94, 234, 212, 0.1)'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-terminal-cyan animate-pulse"></div>
-            <span className="font-mono text-sm text-terminal-cyan">{toast}</span>
-          </div>
         </div>
       )}
 
@@ -337,10 +316,10 @@ export function MarketplacePage() {
               await queryClient.refetchQueries({ queryKey: ["scanResults"] });
 
               // 数据刷新完成后显示 toast
-              showToast(t('skills.toast.installed'));
+              appToast.success(t('skills.toast.installed'));
             } catch (error: any) {
               console.error('[ERROR] 确认安装失败:', error);
-              showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
+              appToast.error(`${t('skills.toast.installFailed')}: ${error.message || error}`);
             }
           }
           setPendingInstall(null);
@@ -382,10 +361,10 @@ export function MarketplacePage() {
               await queryClient.refetchQueries({ queryKey: ["scanResults"] });
 
               // 数据刷新完成后显示 toast
-              showToast(t('skills.toast.installed'));
+              appToast.success(t('skills.toast.installed'));
             } catch (error: any) {
               console.error('[ERROR] 确认安装失败:', error);
-              showToast(`${t('skills.toast.installFailed')}: ${error.message || error}`);
+              appToast.error(`${t('skills.toast.installFailed')}: ${error.message || error}`);
             }
           }
           setPathSelectionPending(null);
@@ -424,13 +403,6 @@ function SkillCard({
   isAnyOperationPending,
   t
 }: SkillCardProps) {
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showLocalToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 5000);
-  };
-
   return (
     <div
       className="cyber-card p-6 group"
@@ -570,9 +542,12 @@ function SkillCard({
                     onClick={async () => {
                       try {
                         await openPath(path);
-                        showLocalToast(t('skills.folder.opened'));
+                        appToast.success(t('skills.folder.opened'), { duration: 5000 });
                       } catch (error: any) {
-                        showLocalToast(t('skills.folder.openFailed', { error: error?.message || String(error) }));
+                        appToast.error(
+                          t('skills.folder.openFailed', { error: error?.message || String(error) }),
+                          { duration: 5000 }
+                        );
                       }
                     }}
                     className="text-terminal-cyan hover:text-terminal-cyan/80 transition-colors"
@@ -594,22 +569,6 @@ function SkillCard({
                 </button>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Local Toast for Folder Open Feedback */}
-      {toast && (
-        <div
-          className="fixed bottom-6 right-6 px-6 py-4 rounded border border-terminal-cyan bg-card/95 backdrop-blur-sm shadow-2xl z-50"
-          style={{
-            animation: 'slideInLeft 0.3s ease-out',
-            boxShadow: '0 0 20px rgba(94, 234, 212, 0.3), 0 0 40px rgba(94, 234, 212, 0.1)'
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-terminal-cyan animate-pulse"></div>
-            <span className="font-mono text-sm text-terminal-cyan">{toast}</span>
           </div>
         </div>
       )}

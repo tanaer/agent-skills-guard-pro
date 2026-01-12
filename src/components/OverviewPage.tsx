@@ -10,7 +10,7 @@ import { StatisticsCards } from "./overview/StatisticsCards";
 import { ScanStatusCard } from "./overview/ScanStatusCard";
 import { IssuesSummaryCard } from "./overview/IssuesSummaryCard";
 import { IssuesList } from "./overview/IssuesList";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 export function OverviewPage() {
   const { t, i18n } = useTranslation();
@@ -56,18 +56,7 @@ export function OverviewPage() {
         await queryClient.refetchQueries({ queryKey: ["skills"] });
       } catch (error: any) {
         console.error("扫描本地技能失败:", error);
-        toast.error(t("overview.scan.localSkillsFailed", { error: error.message }), {
-          duration: 4000,
-          style: {
-            background: "rgba(239, 68, 68, 0.1)",
-            border: "2px solid rgb(239, 68, 68)",
-            backdropFilter: "blur(8px)",
-            color: "rgb(252, 165, 165)",
-            fontFamily: "inherit",
-            fontSize: "14px",
-            boxShadow: "0 0 30px rgba(239, 68, 68, 0.3)",
-          },
-        });
+        appToast.error(t("overview.scan.localSkillsFailed", { error: error.message }), { duration: 4000 });
       }
 
       // 第二步：对所有已安装技能进行安全扫描
@@ -83,38 +72,16 @@ export function OverviewPage() {
       queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
 
       // 显示合并的成功提示
-      toast.success(
+      appToast.success(
         t("overview.scan.allCompleted", {
           localCount: localSkillsCount,
           scannedCount: results.length,
         }),
-        {
-          duration: 4000,
-          style: {
-            background: "rgba(6, 182, 212, 0.1)",
-            border: "2px solid rgb(6, 182, 212)",
-            backdropFilter: "blur(8px)",
-            color: "rgb(94, 234, 212)",
-            fontFamily: "inherit",
-            fontSize: "14px",
-            boxShadow: "0 0 30px rgba(6, 182, 212, 0.3)",
-          },
-        }
+        { duration: 4000 }
       );
     },
     onError: (error: any) => {
-      toast.error(t("overview.scan.failed", { error: error.message }), {
-        duration: 4000,
-        style: {
-          background: "rgba(239, 68, 68, 0.1)",
-          border: "2px solid rgb(239, 68, 68)",
-          backdropFilter: "blur(8px)",
-          color: "rgb(252, 165, 165)",
-          fontFamily: "inherit",
-          fontSize: "14px",
-          boxShadow: "0 0 30px rgba(239, 68, 68, 0.3)",
-        },
-      });
+      appToast.error(t("overview.scan.failed", { error: error.message }), { duration: 4000 });
     },
     onSettled: () => {
       setIsScanning(false);
@@ -196,32 +163,10 @@ export function OverviewPage() {
       if (skill?.local_path) {
         await invoke("open_skill_directory", { localPath: skill.local_path });
       } else {
-        toast.error("无法找到技能路径", {
-          duration: 4000,
-          style: {
-            background: "rgba(239, 68, 68, 0.1)",
-            border: "2px solid rgb(239, 68, 68)",
-            backdropFilter: "blur(8px)",
-            color: "rgb(252, 165, 165)",
-            fontFamily: "inherit",
-            fontSize: "14px",
-            boxShadow: "0 0 30px rgba(239, 68, 68, 0.3)",
-          },
-        });
+        appToast.error("无法找到技能路径", { duration: 4000 });
       }
     } catch (error: any) {
-      toast.error(t("skills.folder.openFailed", { error: error.message }), {
-        duration: 4000,
-        style: {
-          background: "rgba(239, 68, 68, 0.1)",
-          border: "2px solid rgb(239, 68, 68)",
-          backdropFilter: "blur(8px)",
-          color: "rgb(252, 165, 165)",
-          fontFamily: "inherit",
-          fontSize: "14px",
-          boxShadow: "0 0 30px rgba(239, 68, 68, 0.3)",
-        },
-      });
+      appToast.error(t("skills.folder.openFailed", { error: error.message }), { duration: 4000 });
     }
   };
 

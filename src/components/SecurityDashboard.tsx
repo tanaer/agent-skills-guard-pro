@@ -7,6 +7,7 @@ import { SecurityDetailDialog } from "./SecurityDetailDialog";
 import { CyberSelect, type CyberSelectOption } from "./ui/CyberSelect";
 import type { SkillScanResult } from "@/types/security";
 import { countIssuesBySeverity } from "@/lib/security-utils";
+import { appToast } from "@/lib/toast";
 
 export function SecurityDashboard() {
   const { t, i18n } = useTranslation();
@@ -16,12 +17,6 @@ export function SecurityDashboard() {
   const [sortBy, setSortBy] = useState<"score" | "name" | "time">("score");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<SkillScanResult | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
 
   // 风险等级选项
   const levelOptions: CyberSelectOption[] = [
@@ -56,10 +51,10 @@ export function SecurityDashboard() {
         locale: i18n.language,
       });
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
-      showToast(t("security.dashboard.scanSuccess", { count: results.length }));
+      appToast.banner(t("security.dashboard.scanSuccess", { count: results.length }), { tone: "success" });
     } catch (error) {
       console.error("Scan failed:", error);
-      showToast(t("security.dashboard.scanError"));
+      appToast.banner(t("security.dashboard.scanError"), { tone: "error" });
     } finally {
       setIsScanning(false);
     }
@@ -249,21 +244,6 @@ export function SecurityDashboard() {
         onClose={() => setSelectedSkill(null)}
       />
 
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className="fixed bottom-0 left-0 right-0 px-8 py-5 bg-terminal-cyan/15 border-t-2 border-terminal-cyan backdrop-blur-md shadow-2xl z-50 font-mono text-base text-terminal-cyan"
-          style={{
-            animation: 'slideInLeft 0.3s ease-out',
-            boxShadow: '0 -4px 40px rgba(94, 234, 212, 0.4), inset 0 1px 0 rgba(94, 234, 212, 0.2)'
-          }}
-        >
-          <div className="max-w-7xl mx-auto flex items-center">
-            <span className="text-terminal-green mr-3 text-lg">❯</span>
-            <span className="tracking-wide">{toast}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

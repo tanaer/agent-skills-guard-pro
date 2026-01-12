@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, Plus, Check, Loader2, Star, GitBranch, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 interface FeaturedRepositoriesProps {
   onAdd: (url: string, name: string) => void;
@@ -27,10 +27,10 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
     mutationFn: api.refreshFeaturedRepositories,
     onSuccess: (data) => {
       queryClient.setQueryData(['featured-repositories'], data);
-      toast.success(t('repositories.featured.refreshed'));
+      appToast.success(t('repositories.featured.refreshed'));
     },
     onError: (error: any) => {
-      toast.error(
+      appToast.error(
         t('repositories.featured.refreshFailed', {
           error: error?.message || String(error),
         })

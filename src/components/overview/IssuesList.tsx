@@ -15,7 +15,7 @@ import {
 import type { SkillScanResult } from "@/types/security";
 import { SecurityDetailDialog } from "../SecurityDetailDialog";
 import { api } from "@/lib/api";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 interface IssuesListProps {
   issues: SkillScanResult[];
@@ -87,32 +87,10 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
       queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
       queryClient.invalidateQueries({ queryKey: ["skills"] });
       queryClient.invalidateQueries({ queryKey: ["scanResults"] });
-      toast.success(t("skills.toast.uninstalled"), {
-        duration: 3000,
-        style: {
-          background: "rgba(6, 182, 212, 0.1)",
-          border: "2px solid rgb(6, 182, 212)",
-          backdropFilter: "blur(8px)",
-          color: "rgb(94, 234, 212)",
-          fontFamily: "inherit",
-          fontSize: "14px",
-          boxShadow: "0 0 30px rgba(6, 182, 212, 0.3)",
-        },
-      });
+      appToast.success(t("skills.toast.uninstalled"), { duration: 3000 });
     },
     onError: (error: Error) => {
-      toast.error(t("skills.toast.uninstallFailed") + `: ${error.message}`, {
-        duration: 4000,
-        style: {
-          background: "rgba(239, 68, 68, 0.1)",
-          border: "2px solid rgb(239, 68, 68)",
-          backdropFilter: "blur(8px)",
-          color: "rgb(252, 165, 165)",
-          fontFamily: "inherit",
-          fontSize: "14px",
-          boxShadow: "0 0 30px rgba(239, 68, 68, 0.3)",
-        },
-      });
+      appToast.error(t("skills.toast.uninstallFailed") + `: ${error.message}`, { duration: 4000 });
     },
   });
 
