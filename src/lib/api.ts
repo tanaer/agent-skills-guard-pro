@@ -36,6 +36,10 @@ export const api = {
     return invoke("uninstall_skill", { skillId });
   },
 
+  async uninstallSkillPath(skillId: string, path: string): Promise<void> {
+    return invoke("uninstall_skill_path", { skillId, path });
+  },
+
   async deleteSkill(skillId: string): Promise<void> {
     return invoke("delete_skill", { skillId });
   },

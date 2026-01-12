@@ -14,7 +14,8 @@ pub struct Skill {
     pub author: Option<String>,
     pub installed: bool,
     pub installed_at: Option<DateTime<Utc>>,
-    pub local_path: Option<String>,
+    pub local_path: Option<String>,  // 向后兼容,保留单个路径字段
+    pub local_paths: Option<Vec<String>>,  // 新增:支持多个安装路径
     pub checksum: Option<String>,
     pub security_score: Option<i32>,
     pub security_issues: Option<Vec<String>>,
@@ -43,6 +44,7 @@ impl Skill {
             installed: false,
             installed_at: None,
             local_path: None,
+            local_paths: None,
             checksum: None,
             security_score: None,
             security_issues: None,

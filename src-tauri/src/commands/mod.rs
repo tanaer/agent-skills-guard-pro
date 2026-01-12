@@ -242,6 +242,18 @@ pub async fn uninstall_skill(
         .map_err(|e| e.to_string())
 }
 
+/// 卸载特定路径的技能
+#[tauri::command]
+pub async fn uninstall_skill_path(
+    state: State<'_, AppState>,
+    skill_id: String,
+    path: String,
+) -> Result<(), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.uninstall_skill_path(&skill_id, &path)
+        .map_err(|e| e.to_string())
+}
+
 /// 删除 skill 记录
 #[tauri::command]
 pub async fn delete_skill(

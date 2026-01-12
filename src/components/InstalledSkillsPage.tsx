@@ -310,7 +310,7 @@ function SkillCard({
 
             {/* Repository Tag */}
             <span className={`
-              status-indicator text-xs font-mono
+              repository-tag text-xs font-mono
               ${skill.repository_owner === "local"
                 ? "text-muted-foreground border-muted-foreground/30 bg-muted/10"
                 : "text-terminal-cyan border-terminal-cyan/30 bg-terminal-cyan/10"

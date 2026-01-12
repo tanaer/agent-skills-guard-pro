@@ -84,6 +84,7 @@ impl Database {
         self.migrate_add_repository_owner()?;
         self.migrate_add_cache_fields()?;
         self.migrate_add_security_enhancement_fields()?;
+        self.migrate_add_local_paths()?;
 
         // 初始化默认仓库
         self.initialize_default_repositories()?;
@@ -191,11 +192,14 @@ impl Database {
         let security_issues_json = skill.security_issues.as_ref()
             .map(|issues| serde_json::to_string(issues).unwrap());
 
+        let local_paths_json = skill.local_paths.as_ref()
+            .map(|paths| serde_json::to_string(paths).unwrap());
+
         conn.execute(
             "INSERT OR REPLACE INTO skills
             (id, name, description, repository_url, repository_owner, file_path, version, author,
-             installed, installed_at, local_path, checksum, security_score, security_issues, security_level, scanned_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+             installed, installed_at, local_path, local_paths, checksum, security_score, security_issues, security_level, scanned_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
             params![
                 skill.id,
                 skill.name,
@@ -208,6 +212,7 @@ impl Database {
                 skill.installed as i32,
                 skill.installed_at.as_ref().map(|d| d.to_rfc3339()),
                 skill.local_path,
+                local_paths_json,
                 skill.checksum,
                 skill.security_score,
                 security_issues_json,
@@ -224,13 +229,17 @@ impl Database {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, name, description, repository_url, repository_owner, file_path, version, author,
-                    installed, installed_at, local_path, checksum, security_score, security_issues, security_level, scanned_at
+                    installed, installed_at, local_path, local_paths, checksum, security_score, security_issues, security_level, scanned_at
              FROM skills"
         )?;
 
         let skills = stmt.query_map([], |row| {
-            let security_issues: Option<String> = row.get(13)?;
+            let security_issues: Option<String> = row.get(14)?;
             let security_issues = security_issues
+                .and_then(|s| serde_json::from_str(&s).ok());
+
+            let local_paths: Option<String> = row.get(11)?;
+            let local_paths = local_paths
                 .and_then(|s| serde_json::from_str(&s).ok());
 
             Ok(Skill {
@@ -246,11 +255,12 @@ impl Database {
                 installed_at: row.get::<_, Option<String>>(9)?
                     .and_then(|s| s.parse().ok()),
                 local_path: row.get(10)?,
-                checksum: row.get(11)?,
-                security_score: row.get(12)?,
+                local_paths,
+                checksum: row.get(12)?,
+                security_score: row.get(13)?,
                 security_issues,
-                security_level: row.get(14)?,
-                scanned_at: row.get::<_, Option<String>>(15)?
+                security_level: row.get(15)?,
+                scanned_at: row.get::<_, Option<String>>(16)?
                     .and_then(|s| s.parse().ok()),
             })
         })?
@@ -324,6 +334,29 @@ impl Database {
             "ALTER TABLE skills ADD COLUMN scanned_at TEXT",
             [],
         );
+
+        Ok(())
+    }
+
+    /// 数据库迁移：添加 local_paths 列,支持多个安装路径
+    fn migrate_add_local_paths(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+
+        // 添加 local_paths 列（JSON 数组格式）
+        let _ = conn.execute(
+            "ALTER TABLE skills ADD COLUMN local_paths TEXT",
+            [],
+        );
+
+        // 将现有的 local_path 迁移到 local_paths 数组中
+        conn.execute(
+            r#"
+            UPDATE skills
+            SET local_paths = json_array(local_path)
+            WHERE local_path IS NOT NULL AND local_paths IS NULL
+            "#,
+            [],
+        )?;
 
         Ok(())
     }

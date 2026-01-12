@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSkills, useInstallSkill, useUninstallSkill, useDeleteSkill } from "../hooks/useSkills";
+import { useSkills, useInstallSkill, useUninstallSkill, useUninstallSkillPath, useDeleteSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
 import { SecurityReport } from "../types/security";
 import { Download, Trash2, AlertTriangle, Loader2, Package, Search, FolderOpen, XCircle, CheckCircle } from "lucide-react";
@@ -29,6 +29,7 @@ export function MarketplacePage() {
   const { data: allSkills, isLoading } = useSkills();
   const installMutation = useInstallSkill();
   const uninstallMutation = useUninstallSkill();
+  const uninstallPathMutation = useUninstallSkillPath();
   const deleteMutation = useDeleteSkill();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -260,6 +261,16 @@ export function MarketplacePage() {
                   },
                 });
               }}
+              onUninstallPath={(path: string) => {
+                uninstallPathMutation.mutate({ skillId: skill.id, path }, {
+                  onSuccess: () => {
+                    showToast(t('skills.toast.uninstalled'));
+                  },
+                  onError: (error: any) => {
+                    showToast(`${t('skills.toast.uninstallFailed')}: ${error.message || error}`);
+                  },
+                });
+              }}
               onDelete={() => {
                 setDeletingSkillId(skill.id);
                 deleteMutation.mutate(skill.id, {
@@ -420,6 +431,7 @@ interface SkillCardProps {
   index: number;
   onInstall: () => void;
   onUninstall: () => void;
+  onUninstallPath: (path: string) => void;
   onDelete: () => void;
   isInstalling: boolean;
   isUninstalling: boolean;
@@ -435,6 +447,7 @@ function SkillCard({
   index,
   onInstall,
   onUninstall,
+  onUninstallPath,
   onDelete,
   isInstalling,
   isUninstalling,
@@ -449,22 +462,6 @@ function SkillCard({
   const showLocalToast = (message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 5000);
-  };
-
-  const handleOpenFolder = async () => {
-    if (!skill.local_path) return;
-
-    try {
-      await openPath(skill.local_path);
-      showLocalToast(t('skills.folder.opened'));
-    } catch (error: any) {
-      console.error('[ERROR] Failed to open folder:', error);
-      showLocalToast(t('skills.folder.openFailed', { error: error?.message || String(error) }));
-    }
-  };
-
-  const handleInstallClick = () => {
-    onInstall();
   };
 
   return (
@@ -487,7 +484,7 @@ function SkillCard({
 
             {/* Repository Tag */}
             <span className={`
-              status-indicator text-xs font-mono
+              repository-tag text-xs font-mono
               ${skill.repository_owner === "local"
                 ? "text-muted-foreground border-muted-foreground/30 bg-muted/10"
                 : "text-terminal-cyan border-terminal-cyan/30 bg-terminal-cyan/10"
@@ -503,19 +500,41 @@ function SkillCard({
             ) : null}
           </div>
 
-          {/* Security Badge & Score */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {getSecurityBadge(skill.security_score)}
-            {skill.security_score != null && (
-              <span className="font-mono text-xs text-muted-foreground">
-                {t('skills.score')}: <span className="text-terminal-cyan">{skill.security_score}/100</span>
-              </span>
-            )}
-          </div>
+          {/* Security Badge - 只在未安装的技能上显示 */}
+          {!skill.installed && (
+            <div className="flex items-center gap-3 flex-wrap">
+              {getSecurityBadge(skill.security_score)}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-2 ml-4">
+          {/* 安装按钮 - 始终显示 */}
+          <button
+            onClick={onInstall}
+            disabled={isAnyOperationPending}
+            className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            {isPreparing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('skills.scanning')}
+              </>
+            ) : isInstalling ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('skills.installing')}
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                {skill.installed ? t('skills.installToOther') : t('skills.install')}
+              </>
+            )}
+          </button>
+
+          {/* 卸载/删除按钮 */}
           {skill.installed ? (
             <button
               onClick={onUninstall}
@@ -530,53 +549,29 @@ function SkillCard({
               ) : (
                 <>
                   <Trash2 className="w-4 h-4" />
-                  {t('skills.uninstall')}
+                  {t('skills.uninstallAll')}
                 </>
               )}
             </button>
           ) : (
-            <>
-              <button
-                onClick={handleInstallClick}
-                disabled={isAnyOperationPending}
-                className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-              >
-                {isPreparing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('skills.scanning')}
-                  </>
-                ) : isInstalling ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('skills.installing')}
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    {t('skills.install')}
-                  </>
-                )}
-              </button>
-              <button
-                onClick={onDelete}
-                disabled={isAnyOperationPending}
-                className="neon-button text-terminal-red border-terminal-red hover:bg-terminal-red disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                title={t('skills.deleteRecord')}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('skills.deleting')}
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" />
-                    {t('skills.delete')}
-                  </>
-                )}
-              </button>
-            </>
+            <button
+              onClick={onDelete}
+              disabled={isAnyOperationPending}
+              className="neon-button text-terminal-red border-terminal-red hover:bg-terminal-red disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+              title={t('skills.deleteRecord')}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('skills.deleting')}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  {t('skills.delete')}
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>
@@ -599,16 +594,49 @@ function SkillCard({
             {skill.repository_url}
           </a>
         </span>
-        {skill.local_path && (
-          <button
-            onClick={handleOpenFolder}
-            className="text-muted-foreground hover:text-terminal-cyan transition-colors flex items-center gap-1"
-            title={t('skills.localPath')}
-          >
-            <FolderOpen className="w-3 h-3" />
-          </button>
-        )}
       </div>
+
+      {/* Installed Paths */}
+      {skill.local_paths && skill.local_paths.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <div className="text-xs font-mono text-muted-foreground mb-2">
+            <span className="text-terminal-green">{t('skills.installedPaths')}</span> ({skill.local_paths.length})
+          </div>
+          <div className="space-y-2">
+            {skill.local_paths.map((path, idx) => (
+              <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-card/50 rounded border border-border/50">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await openPath(path);
+                        showLocalToast(t('skills.folder.opened'));
+                      } catch (error: any) {
+                        showLocalToast(t('skills.folder.openFailed', { error: error?.message || String(error) }));
+                      }
+                    }}
+                    className="text-terminal-cyan hover:text-terminal-cyan/80 transition-colors"
+                    title={t('skills.openFolder')}
+                  >
+                    <FolderOpen className="w-3 h-3 flex-shrink-0" />
+                  </button>
+                  <span className="text-xs text-muted-foreground truncate" title={path}>
+                    {path}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onUninstallPath(path)}
+                  disabled={isAnyOperationPending}
+                  className="text-terminal-red hover:text-terminal-red/80 transition-colors disabled:opacity-50"
+                  title={t('skills.uninstallPath')}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Local Toast for Folder Open Feedback */}
       {toast && (

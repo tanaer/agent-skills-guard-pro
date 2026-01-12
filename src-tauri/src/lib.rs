@@ -211,6 +211,7 @@ pub fn run() {
             commands::confirm_skill_installation,
             commands::cancel_skill_installation,
             commands::uninstall_skill,
+            commands::uninstall_skill_path,
             commands::delete_skill,
             commands::scan_local_skills,
             commands::clear_repository_cache,

@@ -47,6 +47,19 @@ export function useUninstallSkill() {
   });
 }
 
+export function useUninstallSkillPath() {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, { skillId: string; path: string }>({
+    mutationFn: ({ skillId, path }) => api.uninstallSkillPath(skillId, path),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
+      queryClient.invalidateQueries({ queryKey: ["scanResults"] });
+    },
+  });
+}
+
 export function useDeleteSkill() {
   const queryClient = useQueryClient();
 

@@ -260,9 +260,19 @@ impl SkillManager {
         skill.scanned_at = Some(Utc::now());
 
         // 更新数据库
+        let new_path = skill_dir.to_string_lossy().to_string();
+
+        // 将新路径添加到 local_paths 数组中
+        let mut paths = skill.local_paths.clone().unwrap_or_default();
+        if !paths.contains(&new_path) {
+            paths.push(new_path.clone());
+        }
+        skill.local_paths = Some(paths);
+
+        // 更新 installed 状态和时间
         skill.installed = true;
         skill.installed_at = Some(Utc::now());
-        skill.local_path = Some(skill_dir.to_string_lossy().to_string());
+        skill.local_path = Some(new_path); // 保持向后兼容,存储最新的路径
 
         self.db.save_skill(&skill)?;
 
@@ -549,17 +559,37 @@ impl SkillManager {
             .find(|s| s.id == skill_id)
             .context("未找到该技能")?;
 
-        // 删除本地文件目录
-        if let Some(local_path) = &skill.local_path {
-            let path = PathBuf::from(local_path);
-            if path.exists() {
-                // 如果是目录，删除整个目录
-                if path.is_dir() {
-                    std::fs::remove_dir_all(&path)
-                        .context("无法删除技能目录，请检查文件是否被占用")?;
-                } else {
-                    std::fs::remove_file(&path)
-                        .context("无法删除技能文件，请检查文件是否被占用")?;
+        // 删除所有安装路径的文件
+        if let Some(local_paths) = &skill.local_paths {
+            for local_path in local_paths {
+                let path = PathBuf::from(local_path);
+                if path.exists() {
+                    // 如果是目录，删除整个目录
+                    if path.is_dir() {
+                        if let Err(e) = std::fs::remove_dir_all(&path) {
+                            log::warn!("删除技能目录失败: {:?}, 错误: {}", path, e);
+                        }
+                    } else {
+                        if let Err(e) = std::fs::remove_file(&path) {
+                            log::warn!("删除技能文件失败: {:?}, 错误: {}", path, e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 向后兼容:如果 local_paths 为空,尝试删除 local_path
+        if skill.local_paths.is_none() || skill.local_paths.as_ref().unwrap().is_empty() {
+            if let Some(local_path) = &skill.local_path {
+                let path = PathBuf::from(local_path);
+                if path.exists() {
+                    if path.is_dir() {
+                        std::fs::remove_dir_all(&path)
+                            .context("无法删除技能目录，请检查文件是否被占用")?;
+                    } else {
+                        std::fs::remove_file(&path)
+                            .context("无法删除技能文件，请检查文件是否被占用")?;
+                    }
                 }
             }
         }
@@ -568,11 +598,56 @@ impl SkillManager {
         skill.installed = false;
         skill.installed_at = None;
         skill.local_path = None;
+        skill.local_paths = None;
 
         self.db.save_skill(&skill)
             .context("更新数据库失败")?;
 
         log::info!("Skill uninstalled successfully: {}", skill.name);
+        Ok(())
+    }
+
+    /// 卸载特定路径的技能
+    pub fn uninstall_skill_path(&self, skill_id: &str, path_to_remove: &str) -> Result<()> {
+        // 从数据库获取 skill
+        let mut skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        // 删除指定路径的文件
+        let path = PathBuf::from(path_to_remove);
+        if path.exists() {
+            if path.is_dir() {
+                std::fs::remove_dir_all(&path)
+                    .context("无法删除技能目录，请检查文件是否被占用")?;
+            } else {
+                std::fs::remove_file(&path)
+                    .context("无法删除技能文件，请检查文件是否被占用")?;
+            }
+        }
+
+        // 从 local_paths 中移除该路径
+        if let Some(mut paths) = skill.local_paths.clone() {
+            paths.retain(|p| p != path_to_remove);
+
+            if paths.is_empty() {
+                // 如果没有剩余路径,标记为未安装
+                skill.installed = false;
+                skill.installed_at = None;
+                skill.local_path = None;
+                skill.local_paths = None;
+            } else {
+                // 还有其他路径,更新列表
+                skill.local_paths = Some(paths.clone());
+                skill.local_path = paths.last().cloned(); // 更新为最后一个路径
+            }
+        }
+
+        self.db.save_skill(&skill)
+            .context("更新数据库失败")?;
+
+        log::info!("Skill path uninstalled: {} from {}", skill.name, path_to_remove);
         Ok(())
     }
 
@@ -746,6 +821,7 @@ impl SkillManager {
                             skill_name, report.score, report.scanned_files);
 
                         // 创建 skill 对象（使用之前解析的元数据）
+                        let local_path_str = path.to_string_lossy().to_string();
                         let skill = Skill {
                             id: skill_id,
                             name: skill_name,
@@ -757,7 +833,8 @@ impl SkillManager {
                             author: None,
                             installed: true,
                             installed_at: Some(Utc::now()),
-                            local_path: Some(path.to_string_lossy().to_string()),
+                            local_path: Some(local_path_str.clone()),
+                            local_paths: Some(vec![local_path_str]),
                             checksum: Some(checksum),
                             security_score: Some(report.score),
                             security_issues: Some(

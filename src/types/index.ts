@@ -18,13 +18,14 @@ export interface Skill {
   name: string;
   description?: string;
   repository_url: string;
-  repository_owner?: string;  // 仓库所有者，如 "anthropics" 或 "local"
+  repository_owner?: string;  // 仓库所有者,如 "anthropics" 或 "local"
   file_path: string;
   version?: string;
   author?: string;
   installed: boolean;
   installed_at?: string;
-  local_path?: string;
+  local_path?: string;  // 向后兼容,保留单个路径字段
+  local_paths?: string[];  // 新增:支持多个安装路径
   checksum?: string;
   security_score?: number;
   security_issues?: string[];

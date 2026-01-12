@@ -256,6 +256,11 @@
     @apply text-lg leading-none;
   }
 
+  /* Repository tag - 仓库标签（不带圆点） */
+  .repository-tag {
+    @apply inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-medium border;
+  }
+
   .status-installed {
     @apply bg-terminal-green/10 text-terminal-green border border-terminal-green/30;
   }
