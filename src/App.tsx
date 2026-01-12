@@ -255,31 +255,17 @@ function App() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: 'rgba(6, 182, 212, 0.1)',
-            border: '2px solid rgb(6, 182, 212)',
-            backdropFilter: 'blur(8px)',
-            color: 'rgb(94, 234, 212)',
             fontFamily: 'inherit',
             fontSize: '14px',
-            boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)',
           },
-          success: {
-            style: {
-              background: 'rgba(6, 182, 212, 0.1)',
-              border: '2px solid rgb(6, 182, 212)',
-              backdropFilter: 'blur(8px)',
-              color: 'rgb(94, 234, 212)',
-              boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)',
-            },
-          },
-          error: {
-            style: {
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '2px solid rgb(239, 68, 68)',
-              backdropFilter: 'blur(8px)',
-              color: 'rgb(252, 165, 165)',
-              boxShadow: '0 0 30px rgba(239, 68, 68, 0.3)',
-            },
+          classNames: {
+            toast: "!border-2 backdrop-blur-[8px]",
+            default:
+              "!bg-[rgba(6,182,212,0.1)] !border-[rgb(6,182,212)] !text-[rgb(94,234,212)] !shadow-[0_0_30px_rgba(6,182,212,0.3)]",
+            success:
+              "!bg-[rgba(6,182,212,0.1)] !border-[rgb(6,182,212)] !text-[rgb(94,234,212)] !shadow-[0_0_30px_rgba(6,182,212,0.3)]",
+            error:
+              "!bg-[rgba(239,68,68,0.1)] !border-[rgb(239,68,68)] !text-[rgb(252,165,165)] !shadow-[0_0_30px_rgba(239,68,68,0.3)]",
           },
         }}
       />

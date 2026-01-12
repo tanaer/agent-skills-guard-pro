@@ -1,4 +1,4 @@
-import { check } from "@tauri-apps/plugin-updater";
+import { check, type CheckOptions as UpdaterCheckOptions } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
 export type UpdateChannel = "stable" | "beta";
@@ -33,23 +33,40 @@ export interface UpdateHandle {
   downloadAndInstall(onProgress?: (e: UpdateProgressEvent) => void): Promise<void>;
 }
 
-export interface CheckOptions {
-  timeout?: number;
-}
-
 export async function getCurrentVersion(): Promise<string> {
   const { getVersion } = await import("@tauri-apps/api/app");
   return await getVersion();
 }
 
 export async function checkForUpdate(
-  opts: CheckOptions = {}
+  opts: UpdaterCheckOptions = {}
 ): Promise<
   | { status: "up-to-date" }
   | { status: "available"; info: UpdateInfo; update: UpdateHandle }
 > {
   const currentVersion = await getCurrentVersion();
-  const update = await check();
+  const runCheck = (options: UpdaterCheckOptions) => check({ ...options });
+
+  let update: Awaited<ReturnType<typeof check>> = null;
+  try {
+    update = await runCheck(opts);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const isMissingPlatform =
+      message.includes("platform") &&
+      message.includes("was not found") &&
+      message.includes("platforms");
+
+    const missingPlatform = message.match(/platform `([^`]+)`/)?.[1];
+
+    // 兼容 macOS universal 构建：当 latest.json 使用 `darwin-universal` 作为 key 时，
+    // 默认的 `darwin-{arch}` 会找不到对应平台。
+    if (isMissingPlatform && missingPlatform?.startsWith("darwin-")) {
+      update = await runCheck({ ...opts, target: "darwin-universal" });
+    } else {
+      throw err;
+    }
+  }
 
   if (!update?.available) {
     return { status: "up-to-date" };
