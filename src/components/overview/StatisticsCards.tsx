@@ -101,15 +101,6 @@ export function StatisticsCards({
               />
             </div>
 
-            {/* 顶部扫描线动画 */}
-            <div
-              className={`absolute top-0 left-0 right-0 h-px ${card.accentBar} opacity-30`}
-              style={{
-                animation: `scan-line 3s ease-in-out infinite`,
-                animationDelay: `${index * 0.5}s`,
-              }}
-            />
-
             {/* 角落装饰 - 四个角落 */}
             <div
               className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${card.borderColor} rounded-tl-lg opacity-50 group-hover:opacity-100 transition-opacity`}
@@ -176,17 +167,6 @@ export function StatisticsCards({
                   <Icon className="w-7 h-7 lg:w-8 lg:h-8" />
                 </div>
               </div>
-            </div>
-
-            {/* 底部数据流装饰线 */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden opacity-30">
-              <div
-                className={`h-full w-1/3 ${card.accentBar}`}
-                style={{
-                  animation: "dataFlow 2s ease-in-out infinite",
-                  marginLeft: "-33%",
-                }}
-              />
             </div>
 
             {/* 悬停时的边框发光效果 */}

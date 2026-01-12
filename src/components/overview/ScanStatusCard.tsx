@@ -86,14 +86,6 @@ export function ScanStatusCard({
         />
       </div>
 
-      {/* 顶部扫描线动画 */}
-      <div
-        className={`absolute top-0 left-0 right-0 h-px ${barColor} opacity-30`}
-        style={{
-          animation: `scan-line 3s ease-in-out infinite`,
-        }}
-      />
-
       {/* 角落装饰 */}
       <div
         className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${borderColor} rounded-tl-lg opacity-50 group-hover:opacity-100 transition-opacity`}
@@ -155,10 +147,6 @@ export function ScanStatusCard({
         {/* 右侧：进度条 - 占据剩余全部空间 */}
         <div className="flex-1 w-full space-y-3">
           <div className="relative w-full h-3 bg-muted/30 rounded-full overflow-hidden border border-border/50 shadow-inner">
-            {/* 背景扫描线动画 */}
-            {isScanning && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-cyan/30 to-transparent animate-scan-line"></div>
-            )}
 
             {/* 进度条 */}
             <div
@@ -181,10 +169,6 @@ export function ScanStatusCard({
                 <div className="absolute inset-0 bg-terminal-cyan opacity-60 animate-pulse"></div>
               )}
 
-              {/* 进度条内部扫描线 */}
-              {isScanning && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-scan-line"></div>
-              )}
             </div>
 
             {/* 进度百分比文字 */}
@@ -218,17 +202,6 @@ export function ScanStatusCard({
             </div>
           ) : null}
         </div>
-      </div>
-
-      {/* 底部数据流装饰线 */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden opacity-30">
-        <div
-          className={`h-full w-1/3 ${barColor}`}
-          style={{
-            animation: "dataFlow 2s ease-in-out infinite",
-            marginLeft: "-33%",
-          }}
-        />
       </div>
 
       {/* 悬停时的边框发光效果 */}

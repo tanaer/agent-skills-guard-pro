@@ -4,10 +4,11 @@
     "subtitle": "一站式技能安全管理"
   },
   "nav": {
-    "overview": "概览",
+    "overview": "系统概览",
     "installed": "我的技能",
     "marketplace": "技能市场",
-    "repositories": "仓库配置"
+    "repositories": "仓库配置",
+    "settings": "应用设置"
   },
   "footer": {
     "version": "版本",
@@ -329,5 +330,18 @@
     "installing": "安装中...",
     "failed": "更新失败，请稍后重试",
     "checkFailed": "检查更新失败"
+  },
+  "settings": {
+    "title": "应用设置",
+    "appInfo": {
+      "title": "应用信息",
+      "version": "版本号",
+      "repository": "GitHub 仓库",
+      "updates": "检查更新"
+    },
+    "preferences": {
+      "title": "偏好设置",
+      "comingSoon": "更多设置项即将推出..."
+    }
   }
 }

@@ -7,7 +7,8 @@
     "overview": "OVERVIEW",
     "installed": "INSTALLED",
     "marketplace": "MARKETPLACE",
-    "repositories": "REPO_CONFIG"
+    "repositories": "REPO_CONFIG",
+    "settings": "SETTINGS"
   },
   "footer": {
     "version": "v",
@@ -329,5 +330,18 @@
     "installing": "Installing...",
     "failed": "Update failed, please try again later",
     "checkFailed": "Failed to check for updates"
+  },
+  "settings": {
+    "title": "APPLICATION_SETTINGS",
+    "appInfo": {
+      "title": "APPLICATION_INFO",
+      "version": "VERSION",
+      "repository": "GITHUB_REPOSITORY",
+      "updates": "CHECK_UPDATES"
+    },
+    "preferences": {
+      "title": "PREFERENCES",
+      "comingSoon": "More settings coming soon..."
+    }
   }
 }

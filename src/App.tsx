@@ -4,7 +4,8 @@ import { InstalledSkillsPage } from "./components/InstalledSkillsPage";
 import { MarketplacePage } from "./components/MarketplacePage";
 import { RepositoriesPage } from "./components/RepositoriesPage";
 import { OverviewPage } from "./components/OverviewPage";
-import { Package, ShoppingCart, Database as DatabaseIcon, LayoutDashboard } from "lucide-react";
+import { SettingsPage } from "./components/SettingsPage";
+import { Package, ShoppingCart, Database as DatabaseIcon, LayoutDashboard, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { WindowControls } from "./components/WindowControls";
@@ -13,16 +14,13 @@ import { Toaster } from "sonner";
 import { getPlatform, type Platform } from "./lib/platform";
 import { api } from "./lib/api";
 
-// 全局类型声明
-declare const __APP_VERSION__: string;
-
 const reactQueryClient = new QueryClient();
 
 function AppContent() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState<
-    "overview" | "installed" | "marketplace" | "repositories"
+    "overview" | "installed" | "marketplace" | "repositories" | "settings"
   >("overview");
   const [platform, setPlatform] = useState<Platform | null>(null);
 
@@ -149,7 +147,6 @@ function AppContent() {
               <div className="flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4" />
                 <span>{t("nav.overview")}</span>
-                {currentTab === "overview" && <span className="text-terminal-green">●</span>}
               </div>
             </button>
 
@@ -167,7 +164,6 @@ function AppContent() {
               <div className="flex items-center gap-2">
                 <Package className="w-4 h-4" />
                 <span>{t("nav.installed")}</span>
-                {currentTab === "installed" && <span className="text-terminal-green">●</span>}
               </div>
             </button>
 
@@ -185,7 +181,6 @@ function AppContent() {
               <div className="flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" />
                 <span>{t("nav.marketplace")}</span>
-                {currentTab === "marketplace" && <span className="text-terminal-green">●</span>}
               </div>
             </button>
 
@@ -203,7 +198,23 @@ function AppContent() {
               <div className="flex items-center gap-2">
                 <DatabaseIcon className="w-4 h-4" />
                 <span>{t("nav.repositories")}</span>
-                {currentTab === "repositories" && <span className="text-terminal-green">●</span>}
+              </div>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab("settings")}
+              className={`
+                relative px-6 py-3 font-mono text-sm font-medium transition-all duration-200
+                ${
+                  currentTab === "settings"
+                    ? "text-terminal-cyan border-b-2 border-terminal-cyan"
+                    : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                }
+              `}
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                <span>{t("nav.settings")}</span>
               </div>
             </button>
           </div>
@@ -222,26 +233,10 @@ function AppContent() {
             {currentTab === "installed" && <InstalledSkillsPage />}
             {currentTab === "marketplace" && <MarketplacePage />}
             {currentTab === "repositories" && <RepositoriesPage />}
+            {currentTab === "settings" && <SettingsPage />}
           </div>
         </div>
       </main>
-
-      {/* Footer - Fixed */}
-      <footer className="flex-shrink-0 border-t border-border bg-card/30 backdrop-blur-sm">
-        <div className="w-full px-6 py-3">
-          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-            <span className="text-terminal-green">❯</span>
-            <span>Agent-Skills-Guard </span>
-            <span className="text-terminal-cyan">
-              {t("footer.version")}
-              {__APP_VERSION__}
-            </span>
-            <span className="mx-2">•</span>
-            <span className="text-terminal-purple">{t("footer.status")}</span>
-            <span className="text-terminal-green">{t("footer.operational")}</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

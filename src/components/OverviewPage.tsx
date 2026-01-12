@@ -328,7 +328,7 @@ export function OverviewPage() {
             </div>
 
             <div className="p-4">
-              <div className="max-h-[min(56vh,560px)] overflow-y-auto pr-1">
+              <div className="max-h-[min(68vh,720px)] overflow-y-auto pr-1">
                 {filteredIssues.length === 0 ? (
                   <div className="text-center py-7 bg-card/30 border border-border/40 rounded-lg">
                     <div className="flex flex-col items-center gap-2.5">
