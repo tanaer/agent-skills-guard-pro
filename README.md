@@ -2,15 +2,15 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.9.3-blue.svg)
+![Version](https://img.shields.io/badge/version-0.9.4-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)
 
 </div>
 
-## 让你的 Claude Code 技能探索之旅 安全又安心
+## 让你的 Claude Code Skills探索之旅安全又放心
 
-**一个懂你的 Claude Code 技能管家**
+**Agent skills 可视化管理+精选技能仓库+安全扫描**
 
 ---
 
@@ -54,18 +54,19 @@
 - **符号链接检测**：自动识别潜在的符号链接风险
 - **目录扫描限制**：防止扫描陷入过深的目录结构
 - **直观的安全评分**：0-100分，一眼看穿技能安全性
-- **详细的扫描报告**：告诉你哪里有风险、为什么有风险、如何修复
+- **详细的扫描报告**：告诉你哪里有风险、为什么有风险
 
 ![扫描结果](screen-shot/scanresult.png)
 
 ### 🔄 自动更新
 
-- **应用自动更新**：集成 GitHub Actions，自动检测并安装新版本
+- **应用自动更新**：自动检测并安装新版本
 - **无缝升级体验**：后台下载，一键更新
+- **精选技能仓库**：自动同步仓库精选技能库
 
 ### 🎨 现代化界面
 
-- **Cyberpunk 风格设计**：赛博朋克主题，科技感十足
+- **风格设计**：赛博朋克主题，科技感十足
 - **响应式布局**：完美适配各种屏幕尺寸
 - **流畅动画**：精心打磨的交互体验
 - **中英双语界面**：支持中文和英文切换
@@ -78,10 +79,10 @@
 
 #### 方式一：下载安装包（推荐）
 
-访问 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) 下载最新版本：
+访问 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) 下载最新版本（初次安装触发安全提示可忽略）：
 
-- **macOS**：下载 `.dmg` 或 `.app.tar.gz` 文件
-- **Windows**：下载 `.msi` 或 `.exe` 安装包
+- **macOS**：下载 `.dmg` 文件
+- **Windows**：下载 `.msi` 安装包
 
 #### 方式二：自行编译
 
@@ -149,7 +150,15 @@ pnpm build
 
 ## 📝 更新日志
 
-### v0.9.3 (最新版本)
+### v0.9.4 (最新版本)
+
+#### ✨ 核心功能
+
+- **推荐仓库自动更新**：精选技能仓库支持自动刷新，保持最新内容
+- **多路径安装增强**：完善同一技能多处安装的支持，优化卸载路径选择
+- **其他已知问题优化**
+
+### v0.9.3
 
 #### 🔒 安全性改进
 
@@ -199,7 +208,7 @@ pnpm build
 
 - **Tauri 2.9** - Rust 驱动的跨平台桌面应用框架
 - **SQLite** - 轻量级本地数据库
-- **基于规则的安全扫描引擎** - 60+ 条安全规则
+- **安全扫描引擎** - 60+ 条安全规则
 - **GitHub Actions** - 自动化构建和更新发布
 
 ---
