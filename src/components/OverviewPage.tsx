@@ -246,10 +246,6 @@ export function OverviewPage() {
               {t("overview.title")}
             </h1>
           </div>
-          <p className="text-xs text-muted-foreground font-mono pl-7">
-            <span className="text-terminal-green">&gt;</span>{" "}
-            {t("overview.subtitle", { count: statistics.installedCount })}
-          </p>
         </div>
 
         {/* 一键扫描按钮 - 赛博朋克风格 */}
