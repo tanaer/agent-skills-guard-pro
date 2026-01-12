@@ -147,7 +147,7 @@ export function InstalledSkillsPage() {
               placeholder={t('skills.installedPage.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-terminal-cyan transition-colors"
+              className="w-full h-10 pl-10 pr-4 py-0 bg-card border border-border rounded font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-terminal-cyan transition-colors"
             />
           </div>
 
@@ -163,7 +163,7 @@ export function InstalledSkillsPage() {
           <button
             onClick={() => scanMutation.mutate()}
             disabled={isScanning}
-            className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            className="neon-button h-10 px-4 py-0 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             {isScanning ? (
               <>

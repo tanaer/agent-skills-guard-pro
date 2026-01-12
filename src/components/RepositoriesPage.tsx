@@ -200,16 +200,16 @@ export function RepositoriesPage() {
       {/* Cache Statistics */}
       {cacheStats && (
         <div
-          className="cyber-card p-6 border-terminal-cyan bg-gradient-to-br from-card via-muted to-card"
+          className="cyber-card p-3 border-terminal-cyan bg-gradient-to-br from-card via-muted to-card"
           style={{
             animation: "fadeIn 0.3s ease-out",
             boxShadow: "0 0 20px rgba(94, 234, 212, 0.15), inset 0 1px 0 rgba(94, 234, 212, 0.1)",
           }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-terminal-cyan" />
-              <h3 className="font-bold text-terminal-cyan tracking-wider uppercase">
+              <Database className="w-4 h-4 text-terminal-cyan" />
+              <h3 className="font-bold text-terminal-cyan tracking-wider uppercase text-sm">
                 {t("repositories.cache.stats")}
               </h3>
             </div>
@@ -219,11 +219,11 @@ export function RepositoriesPage() {
               <button
                 onClick={() => clearAllCachesMutation.mutate()}
                 disabled={clearAllCachesMutation.isPending}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded font-mono text-xs bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 hover:border-red-500 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1 rounded font-mono text-xs bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 hover:border-red-500 transition-colors duration-200 disabled:opacity-50"
               >
                 {clearAllCachesMutation.isPending ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin will-change-transform transform-gpu" />
                     {t("repositories.cache.clearing")}
                   </>
                 ) : (
@@ -236,33 +236,33 @@ export function RepositoriesPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="cyber-card p-4 bg-background/40 border-terminal-cyan/30 hover:border-terminal-cyan hover:shadow-[0_0_15px_rgba(94,234,212,0.2)] transition-all duration-300">
-              <div className="text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider flex items-center gap-1">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="cyber-card p-3 bg-background/40 border-terminal-cyan/30 hover:border-terminal-cyan hover:shadow-[0_0_15px_rgba(94,234,212,0.2)] transition-all duration-300">
+              <div className="text-[11px] font-mono text-terminal-green mb-1 uppercase tracking-wider flex items-center gap-1">
                 <span className="text-terminal-cyan">▸</span>
                 {t("repositories.cache.totalRepos")}
               </div>
-              <div className="text-3xl font-bold text-terminal-cyan tabular-nums">
+              <div className="text-2xl font-bold text-terminal-cyan tabular-nums leading-none">
                 {cacheStats.totalRepositories}
               </div>
             </div>
 
-            <div className="cyber-card p-4 bg-background/40 border-terminal-green/30 hover:border-terminal-green hover:shadow-[0_0_15px_rgba(74,222,128,0.2)] transition-all duration-300">
-              <div className="text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider flex items-center gap-1">
+            <div className="cyber-card p-3 bg-background/40 border-terminal-green/30 hover:border-terminal-green hover:shadow-[0_0_15px_rgba(74,222,128,0.2)] transition-all duration-300">
+              <div className="text-[11px] font-mono text-terminal-green mb-1 uppercase tracking-wider flex items-center gap-1">
                 <span className="text-terminal-cyan">▸</span>
                 {t("repositories.cache.cached")}
               </div>
-              <div className="text-3xl font-bold text-terminal-green tabular-nums">
+              <div className="text-2xl font-bold text-terminal-green tabular-nums leading-none">
                 {cacheStats.cachedRepositories}
               </div>
             </div>
 
-            <div className="cyber-card p-4 bg-background/40 border-terminal-cyan/30 hover:border-terminal-cyan hover:shadow-[0_0_15px_rgba(94,234,212,0.2)] transition-all duration-300">
-              <div className="text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider flex items-center gap-1">
+            <div className="cyber-card p-3 bg-background/40 border-terminal-cyan/30 hover:border-terminal-cyan hover:shadow-[0_0_15px_rgba(94,234,212,0.2)] transition-all duration-300">
+              <div className="text-[11px] font-mono text-terminal-green mb-1 uppercase tracking-wider flex items-center gap-1">
                 <span className="text-terminal-cyan">▸</span>
                 {t("repositories.cache.size")}
               </div>
-              <div className="text-3xl font-bold text-terminal-cyan tabular-nums">
+              <div className="text-2xl font-bold text-terminal-cyan tabular-nums leading-none">
                 {formatBytes(cacheStats.totalSizeBytes)}
               </div>
             </div>
