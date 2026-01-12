@@ -89,3 +89,11 @@ categories:
           zh: "从可视化工作流到 AI 原生技能：一键将 14 款精选 n8n 自动化模板导入 Claude Code，让你的 AI 助手瞬间掌握营销、SEO 和市场调研的专家级实战能力。"
         tags: ["community", "cli", "developer-tools"]
         featured: true
+
+      - url: "https://github.com/kepano/obsidian-skills"
+        name: "kepano"
+        description:
+          en: "Three skills for working with Obsidian: JSON Canvas (create/edit .canvas files), Obsidian Bases (create/edit .base files with views, filters, formulas), and Obsidian Flavored Markdown (create/edit with Obsidian-specific syntax)"
+          zh: "三款 Obsidian 相关技能：JSON Canvas（创建/编辑 .canvas 文件）、Obsidian Bases（创建/编辑包含视图、筛选器、公式的 .base 文件）、Obsidian Flavored Markdown（创建/编辑支持 Obsidian 特定语法的 Markdown）"
+        tags: ["community", "obsidian", "markdown", "productivity", "note-taking"]
+        featured: true
