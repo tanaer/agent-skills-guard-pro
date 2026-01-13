@@ -517,14 +517,18 @@ function SkillCard({
       <div className="flex items-center gap-4 mb-3 text-xs font-mono flex-wrap">
         <span className="text-muted-foreground">
           <span className="text-terminal-green">{t('skills.repo')}</span>{" "}
-          <a
-            href={skill.repository_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-terminal-cyan hover:underline break-all"
-          >
-            {skill.repository_url}
-          </a>
+          {skill.repository_url === "local" ? (
+            <span className="text-muted-foreground">{skill.repository_url}</span>
+          ) : (
+            <a
+              href={skill.repository_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-terminal-cyan hover:underline break-all"
+            >
+              {skill.repository_url}
+            </a>
+          )}
         </span>
       </div>
 

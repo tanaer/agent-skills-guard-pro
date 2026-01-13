@@ -344,7 +344,11 @@ function SkillCard({
       <div className="flex items-center gap-4 mb-3 text-xs font-mono">
         <span className="text-muted-foreground">
           <span className="text-terminal-green">{t('skills.repo')}</span>{" "}
-          {skill.repository_url.split("/").slice(-2).join("/")}
+          {skill.repository_url === "local" ? (
+            <span className="text-muted-foreground">{skill.repository_url}</span>
+          ) : (
+            skill.repository_url.split("/").slice(-2).join("/")
+          )}
         </span>
         <span className="text-muted-foreground">
           <span className="text-terminal-purple">{t('skills.path')}</span> {skill.file_path}
@@ -375,7 +379,14 @@ function SkillCard({
           className="mt-4 p-4 bg-muted/50 border border-border rounded space-y-3"
           style={{ animation: 'fadeIn 0.3s ease-out' }}
         >
-          <DetailItem label={t('skills.fullRepository')} value={skill.repository_url} />
+          <div className="text-xs font-mono">
+            <p className="text-terminal-cyan mb-1">{t('skills.fullRepository')}:</p>
+            {skill.repository_url === "local" ? (
+              <p className="text-muted-foreground">{skill.repository_url}</p>
+            ) : (
+              <p className="text-muted-foreground break-all">{skill.repository_url}</p>
+            )}
+          </div>
           {skill.version && <DetailItem label={t('skills.version')} value={skill.version} />}
           {skill.author && <DetailItem label={t('skills.author')} value={skill.author} />}
           {skill.local_path && (
