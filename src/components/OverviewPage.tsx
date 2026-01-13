@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, CheckCircle, Shield, X } from "lucide-react";
+import { Loader2, CheckCircle, Shield, X, LayoutDashboard } from "lucide-react";
 import type { SkillScanResult } from "@/types/security";
 import type { Skill, Repository } from "@/types";
 import { api } from "@/lib/api";
@@ -184,7 +184,7 @@ export function OverviewPage() {
       <div className="flex items-center justify-between pb-3 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-terminal-cyan rounded-full animate-pulse" />
+            <LayoutDashboard className="w-6 h-6 text-terminal-cyan" />
             <h1
               className="text-2xl font-bold text-terminal-cyan tracking-wider uppercase"
             >
