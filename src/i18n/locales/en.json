@@ -98,6 +98,7 @@
         "installAnyway": "Install Anyway",
         "installCautiously": "Install Cautiously",
         "install": "Install",
+        "confirmInstall": "Confirm Install",
         "warningTitle": "⚠️ Strongly Recommended NOT to Install This Skill!",
         "warningMessage": "Severe security threats detected that may harm your system or data.",
         "blocked": "This Skill has severe security risks and has been blocked",

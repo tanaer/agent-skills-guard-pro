@@ -11,7 +11,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { countIssuesBySeverity } from "@/lib/security-utils";
 import { addRecentInstallPath } from "@/lib/storage";
 import { CyberSelect, type CyberSelectOption } from "./ui/CyberSelect";
-import { SimplePathSelectionDialog } from "./SimplePathSelectionDialog";
 import { InstallPathSelector } from "./InstallPathSelector";
 import { appToast } from "@/lib/toast";
 import {
@@ -42,7 +41,6 @@ export function MarketplacePage() {
   } | null>(null);
   const [preparingSkillId, setPreparingSkillId] = useState<string | null>(null);
   const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
-  const [pathSelectionPending, setPathSelectionPending] = useState<Skill | null>(null);
 
   // 只显示从仓库扫描的技能，排除本地技能
   const repositorySkills = useMemo(() => {
@@ -201,15 +199,9 @@ export function MarketplacePage() {
                   console.log('[INFO] 扫描完成，评分:', report.score);
                   setPreparingSkillId(null);
 
-                  // 判断是否需要安全警告
-                  if (report.score < 70 || report.blocked) {
-                    console.log('[INFO] 需要用户确认，显示安全警告弹窗（带路径选择）');
-                    setPendingInstall({ skill, report });
-                  } else {
-                    // 评分 >= 70 且未被阻止，显示简化的路径选择弹窗
-                    console.log('[INFO] 安全评分良好，显示路径选择弹窗');
-                    setPathSelectionPending(skill);
-                  }
+                  // 统一显示安全扫描结果弹窗
+                  console.log('[INFO] 显示安全扫描结果弹窗');
+                  setPendingInstall({ skill, report });
                 } catch (error: any) {
                   console.error('[ERROR] 安装失败:', error);
                   setPreparingSkillId(null);
@@ -326,49 +318,6 @@ export function MarketplacePage() {
         }}
         report={pendingInstall?.report || null}
         skillName={pendingInstall?.skill.name || ""}
-      />
-
-      {/* Simple Path Selection Dialog (for low-risk skills) */}
-      <SimplePathSelectionDialog
-        open={pathSelectionPending !== null}
-        skillName={pathSelectionPending?.name || ''}
-        onClose={async () => {
-          if (pathSelectionPending) {
-            try {
-              await invoke("cancel_skill_installation", {
-                skillId: pathSelectionPending.id,
-              });
-            } catch (error: any) {
-              console.error('[ERROR] 取消安装失败:', error);
-            }
-          }
-          setPathSelectionPending(null);
-        }}
-        onConfirm={async (selectedPath) => {
-          if (pathSelectionPending) {
-            try {
-              await invoke("confirm_skill_installation", {
-                skillId: pathSelectionPending.id,
-                installPath: selectedPath,
-              });
-
-              // 保存到最近路径
-              addRecentInstallPath(selectedPath);
-
-              // 刷新技能列表（等待数据重新获取完成）
-              await queryClient.refetchQueries({ queryKey: ["skills"] });
-              await queryClient.refetchQueries({ queryKey: ["skills", "installed"] });
-              await queryClient.refetchQueries({ queryKey: ["scanResults"] });
-
-              // 数据刷新完成后显示 toast
-              appToast.success(t('skills.toast.installed'));
-            } catch (error: any) {
-              console.error('[ERROR] 确认安装失败:', error);
-              appToast.error(`${t('skills.toast.installFailed')}: ${error.message || error}`);
-            }
-          }
-          setPathSelectionPending(null);
-        }}
       />
     </div>
   );
@@ -633,7 +582,7 @@ function InstallConfirmDialog({
                 <span className="text-sm">{t('skills.marketplace.install.securityScore')}:</span>
                 <span className={`text-3xl font-bold font-mono ${
                   report.score >= 90 ? 'text-green-500' :
-                  report.score >= 70 ? 'text-yellow-500' :
+                  report.score >= 70 ? 'text-green-400' :
                   report.score >= 50 ? 'text-orange-500' : 'text-red-500'
                 }`}>
                   {report.score}
@@ -641,7 +590,7 @@ function InstallConfirmDialog({
               </div>
 
               {/* 问题摘要 */}
-              {report.issues.length > 0 && (
+              {report.issues.length > 0 ? (
                 <div className="space-y-2">
                   <div className="text-sm font-bold">{t('skills.marketplace.install.issuesDetected')}:</div>
                   <div className="flex gap-4 text-sm">
@@ -662,7 +611,7 @@ function InstallConfirmDialog({
                     )}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* 具体问题列表 */}
               {report.issues.length > 0 && (
@@ -690,9 +639,13 @@ function InstallConfirmDialog({
               {/* 警告信息 */}
               {isHighRisk && (
                 <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg text-sm">
-                  <strong>{t('skills.marketplace.install.warningTitle')}</strong>
-                  <br />
-                  {t('skills.marketplace.install.warningMessage')}
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block mb-1">{t('skills.marketplace.install.warningTitle')}</strong>
+                      {t('skills.marketplace.install.warningMessage')}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -709,13 +662,15 @@ function InstallConfirmDialog({
           <button
             onClick={() => onConfirm(selectedPath)}
             disabled={!selectedPath}
-            className={`px-4 py-2 rounded font-mono disabled:opacity-50 ${
+            className={`px-4 py-2 rounded font-mono disabled:opacity-50 transition-colors ${
               isHighRisk ? 'bg-red-500 hover:bg-red-600' :
               isMediumRisk ? 'bg-yellow-500 hover:bg-yellow-600' :
               'bg-green-500 hover:bg-green-600'
             } text-white`}
           >
-            {isHighRisk ? t('skills.marketplace.install.installAnyway') : isMediumRisk ? t('skills.marketplace.install.installCautiously') : t('skills.marketplace.install.install')}
+            {isHighRisk
+              ? t('skills.marketplace.install.installAnyway')
+              : t('skills.marketplace.install.confirmInstall')}
           </button>
         </AlertDialogFooter>
       </AlertDialogContent>
