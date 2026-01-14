@@ -1,5 +1,7 @@
 <div align="center">
 
+<a name="readme-top"></a>
+
 # 🛡️ Agent Skills Guard
 
 ### Making Claude Code Skills Management as Simple and Secure as an App Store
@@ -329,6 +331,6 @@ Made with ❤️ by [Bruce](https://github.com/brucevanfdm)
 
 If this project helps you, please give it a ⭐️ Star!
 
-[⬆ Back to top](#-agent-skills-guard)
+[⬆ Back to top](#readme-top)
 
 </div>
