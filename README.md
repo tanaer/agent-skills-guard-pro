@@ -262,8 +262,14 @@ MIT License - 自由使用，自由分享
 
 有问题或建议？欢迎通过以下方式联系：
 
+- Agent skills 安全交流群
+
+  ![交流群](screen-shot/agentskillsgroup.jpg)
+
 - 💬 [GitHub Issues](https://github.com/brucevanfdm/agent-skills-guard/issues) - 报告问题或提出功能建议
+
 - 🐦 [X/Twitter](https://x.com/brucevanfdm) - 关注项目动态
+
 - 📦 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) - 下载最新版本
 
 ---
