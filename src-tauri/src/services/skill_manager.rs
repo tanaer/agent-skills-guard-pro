@@ -379,7 +379,7 @@ impl SkillManager {
             .join("repositories");
 
         // 下载仓库压缩包并解压
-        let extract_dir = self.github
+        let (extract_dir, commit_sha) = self.github
             .download_repository_archive(&owner, &repo_name, &cache_base_dir)
             .await
             .context("下载仓库压缩包失败")?;
@@ -391,7 +391,7 @@ impl SkillManager {
             repo_id,
             &cache_path_str,
             Utc::now(),
-            None,
+            Some(&commit_sha),
         ).context("更新仓库缓存信息失败")?;
 
         log::info!("Repository cached successfully: {}", cache_path_str);
@@ -477,6 +477,12 @@ impl SkillManager {
             .context("技能尚未准备，请先调用prepare_skill_installation")?;
         let cache_dir = PathBuf::from(cache_path);
 
+        // 获取仓库的 cached_commit_sha
+        let repositories = self.db.get_repositories()?;
+        let repo = repositories.iter()
+            .find(|r| r.url == skill.repository_url);
+        let commit_sha = repo.and_then(|r| r.cached_commit_sha.clone());
+
         // 确定最终安装路径
         let install_base_dir = if let Some(user_path) = install_path {
             PathBuf::from(user_path)
@@ -526,6 +532,7 @@ impl SkillManager {
         // 标记为已安装
         skill.installed = true;
         skill.installed_at = Some(Utc::now());
+        skill.installed_commit_sha = commit_sha;
 
         self.db.save_skill(&skill)?;
 
@@ -865,6 +872,7 @@ impl SkillManager {
                                 crate::models::security::SecurityLevel::Critical => "Critical".to_string(),
                             }),
                             scanned_at: Some(Utc::now()),
+                            installed_commit_sha: None,
                         };
 
                         // 保存到数据库
@@ -956,6 +964,311 @@ impl SkillManager {
             log::info!("Saved file: {}", file_info.name);
         }
 
+        Ok(())
+    }
+
+    /// 检测本地文件是否被修改（与缓存中的版本比较）
+    fn detect_local_modifications(&self, installed_dir: &PathBuf, cached_dir: &PathBuf) -> Result<Vec<String>> {
+        use std::fs;
+
+        let mut modified_files = Vec::new();
+
+        // 遍历已安装目录中的所有文件
+        for entry in walkdir::WalkDir::new(installed_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            if entry.file_type().is_file() {
+                let installed_file = entry.path();
+
+                // 计算相对路径
+                let relative_path = installed_file.strip_prefix(installed_dir)
+                    .context("无法计算相对路径")?;
+
+                // 对应的缓存文件路径
+                let cached_file = cached_dir.join(relative_path);
+
+                // 如果缓存中没有该文件，说明是用户新增的
+                if !cached_file.exists() {
+                    modified_files.push(format!("新增: {}", relative_path.display()));
+                    continue;
+                }
+
+                // 比较文件内容
+                let installed_content = fs::read(installed_file)?;
+                let cached_content = fs::read(&cached_file)?;
+
+                if installed_content != cached_content {
+                    modified_files.push(format!("修改: {}", relative_path.display()));
+                }
+            }
+        }
+
+        Ok(modified_files)
+    }
+
+    /// 准备技能更新：下载最新版本到临时目录并扫描，检测本地修改
+    pub async fn prepare_skill_update(&self, skill_id: &str, locale: &str) -> Result<(crate::models::security::SecurityReport, Vec<String>)> {
+        use anyhow::Context;
+
+        log::info!("Preparing update for skill: {}", skill_id);
+
+        // 获取技能信息
+        let skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        if !skill.installed {
+            anyhow::bail!("该技能尚未安装，无法更新");
+        }
+
+        // 获取仓库记录
+        let repositories = self.db.get_repositories()?;
+        let repo = repositories.iter()
+            .find(|r| r.url == skill.repository_url)
+            .context("未找到对应的仓库记录")?
+            .clone();
+
+        // 重新下载仓库到新的临时缓存（staging）
+        log::info!("下载最新版本到 staging 目录");
+        let (owner, repo_name) = crate::models::Repository::from_github_url(&skill.repository_url)?;
+
+        let staging_base_dir = dirs::cache_dir()
+            .context("无法获取系统缓存目录")?
+            .join("agent-skills-guard")
+            .join("staging");
+
+        // 清理旧的 staging 目录（如果存在）
+        let staging_repo_dir = staging_base_dir.join(format!("{}_{}", owner, repo_name));
+        if staging_repo_dir.exists() {
+            std::fs::remove_dir_all(&staging_repo_dir)?;
+        }
+
+        // 下载最新版本
+        let (extract_dir, new_commit_sha) = self.github
+            .download_repository_archive(&owner, &repo_name, &staging_base_dir)
+            .await
+            .context("下载最新版本失败")?;
+
+        log::info!("下载完成，最新 commit: {}", new_commit_sha);
+
+        // 定位 staging 中的技能目录
+        let staging_skill_dir = self.locate_skill_in_cache(
+            extract_dir.as_path(),
+            &skill.file_path
+        )?;
+
+        // 扫描最新版本
+        let scan_report = self.scanner.scan_directory(
+            staging_skill_dir.to_str().context("技能目录路径无效")?,
+            &skill.id,
+            locale
+        )?;
+
+        log::info!("Security scan completed: score={}, scanned {} files",
+            scan_report.score, scan_report.scanned_files.len());
+
+        // 检测本地修改
+        let modified_files = if let Some(local_path) = &skill.local_path {
+            let installed_dir = PathBuf::from(local_path);
+            if installed_dir.exists() {
+                // 获取当前缓存中的版本（用于比较）
+                if let Some(cache_path) = &repo.cache_path {
+                    let cache_path_buf = PathBuf::from(cache_path);
+                    if cache_path_buf.exists() {
+                        match self.locate_skill_in_cache(cache_path_buf.as_path(), &skill.file_path) {
+                            Ok(cached_skill_dir) => {
+                                self.detect_local_modifications(&installed_dir, &cached_skill_dir)?
+                            }
+                            Err(e) => {
+                                log::warn!("无法定位缓存中的技能目录: {}", e);
+                                Vec::new()
+                            }
+                        }
+                    } else {
+                        Vec::new()
+                    }
+                } else {
+                    Vec::new()
+                }
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
+        log::info!("检测到 {} 个本地修改", modified_files.len());
+
+        // 保存 staging 信息到数据库（临时）
+        // 我们使用一个特殊的字段来标记这是 staging 路径
+        let mut skill_update = skill.clone();
+        skill_update.local_path = Some(format!("__staging__:{}", staging_skill_dir.to_string_lossy()));
+
+        self.db.save_skill(&skill_update)?;
+
+        Ok((scan_report, modified_files))
+    }
+
+    /// 确认技能更新：从 staging 原子替换到安装目录
+    pub fn confirm_skill_update(&self, skill_id: &str, _force_overwrite: bool) -> Result<()> {
+        use anyhow::Context;
+
+        log::info!("Confirming update for skill: {}", skill_id);
+
+        let mut skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        // 获取 staging 路径
+        let staging_marker = skill.local_path.as_ref()
+            .context("技能尚未准备更新")?;
+
+        if !staging_marker.starts_with("__staging__:") {
+            anyhow::bail!("技能尚未准备更新，请先调用 prepare_skill_update");
+        }
+
+        let staging_path_str = &staging_marker[12..]; // 去掉 "__staging__:" 前缀
+        let staging_dir = PathBuf::from(staging_path_str);
+
+        if !staging_dir.exists() {
+            anyhow::bail!("Staging 目录不存在");
+        }
+
+        // 获取原安装路径（从 local_paths）
+        let install_paths = skill.local_paths.as_ref()
+            .context("无法获取安装路径")?;
+
+        if install_paths.is_empty() {
+            anyhow::bail!("技能没有有效的安装路径");
+        }
+
+        // 使用第一个路径作为目标（通常只有一个）
+        let target_install_dir = PathBuf::from(&install_paths[0]);
+
+        // 创建备份（如果目录存在）
+        let backup_dir = if target_install_dir.exists() {
+            let dir_name = target_install_dir.file_name()
+                .context("无效的目录名")?
+                .to_string_lossy();
+            let backup_path = target_install_dir.parent()
+                .context("无效的安装路径")?
+                .join(format!("{}.bak", dir_name));
+
+            if backup_path.exists() {
+                std::fs::remove_dir_all(&backup_path)?;
+            }
+            std::fs::rename(&target_install_dir, &backup_path)?;
+            log::info!("创建备份: {:?}", backup_path);
+            Some(backup_path)
+        } else {
+            None
+        };
+
+        // 复制 staging 到目标路径
+        std::fs::create_dir_all(&target_install_dir.parent().context("无效的安装路径")?)?;
+
+        match self.copy_directory(&staging_dir, &target_install_dir) {
+            Ok(_) => {
+                log::info!("成功更新技能到: {:?}", target_install_dir);
+
+                // 删除备份
+                if let Some(backup) = backup_dir {
+                    let _ = std::fs::remove_dir_all(&backup);
+                }
+
+                // 更新数据库：恢复 local_path，更新 installed_commit_sha
+                skill.local_path = Some(target_install_dir.to_string_lossy().to_string());
+
+                // 获取新的 commit SHA（从仓库记录）
+                let repositories = self.db.get_repositories()?;
+                if let Some(_repo) = repositories.iter().find(|r| r.url == skill.repository_url) {
+                    // 我们需要从 staging 目录提取最新的 commit SHA
+                    // staging_path_str 的父目录的父目录应该是 extracted 目录
+                    if let Some(parent) = staging_dir.parent() {
+                        if let Some(extract_dir) = parent.parent() {
+                            match self.github.extract_commit_sha_from_cache(extract_dir) {
+                                Ok(new_sha) => {
+                                    skill.installed_commit_sha = Some(new_sha);
+                                    log::info!("更新 installed_commit_sha");
+                                }
+                                Err(e) => {
+                                    log::warn!("无法提取新的 commit SHA: {}", e);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                skill.installed_at = Some(Utc::now());
+                self.db.save_skill(&skill)?;
+
+                log::info!("技能更新确认完成: {}", skill.name);
+                Ok(())
+            }
+            Err(e) => {
+                // 恢复备份
+                if let Some(backup) = backup_dir {
+                    if target_install_dir.exists() {
+                        let _ = std::fs::remove_dir_all(&target_install_dir);
+                    }
+                    let _ = std::fs::rename(&backup, &target_install_dir);
+                    log::warn!("更新失败，已恢复备份");
+                }
+                Err(e)
+            }
+        }
+    }
+
+    /// 取消技能更新：清理 staging 目录
+    pub fn cancel_skill_update(&self, skill_id: &str) -> Result<()> {
+        use anyhow::Context;
+
+        log::info!("Canceling update for skill: {}", skill_id);
+
+        let mut skill = self.db.get_skills()?
+            .into_iter()
+            .find(|s| s.id == skill_id)
+            .context("未找到该技能")?;
+
+        // 获取 staging 路径
+        let staging_marker = skill.local_path.as_ref()
+            .context("技能尚未准备更新")?;
+
+        if !staging_marker.starts_with("__staging__:") {
+            log::warn!("技能没有处于更新准备状态");
+            return Ok(());
+        }
+
+        let staging_path_str = &staging_marker[12..];
+        let staging_dir = PathBuf::from(staging_path_str);
+
+        // 删除 staging 目录（整个 staging repo 目录）
+        if let Some(parent) = staging_dir.parent() {
+            if let Some(repo_dir) = parent.parent() {
+                if repo_dir.exists() {
+                    std::fs::remove_dir_all(repo_dir)?;
+                    log::info!("已删除 staging 目录: {:?}", repo_dir);
+                }
+            }
+        }
+
+        // 恢复数据库中的 local_path
+        if let Some(local_paths) = &skill.local_paths {
+            if !local_paths.is_empty() {
+                skill.local_path = Some(local_paths[0].clone());
+            } else {
+                skill.local_path = None;
+            }
+        } else {
+            skill.local_path = None;
+        }
+
+        self.db.save_skill(&skill)?;
+
+        log::info!("技能更新已取消: {}", skill.name);
         Ok(())
     }
 

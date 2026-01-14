@@ -37,6 +37,7 @@
     "uninstalling": "卸载中",
     "scanning": "扫描中",
     "delete": "删除",
+    "update": "更新",
     "deleting": "删除中",
     "deleteRecord": "删除记录",
     "installedPaths": "安装位置",
@@ -114,7 +115,19 @@
       "scanLocal": "刷新",
       "scanning": "刷新中...",
       "scanCompleted": "刷新完成，发现 {{count}} 个技能",
-      "scanFailed": "刷新失败：{{error}}"
+      "scanFailed": "刷新失败：{{error}}",
+      "checkUpdates": "检查更新",
+      "checkingUpdates": "检查中...",
+      "updatesFound": "发现 {{count}} 个可用更新",
+      "noUpdates": "所有技能都是最新版本",
+      "checkUpdatesFailed": "检查更新失败：{{error}}",
+      "updateAvailable": "有更新",
+      "preparingUpdate": "准备中...",
+      "updateScanResult": "更新安全扫描结果",
+      "conflictDetected": "检测到文件冲突",
+      "conflictDescription": "以下文件在本地已被修改，更新将覆盖这些修改：",
+      "forceOverwrite": "我了解风险，强制覆盖本地修改",
+      "andMore": "还有 {{count}} 个..."
     },
     "folder": {
       "opened": "已打开文件夹",
@@ -138,7 +151,9 @@
       "uninstalled": "[成功] 技能已卸载",
       "uninstallFailed": "[错误] 卸载失败",
       "deleted": "[成功] 记录已删除",
-      "deleteFailed": "[错误] 删除失败"
+      "deleteFailed": "[错误] 删除失败",
+      "updateSuccess": "[成功] 技能已更新",
+      "updateFailed": "[错误] 更新失败"
     }
   },
   "repositories": {

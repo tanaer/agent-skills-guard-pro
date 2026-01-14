@@ -111,7 +111,7 @@ pub async fn scan_repository(
         } else {
             // 缓存路径不存在，重新下载
             log::warn!("缓存路径不存在，重新下载: {:?}", cache_path_buf);
-            let extract_dir = state.github
+            let (extract_dir, commit_sha) = state.github
                 .download_repository_archive(&owner, &repo_name, &cache_base_dir)
                 .await
                 .map_err(|e| format!("下载仓库压缩包失败: {}", e))?;
@@ -121,7 +121,7 @@ pub async fn scan_repository(
                 &repo_id,
                 &extract_dir.to_string_lossy(),
                 Utc::now(),
-                None,  // cached_commit_sha - Task 4修复后需要此参数
+                Some(&commit_sha),
             ).map_err(|e| e.to_string())?;
 
             state.github.scan_cached_repository(&extract_dir, &repo.url, repo.scan_subdirs)
@@ -131,7 +131,7 @@ pub async fn scan_repository(
         // 首次扫描: 下载压缩包并缓存(1次API请求)
         log::info!("首次扫描，下载仓库压缩包: {}", repo.name);
 
-        let extract_dir = state.github
+        let (extract_dir, commit_sha) = state.github
             .download_repository_archive(&owner, &repo_name, &cache_base_dir)
             .await
             .map_err(|e| format!("下载仓库压缩包失败: {}", e))?;
@@ -141,7 +141,7 @@ pub async fn scan_repository(
             &repo_id,
             &extract_dir.to_string_lossy(),
             Utc::now(),
-            None,  // cached_commit_sha - Task 4修复后需要此参数
+            Some(&commit_sha),
         ).map_err(|e| e.to_string())?;
 
         // 扫描本地缓存
@@ -645,4 +645,93 @@ pub async fn is_repository_added(
         .map_err(|e| e.to_string())?;
 
     Ok(repos.iter().any(|r| r.url == url))
+}
+
+/// 检查已安装技能的更新
+/// 返回：Vec<(skill_id, latest_commit_sha)>
+#[tauri::command]
+pub async fn check_skills_updates(
+    state: State<'_, AppState>,
+) -> Result<Vec<(String, String)>, String> {
+    let manager = state.skill_manager.lock().await;
+    let installed_skills = manager.get_installed_skills()
+        .map_err(|e| e.to_string())?;
+
+    let mut updates = Vec::new();
+
+    for skill in installed_skills {
+        // 跳过本地技能
+        if skill.repository_url == "local" {
+            continue;
+        }
+
+        // 解析仓库 URL
+        let (owner, repo) = match Repository::from_github_url(&skill.repository_url) {
+            Ok(result) => result,
+            Err(e) => {
+                log::warn!("无法解析仓库 URL {}: {}", skill.repository_url, e);
+                continue;
+            }
+        };
+
+        // 检查更新
+        match state.github
+            .check_skill_update(
+                &owner,
+                &repo,
+                &skill.file_path,
+                skill.installed_commit_sha.as_deref(),
+            )
+            .await
+        {
+            Ok(Some(latest_sha)) => {
+                log::info!("技能 {} 有更新可用: {}", skill.name, latest_sha);
+                updates.push((skill.id.clone(), latest_sha));
+            }
+            Ok(None) => {
+                log::debug!("技能 {} 无更新", skill.name);
+            }
+            Err(e) => {
+                log::warn!("检查技能 {} 更新时出错: {}", skill.name, e);
+            }
+        }
+    }
+
+    log::info!("检查更新完成，发现 {} 个技能有更新", updates.len());
+    Ok(updates)
+}
+
+/// 准备技能更新
+#[tauri::command]
+pub async fn prepare_skill_update(
+    state: State<'_, AppState>,
+    skill_id: String,
+    locale: String,
+) -> Result<(crate::models::security::SecurityReport, Vec<String>), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.prepare_skill_update(&skill_id, &locale).await
+        .map_err(|e| e.to_string())
+}
+
+/// 确认技能更新
+#[tauri::command]
+pub async fn confirm_skill_update(
+    state: State<'_, AppState>,
+    skill_id: String,
+    force_overwrite: bool,
+) -> Result<(), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.confirm_skill_update(&skill_id, force_overwrite)
+        .map_err(|e| e.to_string())
+}
+
+/// 取消技能更新
+#[tauri::command]
+pub async fn cancel_skill_update(
+    state: State<'_, AppState>,
+    skill_id: String,
+) -> Result<(), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.cancel_skill_update(&skill_id)
+        .map_err(|e| e.to_string())
 }

@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Repository, Skill, CacheStats, FeaturedRepositoriesConfig, ClearAllCachesResult } from "../types";
+import type { SecurityReport } from "../types/security";
 
 export const api = {
   // Repository APIs
@@ -82,5 +83,22 @@ export const api = {
 
   async isRepositoryAdded(url: string): Promise<boolean> {
     return invoke("is_repository_added", { url });
+  },
+
+  // Skill Update APIs
+  async checkSkillsUpdates(): Promise<Array<[string, string]>> {
+    return invoke("check_skills_updates");
+  },
+
+  async prepareSkillUpdate(skillId: string, locale: string): Promise<[SecurityReport, string[]]> {
+    return invoke("prepare_skill_update", { skillId, locale });
+  },
+
+  async confirmSkillUpdate(skillId: string, forceOverwrite: boolean): Promise<void> {
+    return invoke("confirm_skill_update", { skillId, forceOverwrite });
+  },
+
+  async cancelSkillUpdate(skillId: string): Promise<void> {
+    return invoke("cancel_skill_update", { skillId });
   },
 };

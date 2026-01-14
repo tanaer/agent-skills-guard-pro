@@ -85,6 +85,7 @@ impl Database {
         self.migrate_add_cache_fields()?;
         self.migrate_add_security_enhancement_fields()?;
         self.migrate_add_local_paths()?;
+        self.migrate_add_installed_commit_sha()?;
 
         // 初始化默认仓库
         self.initialize_default_repositories()?;
@@ -198,8 +199,8 @@ impl Database {
         conn.execute(
             "INSERT OR REPLACE INTO skills
             (id, name, description, repository_url, repository_owner, file_path, version, author,
-             installed, installed_at, local_path, local_paths, checksum, security_score, security_issues, security_level, scanned_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+             installed, installed_at, local_path, local_paths, checksum, security_score, security_issues, security_level, scanned_at, installed_commit_sha)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
             params![
                 skill.id,
                 skill.name,
@@ -218,6 +219,7 @@ impl Database {
                 security_issues_json,
                 skill.security_level,
                 skill.scanned_at.as_ref().map(|d| d.to_rfc3339()),
+                skill.installed_commit_sha,
             ],
         )?;
 
@@ -229,7 +231,7 @@ impl Database {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, name, description, repository_url, repository_owner, file_path, version, author,
-                    installed, installed_at, local_path, local_paths, checksum, security_score, security_issues, security_level, scanned_at
+                    installed, installed_at, local_path, local_paths, checksum, security_score, security_issues, security_level, scanned_at, installed_commit_sha
              FROM skills"
         )?;
 
@@ -262,6 +264,7 @@ impl Database {
                 security_level: row.get(15)?,
                 scanned_at: row.get::<_, Option<String>>(16)?
                     .and_then(|s| s.parse().ok()),
+                installed_commit_sha: row.get(17)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -397,6 +400,19 @@ impl Database {
              WHERE id = ?1",
             params![repo_id],
         )?;
+
+        Ok(())
+    }
+
+    /// 数据库迁移：添加 installed_commit_sha 列
+    fn migrate_add_installed_commit_sha(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+
+        // 添加 installed_commit_sha 列
+        let _ = conn.execute(
+            "ALTER TABLE skills ADD COLUMN installed_commit_sha TEXT",
+            [],
+        );
 
         Ok(())
     }

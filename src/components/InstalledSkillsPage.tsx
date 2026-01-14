@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useInstalledSkills, useUninstallSkill, useUninstallSkillPath } from "../hooks/useSkills";
 import { Skill } from "../types";
-import { Trash2, Loader2, FolderOpen, Package, Search, RefreshCw } from "lucide-react";
+import { SecurityReport } from "../types/security";
+import { Trash2, Loader2, FolderOpen, Package, Search, RefreshCw, Download, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { formatRepositoryTag } from "../lib/utils";
@@ -9,6 +10,16 @@ import { CyberSelect, type CyberSelectOption } from "./ui/CyberSelect";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { appToast } from "../lib/toast";
+import { countIssuesBySeverity } from "@/lib/security-utils";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "./ui/alert-dialog";
 
 export function InstalledSkillsPage() {
   const { t, i18n } = useTranslation();
@@ -21,6 +32,16 @@ export function InstalledSkillsPage() {
   const [selectedRepository, setSelectedRepository] = useState("all");
   const [isScanning, setIsScanning] = useState(false);
   const [uninstallingSkillId, setUninstallingSkillId] = useState<string | null>(null);
+
+  // 更新相关状态
+  const [availableUpdates, setAvailableUpdates] = useState<Map<string, string>>(new Map());
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [preparingUpdateSkillId, setPreparingUpdateSkillId] = useState<string | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<{
+    skill: Skill;
+    report: SecurityReport;
+    conflicts: string[];
+  } | null>(null);
 
   // 添加扫描本地技能的 mutation
   const scanMutation = useMutation({
@@ -42,6 +63,26 @@ export function InstalledSkillsPage() {
       setIsScanning(false);
     },
   });
+
+  // 检查更新的函数
+  const checkUpdates = async () => {
+    try {
+      setIsCheckingUpdates(true);
+      const updates = await api.checkSkillsUpdates();
+      const updateMap = new Map(updates.map(([skillId, latestSha]) => [skillId, latestSha]));
+      setAvailableUpdates(updateMap);
+
+      if (updates.length > 0) {
+        appToast.success(t('skills.installedPage.updatesFound', { count: updates.length }));
+      } else {
+        appToast.success(t('skills.installedPage.noUpdates'));
+      }
+    } catch (error: any) {
+      appToast.error(t('skills.installedPage.checkUpdatesFailed', { error: error.message }));
+    } finally {
+      setIsCheckingUpdates(false);
+    }
+  };
 
   // 对技能进行去重合并，同一个技能的多个安装记录合并为一个
   const mergedSkills = useMemo(() => {
@@ -213,6 +254,25 @@ export function InstalledSkillsPage() {
               </>
             )}
           </button>
+
+          {/* Check Updates Button */}
+          <button
+            onClick={checkUpdates}
+            disabled={isCheckingUpdates}
+            className="neon-button h-10 px-4 py-0 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            {isCheckingUpdates ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('skills.installedPage.checkingUpdates')}
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                {t('skills.installedPage.checkUpdates')}
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -252,8 +312,29 @@ export function InstalledSkillsPage() {
                   },
                 });
               }}
+              onUpdate={async () => {
+                try {
+                  console.log('[INFO] 开始准备更新技能:', skill.name);
+                  setPreparingUpdateSkillId(skill.id);
+
+                  // 调用 prepare_skill_update
+                  const [report, conflicts] = await api.prepareSkillUpdate(skill.id, i18n.language);
+
+                  console.log('[INFO] 更新准备完成，安全评分:', report.score, '冲突文件:', conflicts.length);
+                  setPreparingUpdateSkillId(null);
+
+                  // 显示更新确认弹窗
+                  setPendingUpdate({ skill, report, conflicts });
+                } catch (error: any) {
+                  console.error('[ERROR] 更新准备失败:', error);
+                  setPreparingUpdateSkillId(null);
+                  appToast.error(`${t('skills.toast.updateFailed')}: ${error.message || error}`);
+                }
+              }}
+              hasUpdate={availableUpdates.has(skill.id)}
               isUninstalling={uninstallingSkillId === skill.id}
-              isAnyOperationPending={uninstallMutation.isPending || uninstallPathMutation.isPending}
+              isPreparingUpdate={preparingUpdateSkillId === skill.id}
+              isAnyOperationPending={uninstallMutation.isPending || uninstallPathMutation.isPending || preparingUpdateSkillId !== null}
               t={t}
             />
           ))}
@@ -277,6 +358,52 @@ export function InstalledSkillsPage() {
         </div>
       )}
 
+      {/* Update Confirmation Dialog */}
+      <UpdateConfirmDialog
+        open={pendingUpdate !== null}
+        onClose={async () => {
+          // 用户取消更新，清理临时文件
+          if (pendingUpdate) {
+            try {
+              await api.cancelSkillUpdate(pendingUpdate.skill.id);
+              console.log('[INFO] 已取消更新并删除临时文件');
+            } catch (error: any) {
+              console.error('[ERROR] 取消更新失败:', error);
+            }
+          }
+          setPendingUpdate(null);
+        }}
+        onConfirm={async (forceOverwrite: boolean) => {
+          // 用户确认更新
+          if (pendingUpdate) {
+            try {
+              await api.confirmSkillUpdate(pendingUpdate.skill.id, forceOverwrite);
+              console.log('[INFO] 用户确认更新');
+
+              // 刷新技能列表
+              await queryClient.refetchQueries({ queryKey: ["skills"] });
+              await queryClient.refetchQueries({ queryKey: ["skills", "installed"] });
+              await queryClient.refetchQueries({ queryKey: ["scanResults"] });
+
+              // 清除该技能的更新标记
+              setAvailableUpdates(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(pendingUpdate.skill.id);
+                return newMap;
+              });
+
+              appToast.success(t('skills.toast.updateSuccess'));
+            } catch (error: any) {
+              console.error('[ERROR] 确认更新失败:', error);
+              appToast.error(`${t('skills.toast.updateFailed')}: ${error.message || error}`);
+            }
+          }
+          setPendingUpdate(null);
+        }}
+        report={pendingUpdate?.report || null}
+        conflicts={pendingUpdate?.conflicts || []}
+        skillName={pendingUpdate?.skill.name || ""}
+      />
     </div>
   );
 }
@@ -286,7 +413,10 @@ interface SkillCardProps {
   index: number;
   onUninstall: () => void;
   onUninstallPath: (path: string) => void;
+  onUpdate: () => void;
+  hasUpdate: boolean;
   isUninstalling: boolean;
+  isPreparingUpdate: boolean;
   isAnyOperationPending: boolean;
   t: (key: string, options?: any) => string;
 }
@@ -296,7 +426,10 @@ function SkillCard({
   index,
   onUninstall,
   onUninstallPath,
+  onUpdate,
+  hasUpdate,
   isUninstalling,
+  isPreparingUpdate,
   isAnyOperationPending,
   t
 }: SkillCardProps) {
@@ -328,11 +461,40 @@ function SkillCard({
             `}>
               {formatRepositoryTag(skill)}
             </span>
+
+            {/* Update Available Badge */}
+            {hasUpdate && !skill.repository_owner?.includes("local") && (
+              <span className="px-2 py-1 rounded text-xs font-mono bg-terminal-cyan/10 border border-terminal-cyan/30 text-terminal-cyan flex items-center gap-1">
+                <Download className="w-3 h-3" />
+                {t('skills.installedPage.updateAvailable')}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-2 ml-4">
+          {/* Update Button - only show if update is available */}
+          {hasUpdate && !skill.repository_owner?.includes("local") && (
+            <button
+              onClick={onUpdate}
+              disabled={isAnyOperationPending}
+              className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            >
+              {isPreparingUpdate ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('skills.installedPage.preparingUpdate')}
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  {t('skills.update')}
+                </>
+              )}
+            </button>
+          )}
+
           <button
             onClick={onUninstall}
             disabled={isAnyOperationPending}
@@ -422,5 +584,191 @@ function SkillCard({
         </div>
       )}
     </div>
+  );
+}
+
+// Update Confirmation Dialog Props
+interface UpdateConfirmDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (forceOverwrite: boolean) => void;
+  report: SecurityReport | null;
+  conflicts: string[];
+  skillName: string;
+}
+
+function UpdateConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  report,
+  conflicts,
+  skillName
+}: UpdateConfirmDialogProps) {
+  const { t } = useTranslation();
+  const [forceOverwrite, setForceOverwrite] = useState(false);
+
+  const isMediumRisk = report ? report.score >= 50 && report.score < 70 : false;
+  const isHighRisk = report ? report.score < 50 || report.blocked : false;
+  const hasConflicts = conflicts.length > 0;
+
+  const issueCounts = useMemo(
+    () => report ? countIssuesBySeverity(report.issues) : { critical: 0, error: 0, warning: 0 },
+    [report]
+  );
+
+  if (!report) return null;
+
+  return (
+    <AlertDialog open={open} onOpenChange={onClose}>
+      <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            {isHighRisk ? (
+              <XCircle className="w-6 h-6 text-red-500" />
+            ) : isMediumRisk ? (
+              <AlertTriangle className="w-6 h-6 text-yellow-500" />
+            ) : (
+              <CheckCircle className="w-6 h-6 text-green-500" />
+            )}
+            {t('skills.installedPage.updateScanResult')}
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4 pb-4">
+              <div>
+                {t('skills.installedPage.preparingUpdate')}: <span className="font-mono font-bold">{skillName}</span>
+              </div>
+
+              {/* 评分 */}
+              <div className="flex items-center justify-between p-4 bg-card/50 rounded-lg">
+                <span className="text-sm">{t('skills.marketplace.install.securityScore')}:</span>
+                <span className={`text-3xl font-bold font-mono ${
+                  report.score >= 90 ? 'text-green-500' :
+                  report.score >= 70 ? 'text-green-400' :
+                  report.score >= 50 ? 'text-orange-500' : 'text-red-500'
+                }`}>
+                  {report.score}
+                </span>
+              </div>
+
+              {/* 冲突文件警告 */}
+              {hasConflicts && (
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
+                  <div className="flex items-start gap-2 mb-2">
+                    <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-bold text-yellow-500 mb-1">
+                        {t('skills.installedPage.conflictDetected')}
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        {t('skills.installedPage.conflictDescription')}
+                      </div>
+                      <ul className="space-y-1 text-xs font-mono max-h-32 overflow-y-auto">
+                        {conflicts.slice(0, 10).map((conflict, idx) => (
+                          <li key={idx} className="text-yellow-500">• {conflict}</li>
+                        ))}
+                        {conflicts.length > 10 && (
+                          <li className="text-muted-foreground">
+                            ... {t('skills.installedPage.andMore', { count: conflicts.length - 10 })}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Force Overwrite Checkbox */}
+                  <label className="flex items-center gap-2 mt-3 p-2 bg-card rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={forceOverwrite}
+                      onChange={(e) => setForceOverwrite(e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">{t('skills.installedPage.forceOverwrite')}</span>
+                  </label>
+                </div>
+              )}
+
+              {/* 问题摘要 */}
+              {report.issues.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-bold">{t('skills.marketplace.install.issuesDetected')}:</div>
+                  <div className="flex gap-4 text-sm">
+                    {issueCounts.critical > 0 && (
+                      <span className="text-red-500">
+                        {t('skills.marketplace.install.critical')}: {issueCounts.critical}
+                      </span>
+                    )}
+                    {issueCounts.error > 0 && (
+                      <span className="text-orange-500">
+                        {t('skills.marketplace.install.highRisk')}: {issueCounts.error}
+                      </span>
+                    )}
+                    {issueCounts.warning > 0 && (
+                      <span className="text-yellow-500">
+                        {t('skills.marketplace.install.mediumRisk')}: {issueCounts.warning}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* 具体问题列表 */}
+              {report.issues.length > 0 && (
+                <div className={`p-3 rounded-lg ${
+                  isHighRisk ? 'bg-red-500/10 border border-red-500/50' :
+                  isMediumRisk ? 'bg-yellow-500/10 border border-yellow-500/50' :
+                  'bg-green-500/10 border border-green-500/50'
+                }`}>
+                  <ul className="space-y-1 text-sm font-mono max-h-48 overflow-y-auto">
+                    {report.issues.slice(0, 5).map((issue, idx) => (
+                      <li key={idx} className="text-xs">
+                        {issue.file_path && (
+                          <span className="text-terminal-cyan mr-1.5">[{issue.file_path}]</span>
+                        )}
+                        {issue.description}
+                        {issue.line_number && (
+                          <span className="text-muted-foreground ml-2">(行 {issue.line_number})</span>
+                        )}
+                      </li>
+                    ))}
+                    {report.issues.length > 5 && (
+                      <li className="text-xs text-muted-foreground">
+                        ... {t('skills.installedPage.andMore', { count: report.issues.length - 5 })}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {/* 高风险警告 */}
+              {isHighRisk && (
+                <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
+                  <p className="text-sm text-red-500 font-bold">
+                    {report.blocked
+                      ? t('skills.marketplace.install.blockedWarning')
+                      : t('skills.marketplace.install.highRiskWarning')}
+                  </p>
+                </div>
+              )}
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onClose}>
+            {t('skills.marketplace.install.cancel')}
+          </AlertDialogCancel>
+
+          <button
+            onClick={() => onConfirm(forceOverwrite)}
+            disabled={report.blocked || (hasConflicts && !forceOverwrite)}
+            className="neon-button disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {t('skills.marketplace.install.continue')}
+          </button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

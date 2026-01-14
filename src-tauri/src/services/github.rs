@@ -9,6 +9,30 @@ use std::fs::{self, File};
 use std::io::Write;
 use zip::ZipArchive;
 
+/// GitHub Commit API 响应
+#[derive(Debug, Deserialize)]
+struct GitHubCommit {
+    sha: String,
+    #[allow(dead_code)]
+    commit: GitHubCommitDetail,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubCommitDetail {
+    #[allow(dead_code)]
+    author: GitHubCommitAuthor,
+    #[allow(dead_code)]
+    message: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubCommitAuthor {
+    #[allow(dead_code)]
+    name: String,
+    #[allow(dead_code)]
+    date: String,
+}
+
 /// SKILL.md 文件的 frontmatter
 #[derive(Debug, Deserialize)]
 struct SkillFrontmatter {
@@ -344,12 +368,13 @@ impl GitHubService {
     }
 
     /// 下载仓库压缩包并解压到本地缓存
+    /// 返回值：(extract_dir, commit_sha)
     pub async fn download_repository_archive(
         &self,
         owner: &str,
         repo: &str,
         cache_base_dir: &Path,
-    ) -> Result<PathBuf> {
+    ) -> Result<(PathBuf, String)> {
         // 1. 创建仓库专属缓存目录
         let repo_cache_dir = cache_base_dir.join(format!("{}_{}", owner, repo));
         fs::create_dir_all(&repo_cache_dir)
@@ -418,7 +443,13 @@ impl GitHubService {
 
         log::info!("解压完成: {:?}", extract_dir);
 
-        Ok(extract_dir)
+        // 5. 提取 commit SHA（从解压后的目录名）
+        let commit_sha = self.extract_commit_sha_from_cache(&extract_dir)
+            .context("无法提取 commit SHA")?;
+
+        log::info!("提取到 commit SHA: {}", commit_sha);
+
+        Ok((extract_dir, commit_sha))
     }
 
     /// 解压zip文件
@@ -551,6 +582,31 @@ impl GitHubService {
         Err(anyhow::anyhow!("未找到仓库根目录"))
     }
 
+    /// 从解压后的缓存目录中提取 commit SHA
+    /// GitHub zipball 解压后的目录名格式：{owner}-{repo}-{commit_sha}
+    pub fn extract_commit_sha_from_cache(&self, extract_dir: &Path) -> Result<String> {
+        for entry in fs::read_dir(extract_dir)
+            .context("无法读取解压目录")?
+        {
+            let entry = entry.context("无法读取目录条目")?;
+            if entry.file_type()?.is_dir() {
+                // 获取目录名，格式为 {owner}-{repo}-{commit_sha}
+                if let Some(dir_name) = entry.file_name().to_str() {
+                    // 提取最后一个 `-` 之后的部分作为 commit SHA
+                    if let Some(last_dash) = dir_name.rfind('-') {
+                        let commit_sha = &dir_name[last_dash + 1..];
+                        // 验证是否为合法的 SHA（至少 7 位十六进制字符）
+                        if commit_sha.len() >= 7 && commit_sha.chars().all(|c| c.is_ascii_hexdigit()) {
+                            return Ok(commit_sha.to_string());
+                        }
+                    }
+                }
+            }
+        }
+
+        Err(anyhow::anyhow!("无法从目录名提取 commit SHA"))
+    }
+
     /// 从本地SKILL.md文件解析skill信息
     fn parse_skill_from_file(
         &self,
@@ -597,6 +653,91 @@ impl GitHubService {
         let result = hasher.finalize();
 
         hex::encode(result)
+    }
+
+    /// 检查技能是否有更新
+    /// 返回 Option<String>：如果有更新，返回最新的 commit SHA；如果没有更新或出错，返回 None
+    pub async fn check_skill_update(
+        &self,
+        owner: &str,
+        repo: &str,
+        skill_path: &str,
+        installed_commit_sha: Option<&str>,
+    ) -> Result<Option<String>> {
+        // 如果没有安装的 commit SHA，无法判断是否更新
+        let installed_sha = match installed_commit_sha {
+            Some(sha) => sha,
+            None => {
+                log::warn!("技能没有 installed_commit_sha，无法检查更新");
+                return Ok(None);
+            }
+        };
+
+        // 构建 API URL
+        let path_param = if skill_path == "." { "" } else { skill_path };
+        let url = if path_param.is_empty() {
+            format!("{}/repos/{}/{}/commits?per_page=1", self.api_base, owner, repo)
+        } else {
+            format!("{}/repos/{}/{}/commits?path={}&per_page=1", self.api_base, owner, repo, path_param)
+        };
+
+        log::info!("检查技能更新: {}", url);
+
+        // 发送请求
+        let response = self.client
+            .get(&url)
+            .send()
+            .await
+            .context("检查更新时网络请求失败")?;
+
+        let status = response.status();
+
+        if !status.is_success() {
+            match status.as_u16() {
+                403 => {
+                    if let Err(e) = self.check_rate_limit(&response) {
+                        return Err(e);
+                    }
+                    return Err(anyhow::anyhow!("无权限访问该仓库"));
+                }
+                404 => {
+                    log::warn!("技能路径不存在: {}/{}/{}", owner, repo, skill_path);
+                    return Ok(None);
+                }
+                _ => {
+                    return Err(anyhow::anyhow!("GitHub API 返回错误: {}", status));
+                }
+            }
+        }
+
+        // 解析响应
+        let commits: Vec<GitHubCommit> = response
+            .json()
+            .await
+            .context("解析 GitHub 提交信息失败")?;
+
+        if let Some(latest_commit) = commits.first() {
+            let latest_sha = &latest_commit.sha;
+
+            log::info!(
+                "技能 {}/{}/{} - 已安装: {}，最新: {}",
+                owner, repo, skill_path, installed_sha, latest_sha
+            );
+
+            // 比较 SHA（只比较前 7 位，因为可能存储的是短 SHA）
+            let installed_short = &installed_sha[..installed_sha.len().min(7)];
+            let latest_short = &latest_sha[..7];
+
+            if installed_short != latest_short {
+                log::info!("检测到更新可用");
+                return Ok(Some(latest_sha.clone()));
+            } else {
+                log::info!("已是最新版本");
+                return Ok(None);
+            }
+        }
+
+        Ok(None)
     }
 }
 

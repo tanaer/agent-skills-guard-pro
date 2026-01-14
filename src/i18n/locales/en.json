@@ -37,6 +37,7 @@
     "uninstalling": "UNINSTALLING",
     "scanning": "SCANNING",
     "delete": "DELETE",
+    "update": "UPDATE",
     "deleting": "DELETING",
     "deleteRecord": "DELETE_RECORD",
     "installedPaths": "INSTALLED_PATHS",
@@ -114,7 +115,19 @@
       "scanLocal": "SCAN_LOCAL",
       "scanning": "SCANNING...",
       "scanCompleted": "SCAN_COMPLETE: {{count}} SKILLS_FOUND",
-      "scanFailed": "SCAN_FAILED: {{error}}"
+      "scanFailed": "SCAN_FAILED: {{error}}",
+      "checkUpdates": "CHECK_UPDATES",
+      "checkingUpdates": "CHECKING...",
+      "updatesFound": "{{count}} UPDATES_AVAILABLE",
+      "noUpdates": "ALL_SKILLS_UP_TO_DATE",
+      "checkUpdatesFailed": "CHECK_UPDATES_FAILED: {{error}}",
+      "updateAvailable": "UPDATE_AVAILABLE",
+      "preparingUpdate": "PREPARING...",
+      "updateScanResult": "Update Security Scan Result",
+      "conflictDetected": "File Conflicts Detected",
+      "conflictDescription": "The following files have been modified locally and will be overwritten by the update:",
+      "forceOverwrite": "I understand the risks, force overwrite local changes",
+      "andMore": "and {{count}} more..."
     },
     "folder": {
       "opened": "FOLDER_OPENED",
@@ -138,7 +151,9 @@
       "uninstalled": "[SUCCESS] SKILL_UNINSTALLED",
       "uninstallFailed": "[ERROR] UNINSTALL_FAILED",
       "deleted": "[SUCCESS] RECORD_DELETED",
-      "deleteFailed": "[ERROR] DELETE_FAILED"
+      "deleteFailed": "[ERROR] DELETE_FAILED",
+      "updateSuccess": "[SUCCESS] SKILL_UPDATED",
+      "updateFailed": "[ERROR] UPDATE_FAILED"
     }
   },
   "repositories": {

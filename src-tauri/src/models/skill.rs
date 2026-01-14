@@ -21,6 +21,7 @@ pub struct Skill {
     pub security_issues: Option<Vec<String>>,
     pub security_level: Option<String>,      // 安全等级：Safe/Low/Medium/High/Critical
     pub scanned_at: Option<DateTime<Utc>>,   // 扫描时间戳
+    pub installed_commit_sha: Option<String>, // 安装时对应的仓库 commit SHA
 }
 
 impl Skill {
@@ -50,6 +51,7 @@ impl Skill {
             security_issues: None,
             security_level: None,
             scanned_at: None,
+            installed_commit_sha: None,
         }
     }
 
