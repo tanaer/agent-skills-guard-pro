@@ -18,7 +18,6 @@ export function SecurityDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<SkillScanResult | null>(null);
 
-  // 风险等级选项
   const levelOptions: CyberSelectOption[] = [
     { value: "all", label: t('security.levels.all') },
     { value: "Critical", label: t('security.levels.critical') },
@@ -28,14 +27,12 @@ export function SecurityDashboard() {
     { value: "Safe", label: t('security.levels.safe') },
   ];
 
-  // 排序选项
   const sortOptions: CyberSelectOption[] = [
     { value: "score", label: t('security.sort.score') },
     { value: "name", label: t('security.sort.name') },
     { value: "time", label: t('security.sort.time') },
   ];
 
-  // 获取扫描结果
   const { data: scanResults = [], isLoading } = useQuery<SkillScanResult[]>({
     queryKey: ["scanResults"],
     queryFn: async () => {
@@ -43,7 +40,6 @@ export function SecurityDashboard() {
     },
   });
 
-  // 执行扫描
   const handleScan = async () => {
     setIsScanning(true);
     try {
@@ -60,15 +56,12 @@ export function SecurityDashboard() {
     }
   };
 
-  // 过滤和排序
   const filteredAndSortedResults = useMemo(() => {
     return scanResults
       .filter((result) => {
-        // 等级过滤
         if (filterLevel !== "all" && result.level !== filterLevel) {
           return false;
         }
-        // 搜索过滤
         if (searchQuery && !result.skill_name.toLowerCase().includes(searchQuery.toLowerCase())) {
           return false;
         }
@@ -77,7 +70,7 @@ export function SecurityDashboard() {
       .sort((a, b) => {
         switch (sortBy) {
           case "score":
-            return a.score - b.score; // 低分在前
+            return a.score - b.score;
           case "name":
             return a.skill_name.localeCompare(b.skill_name);
           case "time":
@@ -92,11 +85,16 @@ export function SecurityDashboard() {
     <div className="space-y-6">
       {/* 顶部操作栏 */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-terminal-cyan tracking-wider uppercase">{t("security.dashboard.title")}</h1>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Shield className="w-5 h-5 text-primary" />
+          </div>
+          <h1 className="text-lg font-semibold text-foreground">{t("security.dashboard.title")}</h1>
+        </div>
         <button
           onClick={handleScan}
           disabled={isScanning}
-          className="neon-button inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="macos-button-primary disabled:opacity-50"
         >
           {isScanning ? (
             <>
@@ -113,10 +111,9 @@ export function SecurityDashboard() {
       </div>
 
       {/* 过滤和排序栏 */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-card/30 rounded-lg border border-border">
-        {/* 风险等级过滤 */}
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/30 rounded-lg border border-border">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-mono text-terminal-green uppercase tracking-wider whitespace-nowrap">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">
             {t('security.filterByLevel')}:
           </label>
           <CyberSelect
@@ -127,9 +124,8 @@ export function SecurityDashboard() {
           />
         </div>
 
-        {/* 排序选项 */}
         <div className="flex items-center gap-2">
-          <label className="text-sm font-mono text-terminal-green uppercase tracking-wider whitespace-nowrap">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">
             {t('security.sortBy')}:
           </label>
           <CyberSelect
@@ -140,7 +136,6 @@ export function SecurityDashboard() {
           />
         </div>
 
-        {/* 搜索框 */}
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -149,43 +144,43 @@ export function SecurityDashboard() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('security.search')}
-              className="w-full pl-10 pr-4 py-1 bg-background border border-border rounded font-mono text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
         </div>
       </div>
 
       {/* Skills 列表表格 */}
-      <div className="bg-card/30 rounded-lg border border-border overflow-hidden">
+      <div className="macos-card overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-terminal-cyan" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : filteredAndSortedResults.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Shield className="w-12 h-12 mb-4" />
-            <p className="font-mono">{t('security.noResults')}</p>
+            <p>{t('security.noResults')}</p>
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-background/50 border-b border-border">
+            <thead className="bg-muted/30 border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-mono text-muted-foreground uppercase">
+                <th className="px-6 py-3 text-left text-xs text-muted-foreground uppercase">
                   {t('security.table.skillName')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                <th className="px-6 py-3 text-center text-xs text-muted-foreground uppercase">
                   {t('security.table.score')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                <th className="px-6 py-3 text-center text-xs text-muted-foreground uppercase">
                   {t('security.table.level')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                <th className="px-6 py-3 text-center text-xs text-muted-foreground uppercase">
                   {t('security.table.issues')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                <th className="px-6 py-3 text-center text-xs text-muted-foreground uppercase">
                   {t('security.table.lastScan')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-mono text-muted-foreground uppercase">
+                <th className="px-6 py-3 text-center text-xs text-muted-foreground uppercase">
                   {t('security.table.actions')}
                 </th>
               </tr>
@@ -195,8 +190,8 @@ export function SecurityDashboard() {
                 const issueCounts = countIssuesBySeverity(result.report.issues);
 
                 return (
-                  <tr key={result.skill_id} className="hover:bg-background/50 transition-colors">
-                    <td className="px-6 py-4 font-mono text-sm">
+                  <tr key={result.skill_id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-4 text-sm">
                       {result.skill_name}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -206,25 +201,25 @@ export function SecurityDashboard() {
                       <SecurityBadge level={result.level} />
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-xs font-mono">
+                      <div className="flex items-center justify-center gap-2 text-xs">
                         {issueCounts.critical > 0 && (
-                          <span className="text-red-500">C:{issueCounts.critical}</span>
+                          <span className="text-destructive">C:{issueCounts.critical}</span>
                         )}
                         {issueCounts.error > 0 && (
                           <span className="text-orange-500">H:{issueCounts.error}</span>
                         )}
                         {issueCounts.warning > 0 && (
-                          <span className="text-yellow-500">M:{issueCounts.warning}</span>
+                          <span className="text-warning">M:{issueCounts.warning}</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center text-xs font-mono text-muted-foreground">
+                    <td className="px-6 py-4 text-center text-xs text-muted-foreground">
                       {new Date(result.scanned_at).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => setSelectedSkill(result)}
-                        className="px-3 py-1 text-xs font-mono border border-terminal-cyan text-terminal-cyan rounded hover:bg-terminal-cyan/10"
+                        className="px-3 py-1.5 text-xs border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors"
                       >
                         {t('security.table.viewDetails')}
                       </button>
@@ -237,28 +232,26 @@ export function SecurityDashboard() {
         )}
       </div>
 
-      {/* 详情对话框 */}
       <SecurityDetailDialog
         result={selectedSkill}
         open={selectedSkill !== null}
         onClose={() => setSelectedSkill(null)}
       />
-
     </div>
   );
 }
 
 function SecurityBadge({ level }: { level: string }) {
   const colors = {
-    Safe: "bg-green-500/20 text-green-500 border-green-500/50",
-    Low: "bg-blue-500/20 text-blue-500 border-blue-500/50",
-    Medium: "bg-yellow-500/20 text-yellow-500 border-yellow-500/50",
-    High: "bg-orange-500/20 text-orange-500 border-orange-500/50",
-    Critical: "bg-red-500/20 text-red-500 border-red-500/50",
+    Safe: "bg-success/10 text-success border-success/30",
+    Low: "bg-primary/10 text-primary border-primary/30",
+    Medium: "bg-warning/10 text-warning border-warning/30",
+    High: "bg-orange-500/10 text-orange-500 border-orange-500/30",
+    Critical: "bg-destructive/10 text-destructive border-destructive/30",
   };
 
   return (
-    <span className={`px-2 py-1 rounded text-xs font-mono border ${colors[level as keyof typeof colors] || colors.Safe}`}>
+    <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${colors[level as keyof typeof colors] || colors.Safe}`}>
       {level}
     </span>
   );
@@ -266,14 +259,14 @@ function SecurityBadge({ level }: { level: string }) {
 
 function ScoreDisplay({ score }: { score: number }) {
   const getColor = (score: number) => {
-    if (score >= 90) return "text-green-500";
-    if (score >= 70) return "text-yellow-500";
+    if (score >= 90) return "text-success";
+    if (score >= 70) return "text-warning";
     if (score >= 50) return "text-orange-500";
-    return "text-red-500";
+    return "text-destructive";
   };
 
   return (
-    <span className={`text-2xl font-bold font-mono ${getColor(score)}`}>
+    <span className={`text-2xl font-bold ${getColor(score)}`}>
       {score}
     </span>
   );

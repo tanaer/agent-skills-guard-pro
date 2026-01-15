@@ -20,7 +20,6 @@ interface SecurityDetailDialogProps {
 export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDialogProps) {
   const { t } = useTranslation();
 
-  // 使用 useMemo 优化问题分组（必须在条件返回之前调用所有 hooks）
   const { criticalIssues, highIssues, mediumIssues, lowIssues } = useMemo(
     () => {
       if (!result) {
@@ -43,7 +42,6 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
     [result]
   );
 
-  // 在所有 hooks 调用之后再做条件返回
   if (!result) return null;
 
   const { report } = result;
@@ -53,7 +51,7 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
       <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-terminal-cyan" />
+            <Shield className="w-6 h-6 text-primary" />
             <div>
               <div className="text-xl">{result.skill_name}</div>
               <div className="text-sm text-muted-foreground font-normal mt-1">
@@ -64,24 +62,24 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
         </AlertDialogHeader>
 
         {/* 总体评分 */}
-        <div className="flex items-center justify-between p-6 bg-card/50 rounded-lg border border-border">
+        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-lg border border-border">
           <div>
             <div className="text-sm text-muted-foreground mb-1">{t("security.detail.securityScore")}</div>
-            <div className={`text-5xl font-bold font-mono ${
-              result.score >= 90 ? 'text-green-500' :
-              result.score >= 70 ? 'text-yellow-500' :
-              result.score >= 50 ? 'text-orange-500' : 'text-red-500'
+            <div className={`text-5xl font-bold ${
+              result.score >= 90 ? 'text-success' :
+              result.score >= 70 ? 'text-warning' :
+              result.score >= 50 ? 'text-orange-500' : 'text-destructive'
             }`}>
               {result.score}
             </div>
           </div>
           <div>
-            <span className={`px-4 py-2 rounded-lg text-lg font-mono border ${
-              result.level === 'Safe' ? 'bg-green-500/20 text-green-500 border-green-500/50' :
-              result.level === 'Low' ? 'bg-blue-500/20 text-blue-500 border-blue-500/50' :
-              result.level === 'Medium' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50' :
-              result.level === 'High' ? 'bg-orange-500/20 text-orange-500 border-orange-500/50' :
-              'bg-red-500/20 text-red-500 border-red-500/50'
+            <span className={`px-4 py-2 rounded-lg text-lg font-medium border ${
+              result.level === 'Safe' ? 'bg-success/10 text-success border-success/30' :
+              result.level === 'Low' ? 'bg-primary/10 text-primary border-primary/30' :
+              result.level === 'Medium' ? 'bg-warning/10 text-warning border-warning/30' :
+              result.level === 'High' ? 'bg-orange-500/10 text-orange-500 border-orange-500/30' :
+              'bg-destructive/10 text-destructive border-destructive/30'
             }`}>
               {result.level}
             </span>
@@ -93,7 +91,7 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
           {criticalIssues.length > 0 && (
             <IssueSection
               title={t("security.detail.issues.critical")}
-              icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+              icon={<AlertTriangle className="w-5 h-5 text-destructive" />}
               issues={criticalIssues}
               color="red"
             />
@@ -112,7 +110,7 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
           {mediumIssues.length > 0 && (
             <IssueSection
               title={t("security.detail.issues.medium")}
-              icon={<Info className="w-5 h-5 text-yellow-500" />}
+              icon={<Info className="w-5 h-5 text-warning" />}
               issues={mediumIssues}
               color="yellow"
               defaultCollapsed
@@ -122,7 +120,7 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
           {lowIssues.length > 0 && (
             <IssueSection
               title={t("security.detail.issues.low")}
-              icon={<Info className="w-5 h-5 text-blue-500" />}
+              icon={<Info className="w-5 h-5 text-primary" />}
               issues={lowIssues}
               color="blue"
               defaultCollapsed
@@ -132,12 +130,12 @@ export function SecurityDetailDialog({ result, open, onClose }: SecurityDetailDi
 
         {/* 建议区域 */}
         {report.recommendations.length > 0 && (
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
-            <div className="font-mono text-sm font-bold mb-2">{t("security.detail.recommendations")}：</div>
+          <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+            <div className="text-sm font-medium mb-2">{t("security.detail.recommendations")}：</div>
             <ul className="space-y-1 text-sm">
               {report.recommendations.map((rec, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-yellow-500">▸</span>
+                  <span className="text-warning">▸</span>
                   <span>{rec}</span>
                 </li>
               ))}
@@ -170,27 +168,26 @@ function IssueSection({
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
-  // 使用颜色映射对象，而不是动态字符串拼接
   const colorClasses = {
     red: {
-      border: "border-red-500/50",
-      bg: "bg-red-500/10",
-      hoverBg: "hover:bg-red-500/20",
+      border: "border-destructive/30",
+      bg: "bg-destructive/5",
+      hoverBg: "hover:bg-destructive/10",
     },
     orange: {
-      border: "border-orange-500/50",
-      bg: "bg-orange-500/10",
-      hoverBg: "hover:bg-orange-500/20",
+      border: "border-orange-500/30",
+      bg: "bg-orange-500/5",
+      hoverBg: "hover:bg-orange-500/10",
     },
     yellow: {
-      border: "border-yellow-500/50",
-      bg: "bg-yellow-500/10",
-      hoverBg: "hover:bg-yellow-500/20",
+      border: "border-warning/30",
+      bg: "bg-warning/5",
+      hoverBg: "hover:bg-warning/10",
     },
     blue: {
-      border: "border-blue-500/50",
-      bg: "bg-blue-500/10",
-      hoverBg: "hover:bg-blue-500/20",
+      border: "border-primary/30",
+      bg: "bg-primary/5",
+      hoverBg: "hover:bg-primary/10",
     },
   };
 
@@ -204,19 +201,19 @@ function IssueSection({
       >
         <div className="flex items-center gap-2">
           {icon}
-          <span className="font-mono font-bold">{title}</span>
+          <span className="font-medium">{title}</span>
           <span className="text-sm text-muted-foreground">({issues.length})</span>
         </div>
-        <span className="text-sm">{collapsed ? '▼' : '▲'}</span>
+        <span className="text-sm text-muted-foreground">{collapsed ? '▼' : '▲'}</span>
       </button>
 
       {!collapsed && (
         <div className="p-4 space-y-3">
           {issues.map((issue, idx) => (
-            <div key={idx} className="p-3 bg-background/50 rounded border border-border">
-              <div className="font-mono text-sm font-bold mb-2">
+            <div key={idx} className="p-3 bg-muted/30 rounded-lg border border-border">
+              <div className="text-sm font-medium mb-2">
                 {issue.file_path && (
-                  <span className="text-terminal-cyan mr-2">[{issue.file_path}]</span>
+                  <span className="text-primary mr-2">[{issue.file_path}]</span>
                 )}
                 {issue.description}
               </div>
@@ -225,7 +222,7 @@ function IssueSection({
                   <div className="text-xs text-muted-foreground mb-1">
                     {t("security.detail.lineNumber")}：{issue.line_number}
                   </div>
-                  <pre className="p-2 bg-background rounded text-xs font-mono overflow-x-auto">
+                  <pre className="p-2 bg-muted/50 rounded text-xs font-mono overflow-x-auto">
                     <code>{issue.code_snippet}</code>
                   </pre>
                 </div>

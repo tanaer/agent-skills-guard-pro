@@ -23,41 +23,21 @@ interface IssuesListProps {
 }
 
 const levelConfig = {
-  Critical: {
-    color: "text-terminal-red",
-    bg: "bg-terminal-red/10",
-    icon: AlertTriangle,
-    accentBar: "bg-terminal-red",
-  },
-  Medium: {
-    color: "text-terminal-yellow",
-    bg: "bg-terminal-yellow/10",
-    icon: AlertCircle,
-    accentBar: "bg-terminal-yellow",
-  },
-  Safe: {
-    color: "text-terminal-green",
-    bg: "bg-terminal-green/10",
-    icon: Info,
-    accentBar: "bg-terminal-green",
-  },
+  Critical: { color: "text-destructive", bg: "bg-destructive/10", icon: AlertTriangle },
+  Medium: { color: "text-warning", bg: "bg-warning/10", icon: AlertCircle },
+  Safe: { color: "text-success", bg: "bg-success/10", icon: Info },
 };
 
-// 将原始的4级分类映射到3级
 const mapSeverityTo3Levels = (severity: string): keyof typeof levelConfig => {
-  if (severity === "Critical" || severity === "High") {
-    return "Critical";
-  } else if (severity === "Medium" || severity === "Low") {
-    return "Medium";
-  }
+  if (severity === "Critical" || severity === "High") return "Critical";
+  if (severity === "Medium" || severity === "Low") return "Medium";
   return "Safe";
 };
 
 const getScoreColor = (score: number) => {
-  if (score >= 90) return "text-terminal-green";
-  if (score >= 70) return "text-terminal-yellow";
-  if (score >= 50) return "text-terminal-orange";
-  return "text-terminal-red";
+  if (score >= 90) return "text-success";
+  if (score >= 70) return "text-warning";
+  return "text-destructive";
 };
 
 export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
@@ -69,20 +49,14 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
   const toggleExpanded = (skillId: string) => {
     setExpandedSkills((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(skillId)) {
-        newSet.delete(skillId);
-      } else {
-        newSet.add(skillId);
-      }
+      if (newSet.has(skillId)) newSet.delete(skillId);
+      else newSet.add(skillId);
       return newSet;
     });
   };
 
-  // 卸载 mutation
   const uninstallMutation = useMutation({
-    mutationFn: async (skillId: string) => {
-      return await api.uninstallSkill(skillId);
-    },
+    mutationFn: async (skillId: string) => api.uninstallSkill(skillId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills", "installed"] });
       queryClient.invalidateQueries({ queryKey: ["skills"] });
@@ -94,23 +68,16 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
     },
   });
 
-  const handleUninstall = (skillId: string) => {
-    uninstallMutation.mutate(skillId);
-  };
-
-  if (issues.length === 0) {
-    return null;
-  }
+  if (issues.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      {issues.map((issue, index) => {
+    <div className="divide-y divide-border">
+      {issues.map((issue) => {
         const isExpanded = expandedSkills.has(issue.skill_id);
         const LevelIcon = levelConfig[issue.level as keyof typeof levelConfig]?.icon || AlertCircle;
         const levelColorClass = levelConfig[issue.level as keyof typeof levelConfig]?.color || "";
         const levelBgClass = levelConfig[issue.level as keyof typeof levelConfig]?.bg || "";
 
-        // 统计各等级问题数量（映射到3级分类）
         const issueStats = issue.report.issues.reduce(
           (acc, item) => {
             const mappedSeverity = mapSeverityTo3Levels(item.severity);
@@ -120,13 +87,9 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
           {} as Record<string, number>
         );
 
-        // 获取最严重的前 3 个问题（先去重，使用 description + file_path 作为唯一标识）
         const uniqueIssues = Array.from(
           new Map(
-            issue.report.issues.map((item) => [
-              `${item.file_path || ""}::${item.description}`,
-              item,
-            ])
+            issue.report.issues.map((item) => [`${item.file_path || ""}::${item.description}`, item])
           ).values()
         );
         const topIssues = uniqueIssues
@@ -140,118 +103,57 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
           .slice(0, 3);
 
         return (
-          <div
-            key={issue.skill_id}
-            className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg hover:border-terminal-cyan/30 transition-all duration-300 relative"
-            style={{
-              animation: `fadeIn 0.4s ease-out ${index * 0.05}s`,
-              animationFillMode: "backwards",
-            }}
-          >
-            {/* 左侧风险等级指示条 */}
-            <div
-              className={`absolute top-0 left-0 w-1 h-full ${levelConfig[issue.level as keyof typeof levelConfig]?.accentBar} opacity-70`}
-            ></div>
-
-            {/* 顶部角落装饰 */}
-            <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-border/20 rounded-tr-lg"></div>
-
-            {/* 顶部栏 */}
-            <div className="p-4 border-b border-border/50 relative pl-5">
-              <div className="flex flex-col md:flex-row md:items-center gap-3">
-                {/* 左侧：技能名称 + 风险等级 */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="font-mono font-bold text-base text-foreground truncate">
-                      {issue.skill_name}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${levelBgClass} ${levelColorClass} border border-current/20`}
-                    >
-                      <LevelIcon className="w-3.5 h-3.5" />
-                      {t(`overview.riskLevels.${issue.level.toLowerCase()}`)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 中间：安全评分 */}
-                <div className="flex-shrink-0">
-                  <div className={`text-xs font-mono ${getScoreColor(issue.score)}`}>
-                    {t("skills.securityScore")}：
-                    <span className="text-lg font-bold">{issue.score}</span>
-                  </div>
-                </div>
-
-                {/* 右侧：操作按钮 */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => {
-                      const skill = issues.find((i) => i.skill_id === issue.skill_id);
-                      if (skill) {
-                        onOpenDirectory(issue.skill_id);
-                      }
-                    }}
-                    className="
-                      relative overflow-hidden group
-                      px-2.5 py-1.5 text-xs
-                      bg-terminal-cyan/10
-                      text-terminal-cyan
-                      border border-terminal-cyan/30
-                      rounded font-medium font-mono
-                      hover:bg-terminal-cyan/20 hover:border-terminal-cyan/60 hover:shadow-lg hover:shadow-terminal-cyan/20
-                      transition-all duration-200
-                      flex items-center gap-1.5
-                    "
-                    title={t("overview.issues.openDirectory")}
+          <div key={issue.skill_id} className="p-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h3 className="font-medium text-foreground">{issue.skill_name}</h3>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${levelBgClass} ${levelColorClass}`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-cyan/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
-                    <FolderOpen className="w-3.5 h-3.5 relative z-10" />
-                    <span className="hidden sm:inline relative z-10">
-                      {t("overview.issues.openDirectory")}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => handleUninstall(issue.skill_id)}
-                    disabled={uninstallMutation.isPending}
-                    className="
-                      relative overflow-hidden group
-                      px-2.5 py-1.5 text-xs
-                      bg-terminal-red/10
-                      text-terminal-red
-                      border border-terminal-red/30
-                      rounded font-medium font-mono
-                      hover:bg-terminal-red/20 hover:border-terminal-red/60 hover:shadow-lg hover:shadow-terminal-red/20
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                      transition-all duration-200
-                      flex items-center gap-1.5
-                    "
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-terminal-red/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
-                    <Trash2 className="w-3.5 h-3.5 relative z-10" />
-                    <span className="hidden sm:inline relative z-10">
-                      {t("overview.issues.uninstall")}
-                    </span>
-                  </button>
+                    <LevelIcon className="w-3 h-3" />
+                    {t(`overview.riskLevels.${issue.level.toLowerCase()}`)}
+                  </span>
                 </div>
+              </div>
+
+              <div className="flex-shrink-0">
+                <div className={`text-xs ${getScoreColor(issue.score)}`}>
+                  {t("skills.securityScore")}：<span className="text-base font-semibold">{issue.score}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onOpenDirectory(issue.skill_id)}
+                  className="macos-button-secondary text-xs flex items-center gap-1"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{t("overview.issues.openDirectory")}</span>
+                </button>
+                <button
+                  onClick={() => uninstallMutation.mutate(issue.skill_id)}
+                  disabled={uninstallMutation.isPending}
+                  className="macos-button-destructive text-xs flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{t("overview.issues.uninstall")}</span>
+                </button>
               </div>
             </div>
 
-            {/* 问题预览区 */}
-            <div className="p-4 bg-muted/20 relative pl-5">
-              {/* 如果是安全的技能（0个问题），显示简单的安全状态 */}
+            <div className="mt-3 pl-0 md:pl-0">
               {issue.report.issues.length === 0 ? (
-                <div className="flex items-center gap-3 text-sm text-terminal-green font-mono">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">{t("overview.issues.skillSafe")}</span>
+                <div className="flex items-center gap-2 text-sm text-success">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>{t("overview.issues.skillSafe")}</span>
                 </div>
               ) : !isExpanded ? (
-                // 折叠状态：显示摘要
-                <div
+                <button
                   onClick={() => toggleExpanded(issue.skill_id)}
-                  className="flex items-center justify-between cursor-pointer hover:bg-muted/40 -m-2 p-2.5 rounded transition-all duration-200 group"
+                  className="flex items-center justify-between w-full text-left text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
                 >
-                  <div className="text-xs text-muted-foreground font-mono group-hover:text-foreground transition-colors">
+                  <span>
                     {t("overview.issues.found", {
                       count: issue.report.issues.length,
                       breakdown: Object.entries(issueStats)
@@ -263,26 +165,18 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                         )
                         .join("，"),
                     })}
-                  </div>
-                  <ChevronDown className="w-5 h-5 text-terminal-cyan group-hover:translate-y-0.5 transition-transform" />
-                </div>
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-primary" />
+                </button>
               ) : (
-                // 展开状态：显示前 3 个问题
-                <div className="space-y-2.5">
-                  <div
+                <div className="space-y-2">
+                  <button
                     onClick={() => toggleExpanded(issue.skill_id)}
-                    className="flex items-center justify-between cursor-pointer hover:bg-muted/40 -m-2 p-2.5 rounded transition-all duration-200 mb-2 group"
+                    className="flex items-center justify-between w-full text-left text-xs font-medium py-2"
                   >
-                    <div className="text-xs font-medium text-foreground font-mono">
-                      {
-                        t("overview.issues.found", {
-                          count: issue.report.issues.length,
-                          breakdown: "",
-                        }).split("：")[0]
-                      }
-                    </div>
-                    <ChevronUp className="w-5 h-5 text-terminal-cyan group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
+                    <span>{t("overview.issues.found", { count: issue.report.issues.length, breakdown: "" }).split("：")[0]}</span>
+                    <ChevronUp className="w-4 h-4 text-primary" />
+                  </button>
 
                   {topIssues.map((item, idx) => {
                     const mappedSeverity = mapSeverityTo3Levels(item.severity);
@@ -292,18 +186,18 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                     return (
                       <div
                         key={idx}
-                        className="flex items-start gap-3 text-xs p-2.5 rounded bg-card/50 border border-border/30 hover:border-border/60 transition-all"
+                        className="flex items-start gap-2 text-xs p-2 rounded-lg bg-muted/50"
                       >
                         <IssueIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${issueColor}`} />
                         <div className="flex-1 min-w-0">
-                          <span className="text-foreground line-clamp-2 font-mono text-xs">
+                          <span className="text-foreground">
                             {item.file_path && (
-                              <span className="text-terminal-cyan mr-1.5">[{item.file_path}]</span>
+                              <span className="text-primary mr-1">[{item.file_path}]</span>
                             )}
                             {item.description}
                           </span>
                           {item.line_number && (
-                            <span className="text-muted-foreground text-[11px] ml-2 font-mono">
+                            <span className="text-muted-foreground text-[11px] ml-2">
                               (行 {item.line_number})
                             </span>
                           )}
@@ -315,10 +209,10 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                   {issue.report.issues.length > 3 && (
                     <button
                       onClick={() => setSelectedSkill(issue)}
-                      className="text-xs text-terminal-cyan hover:text-terminal-cyan/80 font-medium font-mono uppercase tracking-wide hover:underline transition-all flex items-center gap-2 group"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
                     >
                       <span>{t("overview.issues.viewFullReport")}</span>
-                      <Eye className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -328,7 +222,6 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
         );
       })}
 
-      {/* 安全详情对话框 */}
       <SecurityDetailDialog
         result={selectedSkill}
         open={selectedSkill !== null}

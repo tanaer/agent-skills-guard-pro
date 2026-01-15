@@ -31,10 +31,10 @@ export function SimplePathSelectionDialog({
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
-          <AlertDialogTitle className="font-mono">
+          <AlertDialogTitle>
             {t('skills.pathSelection.selectInstallPath')}
           </AlertDialogTitle>
-          <AlertDialogDescription className="font-mono">
+          <AlertDialogDescription>
             {t('skills.pathSelection.selectPathDescription', { skillName })}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -51,7 +51,7 @@ export function SimplePathSelectionDialog({
           <button
             onClick={() => onConfirm(selectedPath)}
             disabled={!selectedPath}
-            className="px-4 py-2 rounded font-mono bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 transition-colors"
+            className="macos-button-primary disabled:opacity-50"
           >
             {t('skills.pathSelection.confirm')}
           </button>

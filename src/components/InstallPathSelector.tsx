@@ -18,11 +18,9 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
   const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
-    // 加载默认用户路径
     invoke<string>('get_default_install_path')
       .then(path => {
         setUserPath(path);
-        // 使用 defaultPath 或默认用户路径
         const initial = defaultPath || path;
         setSelectedPath(initial);
         onSelect(initial);
@@ -31,7 +29,6 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
         console.error('Failed to get default install path:', error);
       });
 
-    // 从 localStorage 加载最近路径
     setRecentPaths(getRecentInstallPaths());
   }, [defaultPath, onSelect]);
 
@@ -57,7 +54,7 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-mono text-terminal-cyan">
+      <label className="text-sm text-primary font-medium">
         {t('skills.pathSelection.selectPath')}:
       </label>
 
@@ -75,7 +72,7 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
       {/* 最近使用的路径 */}
       {recentPaths.filter(path => path.toLowerCase() !== userPath.toLowerCase()).length > 0 && (
         <div className="border-t border-border pt-3 mt-3">
-          <label className="text-xs font-mono text-muted-foreground mb-2 block">
+          <label className="text-xs text-muted-foreground mb-2 block">
             {t('skills.pathSelection.recentPaths')}:
           </label>
           {recentPaths
@@ -96,7 +93,7 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
       {/* 显示已选择的自定义路径 */}
       {customPath && customPath !== userPath && !recentPaths.includes(customPath) && (
         <div className="border-t border-border pt-3 mt-3">
-          <label className="text-xs font-mono text-muted-foreground mb-2 block">
+          <label className="text-xs text-muted-foreground mb-2 block">
             自定义路径:
           </label>
           <PathOption
@@ -113,10 +110,10 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
       <button
         onClick={handleCustomPath}
         disabled={isSelecting}
-        className="w-full flex items-center gap-2 px-4 py-3 border border-dashed border-terminal-cyan/50 rounded hover:bg-terminal-cyan/10 transition-colors disabled:opacity-50"
+        className="w-full flex items-center gap-2 px-4 py-3 border border-dashed border-primary/50 rounded-lg hover:bg-primary/5 transition-colors disabled:opacity-50"
       >
-        <FolderPlus className="w-4 h-4 text-terminal-cyan" />
-        <span className="text-sm font-mono text-terminal-cyan">
+        <FolderPlus className="w-4 h-4 text-primary" />
+        <span className="text-sm text-primary">
           {isSelecting ? t('skills.pathSelection.selecting') : t('skills.pathSelection.customPath')}
         </span>
       </button>
@@ -124,7 +121,7 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
   );
 }
 
-// PathOption 子组件（单选样式的路径选项）
+// PathOption 子组件
 function PathOption({ icon, label, path, selected, onClick }: {
   icon: React.ReactNode;
   label: string;
@@ -135,22 +132,22 @@ function PathOption({ icon, label, path, selected, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-start gap-3 px-4 py-3 border rounded transition-colors ${
+      className={`w-full flex items-start gap-3 px-4 py-3 border rounded-lg transition-colors ${
         selected
-          ? 'border-terminal-cyan bg-terminal-cyan/10'
-          : 'border-border hover:border-terminal-cyan/50'
+          ? 'border-primary bg-primary/5'
+          : 'border-border hover:border-primary/50'
       }`}
     >
-      <div className={`mt-0.5 ${selected ? 'text-terminal-cyan' : 'text-muted-foreground'}`}>
+      <div className={`mt-0.5 ${selected ? 'text-primary' : 'text-muted-foreground'}`}>
         {icon}
       </div>
       <div className="flex-1 text-left">
-        <div className="text-sm font-mono font-medium">{label}</div>
-        <div className="text-xs font-mono text-muted-foreground break-all">{path}</div>
+        <div className="text-sm font-medium">{label}</div>
+        <div className="text-xs text-muted-foreground break-all">{path}</div>
       </div>
       {selected && (
-        <div className="w-5 h-5 rounded-full border-2 border-terminal-cyan flex items-center justify-center flex-shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-terminal-cyan"></div>
+        <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center flex-shrink-0">
+          <div className="w-2.5 h-2.5 rounded-full bg-primary"></div>
         </div>
       )}
     </button>

@@ -26,7 +26,6 @@ export function CyberSelect({
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  // 点击外部关闭下拉框
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
@@ -40,48 +39,43 @@ export function CyberSelect({
 
   return (
     <div ref={selectRef} className={`relative ${className}`}>
-      {/* 选择器触发按钮 */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="cyber-select-trigger"
+        className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm flex items-center justify-between gap-2 hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
       >
-        <span className="flex-1 text-left font-mono text-sm">
+        <span className="flex-1 text-left text-sm truncate">
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 transition-transform duration-200 ${
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
 
-      {/* 下拉选项列表 */}
       {isOpen && (
-        <div
-          className="cyber-select-dropdown"
-          style={{
-            animation: 'fadeIn 0.2s ease-out'
-          }}
-        >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-              className={`cyber-select-option ${
-                value === option.value ? "cyber-select-option-active" : ""
-              }`}
-            >
-              <span className="flex-1 text-left font-mono text-sm">{option.label}</span>
-              {value === option.value && (
-                <Check className="w-4 h-4 text-terminal-cyan" />
-              )}
-            </button>
-          ))}
+        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+          <div className="max-h-60 overflow-y-auto py-1">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full px-3 py-2 text-sm flex items-center justify-between gap-2 hover:bg-muted/50 transition-colors ${
+                  value === option.value ? "bg-primary/10 text-primary" : "text-foreground"
+                }`}
+              >
+                <span className="flex-1 text-left truncate">{option.label}</span>
+                {value === option.value && (
+                  <Check className="w-4 h-4 text-primary" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

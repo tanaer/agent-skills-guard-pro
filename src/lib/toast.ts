@@ -26,24 +26,24 @@ const toneClasses: Record<BannerTone, { container: string; arrow: string; boxSha
   {
     info: {
       container:
-        "bg-terminal-cyan/15 border-terminal-cyan text-terminal-cyan shadow-[0_-4px_40px_rgba(94,234,212,0.4)]",
-      arrow: "text-terminal-green",
+        "bg-primary/10 border-primary text-primary shadow-lg",
+      arrow: "text-primary",
       boxShadow:
-        "0 -4px 40px rgba(94, 234, 212, 0.4), inset 0 1px 0 rgba(94, 234, 212, 0.2)",
+        "0 4px 20px rgba(0, 122, 255, 0.15)",
     },
     success: {
       container:
-        "bg-terminal-cyan/15 border-terminal-cyan text-terminal-cyan shadow-[0_-4px_40px_rgba(94,234,212,0.4)]",
-      arrow: "text-terminal-green",
+        "bg-success/10 border-success text-success shadow-lg",
+      arrow: "text-success",
       boxShadow:
-        "0 -4px 40px rgba(94, 234, 212, 0.4), inset 0 1px 0 rgba(94, 234, 212, 0.2)",
+        "0 4px 20px rgba(52, 199, 89, 0.15)",
     },
     error: {
       container:
-        "bg-terminal-red/15 border-terminal-red text-terminal-red shadow-[0_-4px_40px_rgba(239,68,68,0.35)]",
-      arrow: "text-terminal-red",
+        "bg-destructive/10 border-destructive text-destructive shadow-lg",
+      arrow: "text-destructive",
       boxShadow:
-        "0 -4px 40px rgba(239, 68, 68, 0.35), inset 0 1px 0 rgba(239, 68, 68, 0.15)",
+        "0 4px 20px rgba(255, 59, 48, 0.15)",
     },
   };
 
@@ -79,7 +79,7 @@ export const appToast = {
             type: "button",
             onClick: () => toast.dismiss(id),
             className: [
-              "w-[min(100vw-2rem,80rem)] px-8 py-5 border-t-2 backdrop-blur-md font-mono text-base text-left",
+              "w-[min(100vw-2rem,80rem)] px-8 py-5 border-t-2 backdrop-blur-md text-base text-left",
               "rounded-lg",
               toneClasses[tone].container,
             ].join(" "),
@@ -91,7 +91,7 @@ export const appToast = {
             React.createElement(
               "span",
               { className: `${toneClasses[tone].arrow} mr-3 text-lg` },
-              "❯"
+              "›"
             ),
             React.createElement("span", { className: "tracking-wide" }, message)
           )
@@ -100,4 +100,3 @@ export const appToast = {
     );
   },
 };
-

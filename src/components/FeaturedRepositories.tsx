@@ -15,12 +15,11 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
   const queryClient = useQueryClient();
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["official"]);
 
-  // 获取精选仓库
   const { data: config, isLoading } = useQuery({
     queryKey: ['featured-repositories'],
     queryFn: api.getFeaturedRepositories,
-    staleTime: 5 * 60 * 1000, // 5分钟缓存
-    retry: false, // YAML 文件不存在时不重试
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const refreshMutation = useMutation({
@@ -38,13 +37,11 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
     },
   });
 
-  // 获取已添加的仓库列表
   const { data: existingRepos } = useQuery({
     queryKey: ['repositories'],
     queryFn: api.getRepositories,
   });
 
-  // 检查仓库是否已添加
   const isAdded = (url: string) => {
     return existingRepos?.some(repo => repo.url === url) || false;
   };
@@ -63,24 +60,23 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
 
   if (isLoading) {
     return (
-      <div className="cyber-card p-6 border-terminal-cyan animate-pulse">
-        <div className="h-6 bg-terminal-cyan/20 rounded w-1/3 mb-4"></div>
-        <div className="h-4 bg-terminal-cyan/20 rounded w-2/3"></div>
+      <div className="macos-card p-5 animate-pulse">
+        <div className="h-5 bg-muted rounded w-1/3 mb-4"></div>
+        <div className="h-4 bg-muted rounded w-2/3"></div>
       </div>
     );
   }
 
-  // 优雅降级：如果没有配置或读取失败，不显示该区域
   if (!config || config.categories.length === 0) {
     return null;
   }
 
   return (
-    <div className="cyber-card p-6 border-terminal-cyan bg-gradient-to-br from-card via-muted to-card">
+    <div className="macos-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Star className="w-5 h-5 text-terminal-cyan" />
-          <h3 className="font-bold text-terminal-cyan tracking-wider uppercase">
+          <Star className="w-5 h-5 text-warning" />
+          <h3 className="font-medium">
             {t('repositories.featured.title')}
           </h3>
         </div>
@@ -89,37 +85,37 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
           title={t('repositories.featured.refresh')}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded font-mono text-xs bg-terminal-cyan/10 hover:bg-terminal-cyan/20 text-terminal-cyan border border-terminal-cyan/30 hover:border-terminal-cyan transition-colors duration-200 disabled:opacity-50"
+          className="macos-button-secondary text-xs flex items-center gap-1.5 disabled:opacity-50"
         >
           {refreshMutation.isPending ? (
             <>
-              <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin will-change-transform transform-gpu" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
               {t('repositories.featured.refreshing')}
             </>
           ) : (
             <>
-              <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+              <RefreshCw className="w-3.5 h-3.5" />
               {t('repositories.featured.refresh')}
             </>
           )}
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {config.categories.map((category) => {
           const isExpanded = expandedCategories.includes(category.id);
 
           return (
-            <div key={category.id} className="border border-border/30 rounded-lg overflow-hidden">
+            <div key={category.id} className="border border-border rounded-lg overflow-hidden">
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(category.id)}
-                className="w-full flex items-center justify-between p-4 bg-background/40 hover:bg-background/60 transition-colors"
+                className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <GitBranch className="w-4 h-4 text-terminal-cyan" />
+                  <GitBranch className="w-4 h-4 text-primary" />
                   <div className="text-left">
-                    <h4 className="font-semibold text-sm text-foreground">
+                    <h4 className="font-medium text-sm text-foreground">
                       {getLocalizedText(category.name)}
                     </h4>
                     <p className="text-xs text-muted-foreground">
@@ -136,7 +132,7 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
 
               {/* Category Content */}
               {isExpanded && (
-                <div className="p-4 bg-background/20">
+                <div className="p-3 bg-muted/10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {category.repositories.map((repo) => {
                       const added = isAdded(repo.url);
@@ -144,15 +140,15 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
                       return (
                         <div
                           key={repo.url}
-                          className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-3 bg-background/40 rounded border border-border/20 hover:border-terminal-cyan/40 transition-all"
+                          className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-3 bg-card rounded-lg border border-border hover:border-primary/30 transition-all"
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h5 className="font-mono text-sm font-semibold text-terminal-cyan">
+                              <h5 className="text-sm font-medium text-primary">
                                 @{repo.name}
                               </h5>
                               {repo.featured && (
-                                <Star className="w-3 h-3 text-terminal-yellow fill-terminal-yellow" />
+                                <Star className="w-3 h-3 text-warning fill-warning" />
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mb-2">
@@ -162,7 +158,7 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
                               {repo.tags.map((tag) => (
                                 <span
                                   key={tag}
-                                  className="px-2 py-0.5 text-xs font-mono bg-terminal-cyan/10 text-terminal-cyan rounded border border-terminal-cyan/30"
+                                  className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full"
                                 >
                                   {tag}
                                 </span>
@@ -173,25 +169,25 @@ export function FeaturedRepositories({ onAdd, isAdding }: FeaturedRepositoriesPr
                           <button
                             onClick={() => !added && onAdd(repo.url, repo.name)}
                             disabled={added || isAdding}
-                            className={`self-end sm:self-auto sm:ml-4 px-3 py-2 rounded font-mono text-xs transition-all flex items-center gap-1 ${
+                            className={`self-end sm:self-auto sm:ml-4 text-xs flex items-center gap-1.5 disabled:opacity-50 ${
                               added
-                                ? 'bg-terminal-green/10 text-terminal-green border border-terminal-green/30 cursor-default'
-                                : 'neon-button'
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                ? 'px-3 py-1.5 bg-success/10 text-success rounded-lg cursor-default'
+                                : 'macos-button-primary'
+                            }`}
                           >
                             {added ? (
                               <>
-                                <Check className="w-4 h-4" />
+                                <Check className="w-3.5 h-3.5" />
                                 {t('repositories.featured.added')}
                               </>
                             ) : isAdding ? (
                               <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 {t('repositories.adding')}
                               </>
                             ) : (
                               <>
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-3.5 h-3.5" />
                                 {t('repositories.featured.add')}
                               </>
                             )}

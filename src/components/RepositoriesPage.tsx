@@ -13,7 +13,6 @@ import {
   Loader2,
   Database,
   X,
-  Terminal,
   RefreshCw,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -60,14 +59,12 @@ export function RepositoriesPage() {
   const addFormRef = useRef<HTMLDivElement | null>(null);
   const urlInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 缓存统计查询
   const { data: cacheStats } = useQuery({
     queryKey: ["cache-stats"],
     queryFn: api.getCacheStats,
-    refetchInterval: 30000, // 每30秒刷新
+    refetchInterval: 30000,
   });
 
-  // 刷新缓存mutation
   const refreshCacheMutation = useMutation({
     mutationFn: api.refreshRepositoryCache,
     onSuccess: (skills) => {
@@ -80,7 +77,6 @@ export function RepositoriesPage() {
     },
   });
 
-  // 清除所有缓存mutation
   const clearAllCachesMutation = useMutation({
     mutationFn: api.clearAllRepositoryCaches,
     onSuccess: (result) => {
@@ -99,13 +95,8 @@ export function RepositoriesPage() {
     },
   });
 
-  // 添加从 GitHub URL 提取用户名的函数
   const extractRepoNameFromUrl = (url: string): string => {
     try {
-      // 支持多种 GitHub URL 格式
-      // https://github.com/owner/repo
-      // https://github.com/owner/repo.git
-      // git@github.com:owner/repo.git
       const match = url.match(/github\.com[:/]([^/]+)\//);
       if (match && match[1]) {
         return match[1];
@@ -116,11 +107,8 @@ export function RepositoriesPage() {
     }
   };
 
-  // 当 URL 变化时自动提取仓库名称（仅当名称为空时）
   const handleUrlChange = (url: string) => {
     setNewRepoUrl(url);
-
-    // 只在名称为空时自动填充
     if (!newRepoName) {
       const extracted = extractRepoNameFromUrl(url);
       if (extracted) {
@@ -140,7 +128,6 @@ export function RepositoriesPage() {
             setShowAddForm(false);
             appToast.success(t("repositories.toast.added"));
 
-            // 自动触发扫描
             setScanningRepoId(repoId);
             scanMutation.mutate(repoId, {
               onSuccess: (skills) => {
@@ -174,14 +161,16 @@ export function RepositoriesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <Database className="w-6 h-6 text-terminal-cyan" />
-          <h2 className="text-xl font-bold text-terminal-cyan tracking-wider uppercase">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Database className="w-5 h-5 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">
             {t("repositories.title")}
           </h2>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="neon-button inline-flex items-center gap-2"
+          className={showAddForm ? "macos-button-secondary" : "macos-button-primary"}
         >
           {showAddForm ? (
             <>
@@ -199,31 +188,24 @@ export function RepositoriesPage() {
 
       {/* Cache Statistics */}
       {cacheStats && (
-        <div
-          className="cyber-card p-3 border-terminal-cyan bg-gradient-to-br from-card via-muted to-card"
-          style={{
-            animation: "fadeIn 0.3s ease-out",
-            boxShadow: "0 0 20px rgba(94, 234, 212, 0.15), inset 0 1px 0 rgba(94, 234, 212, 0.1)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-2">
+        <div className="macos-card p-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-terminal-cyan" />
-              <h3 className="font-bold text-terminal-cyan tracking-wider uppercase text-sm">
+              <Database className="w-4 h-4 text-primary" />
+              <h3 className="font-medium text-sm">
                 {t("repositories.cache.stats")}
               </h3>
             </div>
 
-            {/* Clear All Caches Button */}
             {cacheStats.cachedRepositories > 0 && (
               <button
                 onClick={() => clearAllCachesMutation.mutate()}
                 disabled={clearAllCachesMutation.isPending}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded font-mono text-xs bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 hover:border-red-500 transition-colors duration-200 disabled:opacity-50"
+                className="macos-button-destructive text-xs flex items-center gap-1.5 disabled:opacity-50"
               >
                 {clearAllCachesMutation.isPending ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin will-change-transform transform-gpu" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     {t("repositories.cache.clearing")}
                   </>
                 ) : (
@@ -237,32 +219,29 @@ export function RepositoriesPage() {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="cyber-card p-3 bg-background/40 border-terminal-cyan/30 hover:border-terminal-cyan hover:shadow-[0_0_15px_rgba(94,234,212,0.2)] transition-all duration-300">
-              <div className="text-[11px] font-mono text-terminal-green mb-1 uppercase tracking-wider flex items-center gap-1">
-                <span className="text-terminal-cyan">▸</span>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="text-xs text-muted-foreground mb-1">
                 {t("repositories.cache.totalRepos")}
               </div>
-              <div className="text-2xl font-bold text-terminal-cyan tabular-nums leading-none">
+              <div className="text-2xl font-semibold text-primary">
                 {cacheStats.totalRepositories}
               </div>
             </div>
 
-            <div className="cyber-card p-3 bg-background/40 border-terminal-green/30 hover:border-terminal-green hover:shadow-[0_0_15px_rgba(74,222,128,0.2)] transition-all duration-300">
-              <div className="text-[11px] font-mono text-terminal-green mb-1 uppercase tracking-wider flex items-center gap-1">
-                <span className="text-terminal-cyan">▸</span>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="text-xs text-muted-foreground mb-1">
                 {t("repositories.cache.cached")}
               </div>
-              <div className="text-2xl font-bold text-terminal-green tabular-nums leading-none">
+              <div className="text-2xl font-semibold text-success">
                 {cacheStats.cachedRepositories}
               </div>
             </div>
 
-            <div className="cyber-card p-3 bg-background/40 border-terminal-cyan/30 hover:border-terminal-cyan hover:shadow-[0_0_15px_rgba(94,234,212,0.2)] transition-all duration-300">
-              <div className="text-[11px] font-mono text-terminal-green mb-1 uppercase tracking-wider flex items-center gap-1">
-                <span className="text-terminal-cyan">▸</span>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="text-xs text-muted-foreground mb-1">
                 {t("repositories.cache.size")}
               </div>
-              <div className="text-2xl font-bold text-terminal-cyan tabular-nums leading-none">
+              <div className="text-2xl font-semibold text-primary">
                 {formatBytes(cacheStats.totalSizeBytes)}
               </div>
             </div>
@@ -282,25 +261,17 @@ export function RepositoriesPage() {
 
       {/* Add Repository Form */}
       {showAddForm && (
-        <div
-          ref={addFormRef}
-          className="cyber-card p-6 border-terminal-cyan"
-          style={{
-            animation: "fadeIn 0.3s ease-out",
-            boxShadow: "0 0 20px rgba(94, 234, 212, 0.15)",
-          }}
-        >
+        <div ref={addFormRef} className="macos-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Terminal className="w-5 h-5 text-terminal-cyan" />
-            <h3 className="font-bold text-terminal-cyan tracking-wider uppercase">
+            <GitBranch className="w-5 h-5 text-primary" />
+            <h3 className="font-medium">
               {t("repositories.newRepository")}
             </h3>
           </div>
 
           <div className="space-y-4">
-            {/* 先输入 GitHub URL */}
             <div>
-              <label className="block text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider">
+              <label className="block text-sm text-muted-foreground mb-2">
                 {t("repositories.githubUrl")}
               </label>
               <input
@@ -308,17 +279,16 @@ export function RepositoriesPage() {
                 value={newRepoUrl}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 placeholder="https://github.com/owner/repo"
-                className="terminal-input font-mono"
+                className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 ref={urlInputRef}
               />
-              <p className="text-xs text-muted-foreground mt-1 font-mono">
+              <p className="text-xs text-muted-foreground mt-1">
                 {t("repositories.urlHint")}
               </p>
             </div>
 
-            {/* 然后显示仓库名称（自动提取，支持手动修改） */}
             <div>
-              <label className="block text-xs font-mono text-terminal-green mb-2 uppercase tracking-wider">
+              <label className="block text-sm text-muted-foreground mb-2">
                 {t("repositories.repoName")}
               </label>
               <input
@@ -326,9 +296,9 @@ export function RepositoriesPage() {
                 value={newRepoName}
                 onChange={(e) => setNewRepoName(e.target.value)}
                 placeholder="owner"
-                className="terminal-input font-mono"
+                className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
-              <p className="text-xs text-muted-foreground mt-1 font-mono">
+              <p className="text-xs text-muted-foreground mt-1">
                 {t("repositories.nameHint")}
               </p>
             </div>
@@ -337,7 +307,7 @@ export function RepositoriesPage() {
           <div className="flex gap-3 mt-6">
             <button
               onClick={handleAddRepository}
-              className="neon-button disabled:opacity-50 disabled:cursor-not-allowed flex-1 inline-flex items-center justify-center gap-2"
+              className="macos-button-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
               disabled={!newRepoUrl || !newRepoName || addMutation.isPending}
             >
               {addMutation.isPending ? (
@@ -358,7 +328,7 @@ export function RepositoriesPage() {
                 setNewRepoUrl("");
                 setNewRepoName("");
               }}
-              className="px-4 py-2 rounded font-mono text-xs border border-muted-foreground text-muted-foreground hover:border-terminal-cyan hover:text-terminal-cyan transition-all duration-200"
+              className="macos-button-secondary"
               disabled={addMutation.isPending}
             >
               {t("repositories.cancel")}
@@ -370,53 +340,40 @@ export function RepositoriesPage() {
       {/* Repository List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-terminal-cyan animate-spin mb-4" />
-          <p className="font-mono text-sm text-terminal-cyan uppercase tracking-wider">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+          <p className="text-sm text-muted-foreground">
             {t("repositories.loading")}
           </p>
         </div>
       ) : repositories && repositories.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {repositories.map((repo, index) => (
-            <div
-              key={repo.id}
-              className="cyber-card p-5 group"
-              style={{
-                animation: "fadeIn 0.4s ease-out",
-                animationDelay: `${index * 50}ms`,
-                animationFillMode: "backwards",
-              }}
-            >
+          {repositories.map((repo) => (
+            <div key={repo.id} className="macos-card p-5">
               <div className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    {/* Repository Header */}
-                    <div className="flex items-center gap-3 mb-3">
-                    <GitBranch className="w-5 h-5 text-terminal-cyan" />
-                    <h3 className="font-bold text-lg text-foreground tracking-wide">
-                      {repo.name}
-                    </h3>
-                  </div>
-
-                    {/* Repository URL */}
-                    <div className="font-mono text-xs text-muted-foreground mb-2 pl-8">
-                      <span className="text-terminal-green">{t("repositories.url")}</span>{" "}
-                      <span className="text-terminal-cyan">{repo.url}</span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <GitBranch className="w-4 h-4 text-primary" />
+                      <h3 className="font-medium text-foreground">
+                        {repo.name}
+                      </h3>
                     </div>
 
-                    {/* Description */}
+                    <div className="text-xs text-muted-foreground mb-2 pl-6">
+                      <span className="text-primary">{t("repositories.url")}</span>{" "}
+                      <span className="break-all">{repo.url}</span>
+                    </div>
+
                     {repo.description && (
-                      <p className="text-sm text-muted-foreground pl-8 mb-2">{repo.description}</p>
+                      <p className="text-sm text-muted-foreground pl-6">{repo.description}</p>
                     )}
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2 shrink-0">
-                    {/* 智能扫描按钮 */}
+                  <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => {
                         if (repo.cache_path) {
-                          // 已缓存：重新扫描
                           setRefreshingRepoId(repo.id);
                           refreshCacheMutation.mutate(repo.id, {
                             onSuccess: (skills) => {
@@ -433,7 +390,6 @@ export function RepositoriesPage() {
                             },
                           });
                         } else {
-                          // 未缓存：一键扫描
                           setScanningRepoId(repo.id);
                           scanMutation.mutate(repo.id, {
                             onSuccess: (skills) => {
@@ -456,39 +412,38 @@ export function RepositoriesPage() {
                         refreshCacheMutation.isPending ||
                         deleteMutation.isPending
                       }
-                      className="neon-button disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 text-xs"
+                      className="macos-button-primary text-xs flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {(scanningRepoId === repo.id && scanMutation.isPending) ||
                       (refreshingRepoId === repo.id && refreshCacheMutation.isPending) ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          {repo.cache_path
-                            ? t("repositories.rescanning")
-                            : t("repositories.scanning")}
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span className="hidden sm:inline">
+                            {repo.cache_path
+                              ? t("repositories.rescanning")
+                              : t("repositories.scanning")}
+                          </span>
                         </>
                       ) : (
                         <>
                           {repo.cache_path ? (
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className="w-3.5 h-3.5" />
                           ) : (
-                            <Search className="w-4 h-4" />
+                            <Search className="w-3.5 h-3.5" />
                           )}
-                          {repo.cache_path ? t("repositories.rescan") : t("repositories.scan")}
+                          <span className="hidden sm:inline">
+                            {repo.cache_path ? t("repositories.rescan") : t("repositories.scan")}
+                          </span>
                         </>
                       )}
                     </button>
 
-                    {/* 删除按钮 */}
                     <button
                       onClick={() => {
                         setDeletingRepoId(repo.id);
                         deleteMutation.mutate(repo.id, {
-                          onSuccess: () => {
-                            setDeletingRepoId(null);
-                          },
-                          onError: () => {
-                            setDeletingRepoId(null);
-                          },
+                          onSuccess: () => setDeletingRepoId(null),
+                          onError: () => setDeletingRepoId(null),
                         });
                       }}
                       disabled={
@@ -496,22 +451,22 @@ export function RepositoriesPage() {
                         refreshCacheMutation.isPending ||
                         deleteMutation.isPending
                       }
-                      className="px-3 py-2 rounded font-mono text-xs border border-terminal-red text-terminal-red hover:bg-terminal-red hover:text-background transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="macos-button-destructive text-xs flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {deletingRepoId === repo.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Metadata（单独一行，占据卡片整行） */}
-                <div className="w-full flex flex-wrap items-center gap-6 pl-8 text-xs font-mono">
+                {/* Metadata */}
+                <div className="flex flex-wrap items-center gap-4 pl-6 text-xs">
                   {repo.last_scanned && (
                     <div className="text-muted-foreground">
-                      <span className="text-terminal-cyan">{t("repositories.lastScan")}</span>{" "}
+                      <span className="text-primary">{t("repositories.lastScan")}</span>{" "}
                       {new Date(repo.last_scanned).toLocaleString("zh-CN", {
                         year: "numeric",
                         month: "2-digit",
@@ -522,15 +477,14 @@ export function RepositoriesPage() {
                     </div>
                   )}
 
-                  {/* Cache Status */}
-                  <div className="text-muted-foreground">
+                  <div>
                     {repo.cache_path ? (
-                      <span className="status-indicator text-terminal-green border-terminal-green/40 bg-terminal-green/15 hover:bg-terminal-green/25 transition-colors duration-200">
-                        {t("repositories.cache.statusCached")}{" "}
-                        {repo.cached_at && `· ${formatDate(repo.cached_at, t)}`}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-success/10 text-success">
+                        {t("repositories.cache.statusCached")}
+                        {repo.cached_at && ` · ${formatDate(repo.cached_at, t)}`}
                       </span>
                     ) : (
-                      <span className="status-indicator text-muted-foreground border-border bg-background/50">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">
                         {t("repositories.cache.statusUncached")}
                       </span>
                     )}
@@ -541,15 +495,12 @@ export function RepositoriesPage() {
           ))}
         </div>
       ) : (
-        <div
-          className="cyber-card p-12 text-center border-dashed"
-          style={{ animation: "fadeIn 0.5s ease-out" }}
-        >
-          <Database className="w-16 h-16 text-terminal-cyan/30 mx-auto mb-4" />
-          <p className="text-lg font-mono text-terminal-cyan mb-2 uppercase tracking-wider">
-            <span className="text-terminal-green">❯</span> {t("repositories.noReposFound")}
+        <div className="macos-card p-12 text-center">
+          <Database className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground mb-2">
+            {t("repositories.noReposFound")}
           </p>
-          <p className="text-sm text-muted-foreground font-mono">
+          <p className="text-xs text-muted-foreground">
             {t("repositories.clickAddRepo")}
           </p>
         </div>
