@@ -6,7 +6,6 @@ import { RepositoriesPage } from "./components/RepositoriesPage";
 import { OverviewPage } from "./components/OverviewPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { Sidebar } from "./components/Sidebar";
-import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { WindowControls } from "./components/WindowControls";
 import { UpdateBadge } from "./components/UpdateBadge";
 import { Toaster } from "sonner";
@@ -58,10 +57,10 @@ function AppContent() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
-      {/* Title Bar */}
+      {/* Title Bar - Apple 风格：极简、透明感 */}
       <header
         data-tauri-drag-region
-        className="h-12 flex-shrink-0 flex items-center justify-between px-4 bg-sidebar border-b border-border"
+        className="h-12 flex-shrink-0 flex items-center justify-between px-4 bg-sidebar/80 backdrop-blur-xl border-b border-border/50"
       >
         {/* macOS: 左侧窗口控件 */}
         {platform === "macos" && (
@@ -73,10 +72,9 @@ function AppContent() {
         {/* 中间占位 */}
         <div className="flex-1" />
 
-        {/* 右侧：更新徽章 + 语言切换 */}
-        <div className="flex items-center gap-2">
+        {/* 右侧：更新徽章 */}
+        <div className="flex items-center gap-3">
           <UpdateBadge />
-          <LanguageSwitcher />
           {/* Windows/Linux: 右侧窗口控件 */}
           {platform !== "macos" && platform !== null && <WindowControls />}
         </div>
@@ -87,9 +85,9 @@ function AppContent() {
         {/* Sidebar */}
         <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div style={{ animation: "fadeIn 0.3s ease-out" }}>
+        {/* Content Area - 更大的内边距，更宽敞的感觉 */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-8 max-w-6xl" style={{ animation: "fadeIn 0.4s ease-out" }}>
             {currentTab === "overview" && <OverviewPage />}
             {currentTab === "installed" && <InstalledSkillsPage />}
             {currentTab === "marketplace" && (

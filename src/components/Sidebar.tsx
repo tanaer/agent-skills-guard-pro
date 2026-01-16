@@ -8,21 +8,23 @@ interface SidebarProps {
   onTabChange: (tab: TabType) => void;
 }
 
-const navItems: { id: TabType; icon: typeof LayoutDashboard; labelKey: string }[] = [
+const mainNavItems: { id: TabType; icon: typeof LayoutDashboard; labelKey: string }[] = [
   { id: "overview", icon: LayoutDashboard, labelKey: "nav.overview" },
   { id: "installed", icon: Package, labelKey: "nav.installed" },
   { id: "marketplace", icon: ShoppingCart, labelKey: "nav.marketplace" },
   { id: "repositories", icon: Database, labelKey: "nav.repositories" },
-  { id: "settings", icon: Settings, labelKey: "nav.settings" },
 ];
+
+const settingsItem = { id: "settings" as TabType, icon: Settings, labelKey: "nav.settings" };
 
 export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
   const { t } = useTranslation();
 
   return (
-    <aside className="w-[220px] flex-shrink-0 bg-sidebar border-r border-border">
-      <nav className="p-3 space-y-1">
-        {navItems.map((item) => {
+    <aside className="w-[240px] flex-shrink-0 bg-sidebar flex flex-col">
+      {/* Main Navigation */}
+      <nav className="p-4 space-y-1 flex-1">
+        {mainNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
 
@@ -35,12 +37,26 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
                 ${isActive ? "sidebar-item-active" : ""}
               `}
             >
-              <Icon className="w-[18px] h-[18px]" />
+              <Icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 2} />
               <span>{t(item.labelKey)}</span>
             </button>
           );
         })}
       </nav>
+
+      {/* Settings at Bottom */}
+      <div className="p-4 border-t border-border/50">
+        <button
+          onClick={() => onTabChange(settingsItem.id)}
+          className={`
+            sidebar-item w-full
+            ${currentTab === settingsItem.id ? "sidebar-item-active" : ""}
+          `}
+        >
+          <settingsItem.icon className="w-[18px] h-[18px]" strokeWidth={currentTab === settingsItem.id ? 2.5 : 2} />
+          <span>{t(settingsItem.labelKey)}</span>
+        </button>
+      </div>
     </aside>
   );
 }

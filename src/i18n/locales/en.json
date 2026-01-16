@@ -324,6 +324,7 @@
       "safe": "SAFE"
     },
     "issues": {
+      "showing": "SHOWING {{count}} SKILLS",
       "found": "{{count}} ISSUES_FOUND: {{breakdown}}",
       "clearFilters": "CLEAR_FILTERS",
       "viewDetails": "VIEW_DETAILS",
@@ -356,6 +357,10 @@
   },
   "settings": {
     "title": "APPLICATION_SETTINGS",
+    "language": {
+      "title": "LANGUAGE",
+      "label": "INTERFACE_LANGUAGE"
+    },
     "appInfo": {
       "title": "APPLICATION_INFO",
       "version": "VERSION",

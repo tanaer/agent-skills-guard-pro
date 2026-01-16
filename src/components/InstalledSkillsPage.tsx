@@ -205,12 +205,11 @@ export function InstalledSkillsPage() {
   }, [installedSkills, searchQuery, selectedRepository]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <Package className="w-5 h-5" />
+            <h1 className="text-headline text-foreground">
               {t('nav.installed')}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -221,13 +220,13 @@ export function InstalledSkillsPage() {
 
         <div className="flex gap-3 items-center flex-wrap">
           <div className="relative flex-1 min-w-[300px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder={t('skills.installedPage.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              className="apple-input w-full h-10 pl-11 pr-4"
             />
           </div>
 
@@ -241,7 +240,7 @@ export function InstalledSkillsPage() {
           <button
             onClick={() => scanMutation.mutate()}
             disabled={isScanning}
-            className="macos-button-secondary h-10 px-4 flex items-center gap-2"
+            className="apple-button-secondary h-10 px-5 flex items-center gap-2"
           >
             {isScanning ? (
               <><Loader2 className="w-4 h-4 animate-spin" />{t('skills.installedPage.scanning')}</>
@@ -253,7 +252,7 @@ export function InstalledSkillsPage() {
           <button
             onClick={checkUpdates}
             disabled={isCheckingUpdates}
-            className="macos-button-primary h-10 px-4 flex items-center gap-2"
+            className="apple-button-primary h-10 px-5 flex items-center gap-2"
           >
             {isCheckingUpdates ? (
               <><Loader2 className="w-4 h-4 animate-spin" />{t('skills.installedPage.checkingUpdates')}</>
@@ -265,12 +264,12 @@ export function InstalledSkillsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
           <p className="text-sm text-muted-foreground">{t('skills.loading')}</p>
         </div>
       ) : filteredSkills && filteredSkills.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filteredSkills.map((skill, index) => (
             <SkillCard
               key={skill.id}
@@ -316,15 +315,17 @@ export function InstalledSkillsPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 macos-card">
-          <div className="text-4xl mb-4">{searchQuery ? "🔍" : "📦"}</div>
+        <div className="flex flex-col items-center justify-center py-20 apple-card">
+          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-5">
+            <Package className="w-10 h-10 text-muted-foreground" />
+          </div>
           <p className="text-sm text-muted-foreground">
             {searchQuery ? t('skills.installedPage.noResults', { query: searchQuery }) : t('skills.installedPage.empty')}
           </p>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="mt-4 macos-button-secondary"
+              className="mt-5 apple-button-secondary"
             >
               {t('skills.installedPage.clearSearch')}
             </button>
@@ -403,15 +404,15 @@ function SkillCard({
   t
 }: SkillCardProps) {
   return (
-    <div className="macos-card p-5">
-      <div className="flex items-start justify-between mb-3">
+    <div className="apple-card p-6 group">
+      <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h3 className="font-medium text-foreground">{skill.name}</h3>
-            <span className={`text-xs px-2 py-0.5 rounded-md ${
+          <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+            <h3 className="font-semibold text-foreground">{skill.name}</h3>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
               skill.repository_owner === "local"
-                ? "text-muted-foreground bg-muted"
-                : "text-primary bg-primary/10"
+                ? "text-muted-foreground bg-secondary"
+                : "text-blue-600 bg-blue-500/10"
             }`}>
               {formatRepositoryTag(skill)}
             </span>
@@ -423,7 +424,7 @@ function SkillCard({
             <button
               onClick={onUpdate}
               disabled={isAnyOperationPending}
-              className="macos-button-primary text-xs flex items-center gap-1.5"
+              className="apple-button-primary h-8 px-3 text-xs flex items-center gap-1.5"
             >
               {isPreparingUpdate || isApplyingUpdate ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" />{isApplyingUpdate ? t('skills.installedPage.applyingUpdate') : t('skills.installedPage.securityChecking')}</>
@@ -435,7 +436,7 @@ function SkillCard({
           <button
             onClick={onUninstall}
             disabled={isAnyOperationPending}
-            className="macos-button-destructive text-xs flex items-center gap-1.5"
+            className="apple-button-destructive h-8 px-3 text-xs flex items-center gap-1.5"
           >
             {isUninstalling ? (
               <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('skills.uninstalling')}</>
@@ -446,28 +447,28 @@ function SkillCard({
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground mb-3">{skill.description || t('skills.noDescription')}</p>
+      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{skill.description || t('skills.noDescription')}</p>
 
-      <div className="text-xs text-muted-foreground mb-3">
+      <div className="text-sm text-muted-foreground mb-4">
         <span>{t('skills.repo')} </span>
         {skill.repository_url === "local" ? (
           <span>{skill.repository_url}</span>
         ) : (
-          <a href={skill.repository_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+          <a href={skill.repository_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 transition-colors break-all">
             {skill.repository_url}
           </a>
         )}
       </div>
 
       {skill.local_paths && skill.local_paths.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <div className="text-xs text-muted-foreground mb-2">
+        <div className="mt-4 pt-4 border-t border-border/60">
+          <div className="text-xs font-medium text-foreground mb-3">
             {t('skills.installedPaths')} ({skill.local_paths.length})
           </div>
           <div className="space-y-2">
             {skill.local_paths.map((path, idx) => (
-              <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div key={idx} className="flex items-center justify-between gap-3 p-3 bg-secondary/50 rounded-xl">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <button
                     onClick={async () => {
                       try {
@@ -477,18 +478,18 @@ function SkillCard({
                         appToast.error(t('skills.folder.openFailed', { error: error?.message || String(error) }), { duration: 5000 });
                       }
                     }}
-                    className="text-primary hover:text-primary/80 transition-colors"
+                    className="text-blue-500 hover:text-blue-600 transition-colors"
                   >
-                    <FolderOpen className="w-3.5 h-3.5" />
+                    <FolderOpen className="w-4 h-4" />
                   </button>
-                  <span className="text-xs text-muted-foreground truncate" title={path}>{path}</span>
+                  <span className="text-sm text-muted-foreground truncate" title={path}>{path}</span>
                 </div>
                 <button
                   onClick={() => onUninstallPath(path)}
                   disabled={isAnyOperationPending}
-                  className="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+                  className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}

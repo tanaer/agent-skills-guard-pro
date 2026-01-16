@@ -23,9 +23,24 @@ interface IssuesListProps {
 }
 
 const levelConfig = {
-  Critical: { color: "text-destructive", bg: "bg-destructive/10", icon: AlertTriangle },
-  Medium: { color: "text-warning", bg: "bg-warning/10", icon: AlertCircle },
-  Safe: { color: "text-success", bg: "bg-success/10", icon: Info },
+  Critical: {
+    color: "text-red-600",
+    bg: "bg-red-500/10",
+    iconBg: "bg-red-500",
+    icon: AlertTriangle
+  },
+  Medium: {
+    color: "text-orange-600",
+    bg: "bg-orange-500/10",
+    iconBg: "bg-orange-500",
+    icon: AlertCircle
+  },
+  Safe: {
+    color: "text-green-600",
+    bg: "bg-green-500/10",
+    iconBg: "bg-green-500",
+    icon: Info
+  },
 };
 
 const mapSeverityTo3Levels = (severity: string): keyof typeof levelConfig => {
@@ -35,9 +50,9 @@ const mapSeverityTo3Levels = (severity: string): keyof typeof levelConfig => {
 };
 
 const getScoreColor = (score: number) => {
-  if (score >= 90) return "text-success";
-  if (score >= 70) return "text-warning";
-  return "text-destructive";
+  if (score >= 90) return "text-green-600";
+  if (score >= 70) return "text-orange-600";
+  return "text-red-600";
 };
 
 export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
@@ -71,12 +86,11 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
   if (issues.length === 0) return null;
 
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border/60">
       {issues.map((issue) => {
         const isExpanded = expandedSkills.has(issue.skill_id);
-        const LevelIcon = levelConfig[issue.level as keyof typeof levelConfig]?.icon || AlertCircle;
-        const levelColorClass = levelConfig[issue.level as keyof typeof levelConfig]?.color || "";
-        const levelBgClass = levelConfig[issue.level as keyof typeof levelConfig]?.bg || "";
+        const config = levelConfig[issue.level as keyof typeof levelConfig] || levelConfig.Medium;
+        const LevelIcon = config.icon;
 
         const issueStats = issue.report.issues.reduce(
           (acc, item) => {
@@ -103,30 +117,31 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
           .slice(0, 3);
 
         return (
-          <div key={issue.skill_id} className="p-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div key={issue.skill_id} className="px-5 py-5 hover:bg-secondary/30 transition-colors">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h3 className="font-medium text-foreground">{issue.skill_name}</h3>
+                  <h3 className="font-semibold text-foreground">{issue.skill_name}</h3>
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${levelBgClass} ${levelColorClass}`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}
                   >
-                    <LevelIcon className="w-3 h-3" />
+                    <LevelIcon className="w-3 h-3" strokeWidth={2.5} />
                     {t(`overview.riskLevels.${issue.level.toLowerCase()}`)}
                   </span>
                 </div>
               </div>
 
               <div className="flex-shrink-0">
-                <div className={`text-xs ${getScoreColor(issue.score)}`}>
-                  {t("skills.securityScore")}：<span className="text-base font-semibold">{issue.score}</span>
+                <div className={`text-sm ${getScoreColor(issue.score)}`}>
+                  <span className="text-muted-foreground">{t("skills.securityScore")}</span>
+                  <span className="text-xl font-semibold ml-2">{issue.score}</span>
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => onOpenDirectory(issue.skill_id)}
-                  className="macos-button-secondary text-xs flex items-center gap-1"
+                  className="apple-button-secondary h-8 px-3 text-xs flex items-center gap-1.5"
                 >
                   <FolderOpen className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{t("overview.issues.openDirectory")}</span>
@@ -134,7 +149,7 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                 <button
                   onClick={() => uninstallMutation.mutate(issue.skill_id)}
                   disabled={uninstallMutation.isPending}
-                  className="macos-button-destructive text-xs flex items-center gap-1"
+                  className="apple-button-destructive h-8 px-3 text-xs flex items-center gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{t("overview.issues.uninstall")}</span>
@@ -142,16 +157,16 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
               </div>
             </div>
 
-            <div className="mt-3 pl-0 md:pl-0">
+            <div className="mt-4">
               {issue.report.issues.length === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-success">
+                <div className="flex items-center gap-2 text-sm text-green-600">
                   <CheckCircle className="w-4 h-4" />
                   <span>{t("overview.issues.skillSafe")}</span>
                 </div>
               ) : !isExpanded ? (
                 <button
                   onClick={() => toggleExpanded(issue.skill_id)}
-                  className="flex items-center justify-between w-full text-left text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
+                  className="flex items-center justify-between w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors py-2 group"
                 >
                   <span>
                     {t("overview.issues.found", {
@@ -166,38 +181,40 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                         .join("，"),
                     })}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-primary" />
+                  <ChevronDown className="w-4 h-4 text-blue-500 group-hover:translate-y-0.5 transition-transform" />
                 </button>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <button
                     onClick={() => toggleExpanded(issue.skill_id)}
-                    className="flex items-center justify-between w-full text-left text-xs font-medium py-2"
+                    className="flex items-center justify-between w-full text-left text-sm font-medium py-2 group"
                   >
                     <span>{t("overview.issues.found", { count: issue.report.issues.length, breakdown: "" }).split("：")[0]}</span>
-                    <ChevronUp className="w-4 h-4 text-primary" />
+                    <ChevronUp className="w-4 h-4 text-blue-500 group-hover:-translate-y-0.5 transition-transform" />
                   </button>
 
                   {topIssues.map((item, idx) => {
                     const mappedSeverity = mapSeverityTo3Levels(item.severity);
-                    const IssueIcon = levelConfig[mappedSeverity]?.icon || AlertCircle;
-                    const issueColor = levelConfig[mappedSeverity]?.color || "";
+                    const issueConfig = levelConfig[mappedSeverity] || levelConfig.Medium;
+                    const IssueIcon = issueConfig.icon;
 
                     return (
                       <div
                         key={idx}
-                        className="flex items-start gap-2 text-xs p-2 rounded-lg bg-muted/50"
+                        className="flex items-start gap-3 text-sm p-3 rounded-xl bg-secondary/50"
                       >
-                        <IssueIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${issueColor}`} />
+                        <div className={`w-6 h-6 rounded-lg ${issueConfig.iconBg} flex items-center justify-center flex-shrink-0`}>
+                          <IssueIcon className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-foreground">
                             {item.file_path && (
-                              <span className="text-primary mr-1">[{item.file_path}]</span>
+                              <span className="text-blue-500 font-medium mr-1">[{item.file_path}]</span>
                             )}
                             {item.description}
                           </span>
                           {item.line_number && (
-                            <span className="text-muted-foreground text-[11px] ml-2">
+                            <span className="text-muted-foreground text-xs ml-2">
                               (行 {item.line_number})
                             </span>
                           )}
@@ -209,10 +226,10 @@ export function IssuesList({ issues, onOpenDirectory }: IssuesListProps) {
                   {issue.report.issues.length > 3 && (
                     <button
                       onClick={() => setSelectedSkill(issue)}
-                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1.5 transition-colors"
                     >
                       <span>{t("overview.issues.viewFullReport")}</span>
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="w-4 h-4" />
                     </button>
                   )}
                 </div>

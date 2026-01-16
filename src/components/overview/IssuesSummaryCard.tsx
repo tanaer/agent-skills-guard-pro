@@ -8,9 +8,27 @@ interface IssuesSummaryCardProps {
 }
 
 const levelConfig = {
-  Critical: { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
-  Medium: { icon: AlertCircle, color: "text-warning", bg: "bg-warning/10" },
-  Safe: { icon: Shield, color: "text-success", bg: "bg-success/10" },
+  Critical: {
+    icon: AlertTriangle,
+    iconBg: "bg-red-500",
+    textColor: "text-red-600",
+    selectedBg: "bg-red-50",
+    selectedRing: "ring-red-200",
+  },
+  Medium: {
+    icon: AlertCircle,
+    iconBg: "bg-orange-500",
+    textColor: "text-orange-600",
+    selectedBg: "bg-orange-50",
+    selectedRing: "ring-orange-200",
+  },
+  Safe: {
+    icon: Shield,
+    iconBg: "bg-green-500",
+    textColor: "text-green-600",
+    selectedBg: "bg-green-50",
+    selectedRing: "ring-green-200",
+  },
 };
 
 export function IssuesSummaryCard({
@@ -21,7 +39,7 @@ export function IssuesSummaryCard({
   const { t } = useTranslation();
 
   return (
-    <div className="grid h-full grid-cols-3 gap-3">
+    <div className="grid h-full grid-cols-3 gap-4">
       {Object.entries(levelConfig).map(([level, config]) => {
         const Icon = config.icon;
         const count = issuesByLevel[level] || 0;
@@ -31,15 +49,19 @@ export function IssuesSummaryCard({
           <button
             key={level}
             onClick={() => onFilterChange(isSelected ? null : level)}
-            className={`macos-card p-4 text-left transition-all hover:shadow-md ${
-              isSelected ? "ring-2 ring-primary" : ""
+            className={`apple-card p-5 text-left transition-all duration-200 ${
+              isSelected
+                ? `${config.selectedBg} ring-2 ${config.selectedRing}`
+                : "hover:scale-[1.02]"
             }`}
           >
-            <div className={`p-2 rounded-lg ${config.bg} w-fit mb-2`}>
-              <Icon className={`w-4 h-4 ${config.color}`} />
+            <div className={`w-9 h-9 rounded-xl ${config.iconBg} flex items-center justify-center mb-3 shadow-lg shadow-black/10`}>
+              <Icon className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
-            <div className={`text-2xl font-semibold ${config.color}`}>{count}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className={`text-3xl font-semibold tracking-tight ${config.textColor}`}>
+              {count}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1 font-medium">
               {t(`overview.riskLevels.${level.toLowerCase()}`)}
             </div>
           </button>

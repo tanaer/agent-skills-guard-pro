@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSkills, useInstallSkill, useUninstallSkill, useUninstallSkillPath, useDeleteSkill } from "../hooks/useSkills";
 import { Skill } from "../types";
 import { SecurityReport } from "../types/security";
-import { Download, Trash2, AlertTriangle, Loader2, Package, Search, FolderOpen, XCircle, CheckCircle } from "lucide-react";
+import { Download, Trash2, AlertTriangle, Loader2, Search, FolderOpen, XCircle, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { formatRepositoryTag } from "../lib/utils";
@@ -121,16 +121,11 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Package className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">{t('nav.marketplace')}</h2>
-              <p className="text-xs text-muted-foreground">
-                {t('skills.marketplace.found', { count: filteredSkills.length })}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-headline text-foreground">{t('nav.marketplace')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t('skills.marketplace.found', { count: filteredSkills.length })}
+            </p>
           </div>
         </div>
 
@@ -143,7 +138,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
               placeholder={t('skills.marketplace.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              className="apple-input w-full h-10 pl-10 pr-4"
             />
           </div>
 
@@ -154,12 +149,12 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
             className="min-w-[200px]"
           />
 
-          <label className="flex items-center gap-2 h-10 px-4 bg-card border border-border rounded-lg text-sm cursor-pointer hover:bg-muted/50 transition-colors">
+          <label className="flex items-center gap-2 h-10 px-4 apple-card text-sm cursor-pointer hover:bg-secondary/50 transition-colors">
             <input
               type="checkbox"
               checked={hideInstalled}
               onChange={(e) => setHideInstalled(e.target.checked)}
-              className="rounded border-border"
+              className="rounded border-border accent-blue-500"
             />
             <span>{t('skills.marketplace.hideInstalled')}</span>
           </label>
@@ -227,7 +222,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
           ))}
         </div>
       ) : (
-        <div className="macos-card p-12 text-center">
+        <div className="apple-card p-12 text-center">
           <div className="text-4xl mb-4">🔍</div>
           {searchQuery ? (
             <>
@@ -240,7 +235,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
                   setSelectedRepository("all");
                   setHideInstalled(false);
                 }}
-                className="macos-button-secondary"
+                className="apple-button-secondary"
               >
                 {t('skills.marketplace.clearFilters')}
               </button>
@@ -256,7 +251,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
               <button
                 onClick={() => onNavigateToRepositories?.()}
                 disabled={!onNavigateToRepositories}
-                className="macos-button-primary disabled:opacity-50"
+                className="apple-button-primary disabled:opacity-50"
               >
                 {t('skills.marketplace.goToRepositories')}
               </button>
@@ -272,7 +267,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
                   setSelectedRepository("all");
                   setHideInstalled(false);
                 }}
-                className="macos-button-secondary"
+                className="apple-button-secondary"
               >
                 {t('skills.marketplace.clearFilters')}
               </button>
@@ -347,7 +342,7 @@ function SkillCard({
   t
 }: SkillCardProps) {
   return (
-    <div className="macos-card p-5">
+    <div className="apple-card p-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1 min-w-0">
@@ -356,17 +351,17 @@ function SkillCard({
             <span className={`text-xs px-2 py-0.5 rounded-full ${
               skill.repository_owner === "local"
                 ? "bg-muted text-muted-foreground"
-                : "bg-primary/10 text-primary"
+                : "bg-blue-500/10 text-blue-600"
             }`}>
               {formatRepositoryTag(skill)}
             </span>
             {skill.installed && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600">
                 {t('skills.installed')}
               </span>
             )}
             {isInstalling && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
                 {t('skills.installing')}
               </span>
             )}
@@ -378,7 +373,7 @@ function SkillCard({
           <button
             onClick={onInstall}
             disabled={isAnyOperationPending}
-            className="macos-button-primary text-xs flex items-center gap-1.5 disabled:opacity-50"
+            className="apple-button-primary h-8 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50"
           >
             {isPreparing ? (
               <>
@@ -402,7 +397,7 @@ function SkillCard({
             <button
               onClick={onUninstall}
               disabled={isAnyOperationPending}
-              className="macos-button-destructive text-xs flex items-center gap-1.5 disabled:opacity-50"
+              className="apple-button-destructive h-8 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50"
             >
               {isUninstalling ? (
                 <>
@@ -420,7 +415,7 @@ function SkillCard({
             <button
               onClick={onDelete}
               disabled={isAnyOperationPending}
-              className="macos-button-destructive text-xs flex items-center gap-1.5 disabled:opacity-50"
+              className="apple-button-destructive h-8 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50"
               title={t('skills.deleteRecord')}
             >
               {isDeleting ? (
@@ -446,7 +441,7 @@ function SkillCard({
 
       {/* Repository */}
       <div className="text-xs text-muted-foreground mb-3">
-        <span className="text-primary">{t('skills.repo')}</span>{" "}
+        <span className="text-blue-500 font-medium">{t('skills.repo')}</span>{" "}
         {skill.repository_url === "local" ? (
           <span>{skill.repository_url}</span>
         ) : (
@@ -454,7 +449,7 @@ function SkillCard({
             href={skill.repository_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline break-all"
+            className="text-blue-500 hover:text-blue-600 hover:underline break-all transition-colors"
           >
             {skill.repository_url}
           </a>
@@ -463,13 +458,13 @@ function SkillCard({
 
       {/* Installed Paths */}
       {skill.local_paths && skill.local_paths.length > 0 && (
-        <div className="pt-3 border-t border-border">
+        <div className="pt-3 border-t border-border/60">
           <div className="text-xs text-muted-foreground mb-2">
-            <span className="text-primary">{t('skills.installedPaths')}</span> ({skill.local_paths.length})
+            <span className="text-blue-500 font-medium">{t('skills.installedPaths')}</span> ({skill.local_paths.length})
           </div>
           <div className="space-y-1.5">
             {skill.local_paths.map((path, idx) => (
-              <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-lg text-xs">
+              <div key={idx} className="flex items-center justify-between gap-2 p-2.5 bg-secondary/50 rounded-xl text-xs">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <button
                     onClick={async () => {
@@ -480,7 +475,7 @@ function SkillCard({
                         appToast.error(t('skills.folder.openFailed', { error: error?.message || String(error) }), { duration: 5000 });
                       }
                     }}
-                    className="text-primary hover:text-primary/80 transition-colors"
+                    className="text-blue-500 hover:text-blue-600 transition-colors"
                     title={t('skills.openFolder')}
                   >
                     <FolderOpen className="w-3.5 h-3.5" />
@@ -490,7 +485,7 @@ function SkillCard({
                 <button
                   onClick={() => onUninstallPath(path)}
                   disabled={isAnyOperationPending}
-                  className="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+                  className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
                   title={t('skills.uninstallPath')}
                 >
                   <Trash2 className="w-3.5 h-3.5" />

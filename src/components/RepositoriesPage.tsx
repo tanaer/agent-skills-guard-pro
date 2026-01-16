@@ -157,20 +157,17 @@ export function RepositoriesPage() {
   }, [showAddForm]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Database className="w-5 h-5 text-primary" />
-          </div>
-          <h2 className="text-lg font-semibold text-foreground">
+        <div>
+          <h1 className="text-headline text-foreground">
             {t("repositories.title")}
-          </h2>
+          </h1>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className={showAddForm ? "macos-button-secondary" : "macos-button-primary"}
+          className={`flex items-center gap-2 ${showAddForm ? "apple-button-secondary" : "apple-button-primary"}`}
         >
           {showAddForm ? (
             <>
@@ -188,11 +185,11 @@ export function RepositoriesPage() {
 
       {/* Cache Statistics */}
       {cacheStats && (
-        <div className="macos-card p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="apple-card p-5">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-primary" />
-              <h3 className="font-medium text-sm">
+              <Database className="w-4 h-4 text-blue-500" />
+              <h3 className="font-semibold text-sm">
                 {t("repositories.cache.stats")}
               </h3>
             </div>
@@ -201,7 +198,7 @@ export function RepositoriesPage() {
               <button
                 onClick={() => clearAllCachesMutation.mutate()}
                 disabled={clearAllCachesMutation.isPending}
-                className="macos-button-destructive text-xs flex items-center gap-1.5 disabled:opacity-50"
+                className="apple-button-destructive h-8 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50"
               >
                 {clearAllCachesMutation.isPending ? (
                   <>
@@ -218,30 +215,30 @@ export function RepositoriesPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 bg-secondary/50 rounded-xl">
               <div className="text-xs text-muted-foreground mb-1">
                 {t("repositories.cache.totalRepos")}
               </div>
-              <div className="text-2xl font-semibold text-primary">
+              <div className="text-2xl font-semibold text-blue-500">
                 {cacheStats.totalRepositories}
               </div>
             </div>
 
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-4 bg-secondary/50 rounded-xl">
               <div className="text-xs text-muted-foreground mb-1">
                 {t("repositories.cache.cached")}
               </div>
-              <div className="text-2xl font-semibold text-success">
+              <div className="text-2xl font-semibold text-green-600">
                 {cacheStats.cachedRepositories}
               </div>
             </div>
 
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-4 bg-secondary/50 rounded-xl">
               <div className="text-xs text-muted-foreground mb-1">
                 {t("repositories.cache.size")}
               </div>
-              <div className="text-2xl font-semibold text-primary">
+              <div className="text-2xl font-semibold text-purple-500">
                 {formatBytes(cacheStats.totalSizeBytes)}
               </div>
             </div>
@@ -261,17 +258,19 @@ export function RepositoriesPage() {
 
       {/* Add Repository Form */}
       {showAddForm && (
-        <div ref={addFormRef} className="macos-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <GitBranch className="w-5 h-5 text-primary" />
-            <h3 className="font-medium">
+        <div ref={addFormRef} className="apple-card p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center">
+              <GitBranch className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-semibold">
               {t("repositories.newRepository")}
             </h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm text-muted-foreground mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 {t("repositories.githubUrl")}
               </label>
               <input
@@ -279,16 +278,16 @@ export function RepositoriesPage() {
                 value={newRepoUrl}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 placeholder="https://github.com/owner/repo"
-                className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="apple-input w-full"
                 ref={urlInputRef}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-2">
                 {t("repositories.urlHint")}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm text-muted-foreground mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 {t("repositories.repoName")}
               </label>
               <input
@@ -296,9 +295,9 @@ export function RepositoriesPage() {
                 value={newRepoName}
                 onChange={(e) => setNewRepoName(e.target.value)}
                 placeholder="owner"
-                className="w-full h-10 px-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="apple-input w-full"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-2">
                 {t("repositories.nameHint")}
               </p>
             </div>
@@ -307,7 +306,7 @@ export function RepositoriesPage() {
           <div className="flex gap-3 mt-6">
             <button
               onClick={handleAddRepository}
-              className="macos-button-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="apple-button-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
               disabled={!newRepoUrl || !newRepoName || addMutation.isPending}
             >
               {addMutation.isPending ? (
@@ -328,7 +327,7 @@ export function RepositoriesPage() {
                 setNewRepoUrl("");
                 setNewRepoName("");
               }}
-              className="macos-button-secondary"
+              className="apple-button-secondary"
               disabled={addMutation.isPending}
             >
               {t("repositories.cancel")}
@@ -339,28 +338,28 @@ export function RepositoriesPage() {
 
       {/* Repository List */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
           <p className="text-sm text-muted-foreground">
             {t("repositories.loading")}
           </p>
         </div>
       ) : repositories && repositories.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {repositories.map((repo) => (
-            <div key={repo.id} className="macos-card p-5">
+            <div key={repo.id} className="apple-card p-6">
               <div className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <GitBranch className="w-4 h-4 text-primary" />
-                      <h3 className="font-medium text-foreground">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <GitBranch className="w-4 h-4 text-blue-500" />
+                      <h3 className="font-semibold text-foreground">
                         {repo.name}
                       </h3>
                     </div>
 
-                    <div className="text-xs text-muted-foreground mb-2 pl-6">
-                      <span className="text-primary">{t("repositories.url")}</span>{" "}
+                    <div className="text-sm text-muted-foreground mb-2 pl-6">
+                      <span className="text-blue-500">{t("repositories.url")}</span>{" "}
                       <span className="break-all">{repo.url}</span>
                     </div>
 
@@ -412,7 +411,7 @@ export function RepositoriesPage() {
                         refreshCacheMutation.isPending ||
                         deleteMutation.isPending
                       }
-                      className="macos-button-primary text-xs flex items-center gap-1.5 disabled:opacity-50"
+                      className="apple-button-primary h-8 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {(scanningRepoId === repo.id && scanMutation.isPending) ||
                       (refreshingRepoId === repo.id && refreshCacheMutation.isPending) ? (
@@ -451,7 +450,7 @@ export function RepositoriesPage() {
                         refreshCacheMutation.isPending ||
                         deleteMutation.isPending
                       }
-                      className="macos-button-destructive text-xs flex items-center gap-1.5 disabled:opacity-50"
+                      className="apple-button-destructive h-8 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {deletingRepoId === repo.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -466,7 +465,7 @@ export function RepositoriesPage() {
                 <div className="flex flex-wrap items-center gap-4 pl-6 text-xs">
                   {repo.last_scanned && (
                     <div className="text-muted-foreground">
-                      <span className="text-primary">{t("repositories.lastScan")}</span>{" "}
+                      <span className="text-blue-500 font-medium">{t("repositories.lastScan")}</span>{" "}
                       {new Date(repo.last_scanned).toLocaleString("zh-CN", {
                         year: "numeric",
                         month: "2-digit",
@@ -479,12 +478,12 @@ export function RepositoriesPage() {
 
                   <div>
                     {repo.cache_path ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-success/10 text-success">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600">
                         {t("repositories.cache.statusCached")}
                         {repo.cached_at && ` · ${formatDate(repo.cached_at, t)}`}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
                         {t("repositories.cache.statusUncached")}
                       </span>
                     )}
@@ -495,8 +494,10 @@ export function RepositoriesPage() {
           ))}
         </div>
       ) : (
-        <div className="macos-card p-12 text-center">
-          <Database className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+        <div className="apple-card p-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mx-auto mb-5">
+            <Database className="w-10 h-10 text-muted-foreground" />
+          </div>
           <p className="text-sm text-muted-foreground mb-2">
             {t("repositories.noReposFound")}
           </p>

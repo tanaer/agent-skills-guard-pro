@@ -28,73 +28,72 @@ export function ScanStatusCard({
     return formatDistanceToNow(date, { addSuffix: true, locale });
   };
 
-  const getStatusColor = () => {
-    if (isScanning) return "primary";
-    if (isComplete && issueCount === 0) return "success";
-    if (isComplete && issueCount > 0) return "warning";
-    return "primary";
+  const getStatusInfo = () => {
+    if (isScanning) return { color: "text-blue-500", bg: "bg-blue-500", label: "scanning" };
+    if (isComplete && issueCount === 0) return { color: "text-green-600", bg: "bg-green-500", label: "safe" };
+    if (isComplete && issueCount > 0) return { color: "text-orange-500", bg: "bg-orange-500", label: "warning" };
+    return { color: "text-blue-500", bg: "bg-blue-500", label: "default" };
   };
 
-  const statusColor = getStatusColor();
+  const status = getStatusInfo();
 
   return (
-    <div className="macos-card p-5 h-full">
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center">
-        <div className="flex-shrink-0 min-w-[180px] space-y-2">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{t("overview.scanStatus.lastScan")}</span>
-          </div>
-          {lastScanTime ? (
-            <div className={`text-sm font-medium text-${statusColor} pl-6`}>
-              {formatRelativeTime(lastScanTime)}
+    <div className="apple-card p-6 h-full">
+      <div className="space-y-5">
+        {/* 顶部信息区 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+              <Clock className="w-5 h-5 text-muted-foreground" />
             </div>
-          ) : (
-            <div className="text-sm font-medium text-warning pl-6">{t("overview.scanStatus.never")}</div>
-          )}
-          <div className="flex items-center gap-2 pl-6 pt-1">
-            <Activity className={`w-4 h-4 text-${statusColor} ${isScanning ? "animate-pulse" : ""}`} />
+            <div>
+              <div className="text-xs text-muted-foreground mb-0.5">
+                {t("overview.scanStatus.lastScan")}
+              </div>
+              <div className={`text-sm font-semibold ${status.color}`}>
+                {lastScanTime ? formatRelativeTime(lastScanTime) : t("overview.scanStatus.never")}
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-semibold text-foreground">
+              {scannedCount}<span className="text-muted-foreground text-lg">/{totalCount}</span>
+            </div>
             <div className="text-xs text-muted-foreground">
-              {t("overview.scanStatus.scanned")}
-              <span className={`font-medium mx-1 text-${statusColor}`}>{scannedCount}</span>
-              {t("overview.scanStatus.of")}
-              <span className={`font-medium mx-1 text-${statusColor}`}>{totalCount}</span>
               {t("overview.scanStatus.skills")}
             </div>
           </div>
         </div>
 
-        <div className="flex-1 w-full space-y-3">
-          <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
+        {/* 进度条 */}
+        <div className="space-y-2">
+          <div className="apple-progress h-2">
             <div
-              className={`h-full transition-all duration-500 rounded-full ${
-                isScanning
-                  ? "bg-primary"
-                  : isComplete && issueCount === 0
-                    ? "bg-success"
-                    : isComplete && issueCount > 0
-                      ? "bg-warning"
-                      : "bg-primary"
-              }`}
+              className={`h-full rounded-full transition-all duration-500 ease-out ${status.bg}`}
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          {isComplete && !isScanning ? (
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className={`w-4 h-4 ${issueCount === 0 ? "text-success" : "text-warning"}`} />
-              <span className="text-muted-foreground">
-                {issueCount === 0
-                  ? t("overview.scanStatus.noIssues")
-                  : t("overview.scanStatus.completed", { count: issueCount })}
-              </span>
-            </div>
-          ) : isScanning ? (
-            <div className="flex items-center gap-2 text-sm">
-              <Activity className="w-4 h-4 text-primary animate-pulse" />
-              <span className="text-primary">{t("overview.scanStatus.scanning")}...</span>
-            </div>
-          ) : null}
+          {/* 状态文字 */}
+          <div className="flex items-center gap-2">
+            {isScanning ? (
+              <>
+                <Activity className="w-4 h-4 text-blue-500 animate-pulse" />
+                <span className="text-sm text-blue-500 font-medium">
+                  {t("overview.scanStatus.scanning")}...
+                </span>
+              </>
+            ) : isComplete ? (
+              <>
+                <CheckCircle className={`w-4 h-4 ${issueCount === 0 ? "text-green-600" : "text-orange-500"}`} />
+                <span className={`text-sm font-medium ${issueCount === 0 ? "text-green-600" : "text-orange-500"}`}>
+                  {issueCount === 0
+                    ? t("overview.scanStatus.noIssues")
+                    : t("overview.scanStatus.completed", { count: issueCount })}
+                </span>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

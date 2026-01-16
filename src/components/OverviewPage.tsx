@@ -143,25 +143,30 @@ export function OverviewPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
+      {/* 页面标题区 */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">{t("overview.title")}</h1>
+        <div>
+          <h1 className="text-headline text-foreground">{t("overview.title")}</h1>
+        </div>
         <button
           onClick={() => scanMutation.mutate()}
           disabled={isScanning}
-          className="macos-button-primary flex items-center gap-2"
+          className="apple-button-primary flex items-center gap-2"
         >
           <RefreshCw className={`w-4 h-4 ${isScanning ? "animate-spin" : ""}`} />
           {isScanning ? t("overview.scanStatus.scanning") : t("overview.scanStatus.scanAll")}
         </button>
       </div>
 
+      {/* 统计卡片 */}
       <StatisticsCards
         installedCount={statistics.installedCount}
         repositoryCount={statistics.repositoryCount}
         scannedCount={statistics.scannedCount}
       />
 
+      {/* 扫描状态 + 问题概览 */}
       <div className="grid gap-5 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <ScanStatusCard
@@ -181,10 +186,11 @@ export function OverviewPage() {
         </div>
       </div>
 
+      {/* 问题详情列表 */}
       <GroupCard title={t("overview.section.issueDetails")}>
         <GroupCardItem noBorder className="p-0">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
+            <span className="text-sm text-muted-foreground font-medium">
               {filteredIssues.length > 0
                 ? t("overview.issues.showing", { count: filteredIssues.length })
                 : t("overview.issues.noIssues")}
@@ -192,22 +198,24 @@ export function OverviewPage() {
             {filterLevel && (
               <button
                 onClick={() => setFilterLevel(null)}
-                className="macos-button-secondary text-xs flex items-center gap-1"
+                className="apple-button-secondary text-xs flex items-center gap-1.5 h-7 px-3"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
                 {t("overview.issues.clearFilters")}
               </button>
             )}
           </div>
           <div className="max-h-[500px] overflow-y-auto">
             {filteredIssues.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="flex flex-col items-center gap-3">
-                  {filterLevel === "Safe" ? (
-                    <Shield className="w-10 h-10 text-success" />
-                  ) : (
-                    <CheckCircle className="w-10 h-10 text-success" />
-                  )}
+              <div className="text-center py-16">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+                    {filterLevel === "Safe" ? (
+                      <Shield className="w-8 h-8 text-green-600" />
+                    ) : (
+                      <CheckCircle className="w-8 h-8 text-green-600" />
+                    )}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     {filterLevel === "Critical"
                       ? t("overview.issues.noCriticalIssues")
