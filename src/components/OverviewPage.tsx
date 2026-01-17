@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, CheckCircle, Shield, X, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle, Shield, X } from "lucide-react";
 import type { SkillScanResult } from "@/types/security";
 import type { Skill, Repository } from "@/types";
 import { api } from "@/lib/api";
@@ -48,7 +48,9 @@ export function OverviewPage() {
         await queryClient.refetchQueries({ queryKey: ["skills"] });
       } catch (error: any) {
         console.error("扫描本地技能失败:", error);
-        appToast.error(t("overview.scan.localSkillsFailed", { error: error.message }), { duration: 4000 });
+        appToast.error(t("overview.scan.localSkillsFailed", { error: error.message }), {
+          duration: 4000,
+        });
       }
 
       const results = await invoke<SkillScanResult[]>("scan_all_installed_skills", {
@@ -156,7 +158,11 @@ export function OverviewPage() {
           disabled={isScanning}
           className="apple-button-primary flex items-center gap-2"
         >
-          <RefreshCw className={`w-4 h-4 ${isScanning ? "animate-spin" : ""}`} />
+          {isScanning ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Shield className="w-4 h-4" />
+          )}
           {isScanning ? t("overview.scanStatus.scanning") : t("overview.scanStatus.scanAll")}
         </button>
       </div>
