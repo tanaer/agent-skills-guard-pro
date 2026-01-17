@@ -32,6 +32,19 @@ function AppContent() {
     getPlatform().then(setPlatform);
   }, []);
 
+  useEffect(() => {
+    if (platform === null) return;
+    const className = "macos-window";
+    if (platform === "macos") {
+      document.body.classList.add(className);
+    } else {
+      document.body.classList.remove(className);
+    }
+    return () => {
+      document.body.classList.remove(className);
+    };
+  }, [platform]);
+
   // 启动时自动更新精选仓库
   useEffect(() => {
     const updateFeaturedRepos = async () => {
@@ -63,7 +76,11 @@ function AppContent() {
   }, [queryClient]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div
+      className={`h-screen flex flex-col overflow-hidden bg-background ${
+        platform === "macos" ? "macos-window-frame" : ""
+      }`}
+    >
       {/* Title Bar - Apple 风格：极简、透明感 */}
       <header
         data-tauri-drag-region

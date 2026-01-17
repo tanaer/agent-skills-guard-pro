@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Minus, Square, X } from "lucide-react";
+import { Minus, Plus, Square, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getPlatform, type Platform } from "../lib/platform";
 
@@ -23,27 +23,27 @@ export function WindowControls() {
   };
 
   const renderMacButtons = () => (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 group">
       <button
         onClick={handleClose}
-        className="group w-3 h-3 rounded-full bg-[#FF5F57] hover:brightness-110 transition-all flex items-center justify-center"
+        className="w-3 h-3 rounded-full bg-[#FF5F57] hover:brightness-110 transition-all flex items-center justify-center"
         aria-label="Close window"
       >
         <X className="w-2 h-2 text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
       <button
         onClick={handleMinimize}
-        className="group w-3 h-3 rounded-full bg-[#FEBC2E] hover:brightness-110 transition-all flex items-center justify-center"
+        className="w-3 h-3 rounded-full bg-[#FEBC2E] hover:brightness-110 transition-all flex items-center justify-center"
         aria-label="Minimize window"
       >
         <Minus className="w-2 h-2 text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
       <button
         onClick={handleMaximize}
-        className="group w-3 h-3 rounded-full bg-[#28C840] hover:brightness-110 transition-all flex items-center justify-center"
+        className="w-3 h-3 rounded-full bg-[#28C840] hover:brightness-110 transition-all flex items-center justify-center"
         aria-label="Maximize window"
       >
-        <Square className="w-1.5 h-1.5 text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Plus className="w-2 h-2 text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
     </div>
   );

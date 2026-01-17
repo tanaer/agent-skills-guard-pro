@@ -58,6 +58,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  body.macos-window {
+    background: transparent;
+    overflow: hidden;
+  }
+
   /* Apple 风格动画 - 流畅、克制 */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
@@ -91,6 +96,10 @@
   /* 兼容旧类名 */
   .macos-card {
     @apply apple-card;
+  }
+
+  .macos-window-frame {
+    border-radius: var(--radius-lg);
   }
 
   /* Apple 风格按钮 - 圆润、精致 */
