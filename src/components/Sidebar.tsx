@@ -1,7 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Package, ShoppingCart, Database, Settings } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Star, Database, Settings } from "lucide-react";
 
-type TabType = "overview" | "installed" | "marketplace" | "repositories" | "settings";
+type TabType =
+  | "overview"
+  | "installed"
+  | "marketplace"
+  | "featuredRepositories"
+  | "repositories"
+  | "settings";
 
 interface SidebarProps {
   currentTab: TabType;
@@ -12,6 +18,7 @@ const mainNavItems: { id: TabType; icon: typeof LayoutDashboard; labelKey: strin
   { id: "overview", icon: LayoutDashboard, labelKey: "nav.overview" },
   { id: "installed", icon: Package, labelKey: "nav.installed" },
   { id: "marketplace", icon: ShoppingCart, labelKey: "nav.marketplace" },
+  { id: "featuredRepositories", icon: Star, labelKey: "nav.featuredRepositories" },
   { id: "repositories", icon: Database, labelKey: "nav.repositories" },
 ];
 
@@ -23,7 +30,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
   return (
     <aside className="w-[240px] flex-shrink-0 bg-sidebar flex flex-col">
       {/* Main Navigation */}
-      <nav className="p-4 space-y-1 flex-1">
+      <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
         {mainNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
@@ -53,7 +60,10 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
             ${currentTab === settingsItem.id ? "sidebar-item-active" : ""}
           `}
         >
-          <settingsItem.icon className="w-[18px] h-[18px]" strokeWidth={currentTab === settingsItem.id ? 2.5 : 2} />
+          <settingsItem.icon
+            className="w-[18px] h-[18px]"
+            strokeWidth={currentTab === settingsItem.id ? 2.5 : 2}
+          />
           <span>{t(settingsItem.labelKey)}</span>
         </button>
       </div>

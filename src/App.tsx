@@ -5,6 +5,7 @@ import { MarketplacePage } from "./components/MarketplacePage";
 import { RepositoriesPage } from "./components/RepositoriesPage";
 import { OverviewPage } from "./components/OverviewPage";
 import { SettingsPage } from "./components/SettingsPage";
+import { FeaturedRepositoriesPage } from "./components/FeaturedRepositoriesPage";
 import { Sidebar } from "./components/Sidebar";
 import { WindowControls } from "./components/WindowControls";
 import { UpdateBadge } from "./components/UpdateBadge";
@@ -14,7 +15,13 @@ import { api } from "./lib/api";
 
 const reactQueryClient = new QueryClient();
 
-type TabType = "overview" | "installed" | "marketplace" | "repositories" | "settings";
+type TabType =
+  | "overview"
+  | "installed"
+  | "marketplace"
+  | "featuredRepositories"
+  | "repositories"
+  | "settings";
 
 function AppContent() {
   const queryClient = useQueryClient();
@@ -104,6 +111,15 @@ function AppContent() {
           {currentTab === "marketplace" && (
             <div className="h-full overflow-hidden">
               <MarketplacePage onNavigateToRepositories={() => setCurrentTab("repositories")} />
+            </div>
+          )}
+          {currentTab === "featuredRepositories" && (
+            <div className="h-full overflow-y-auto">
+              <div className="p-8" style={{ animation: "fadeIn 0.4s ease-out" }}>
+                <div className="max-w-6xl mx-auto">
+                  <FeaturedRepositoriesPage />
+                </div>
+              </div>
             </div>
           )}
           {currentTab === "repositories" && (

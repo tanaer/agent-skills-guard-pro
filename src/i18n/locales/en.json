@@ -7,6 +7,7 @@
     "overview": "OVERVIEW",
     "installed": "INSTALLED",
     "marketplace": "MARKETPLACE",
+    "featuredRepositories": "FEATURED_REPOS",
     "repositories": "REPO_CONFIG",
     "settings": "SETTINGS"
   },
@@ -329,7 +330,7 @@
       "Safe": "SAFE"
     },
     "issues": {
-      "showing": "SHOWING {{count}} SKILLS",
+      "showing": " {{count}} SKILLS",
       "found": "{{count}} ISSUES_FOUND: {{breakdown}}",
       "clearFilters": "CLEAR_FILTERS",
       "viewDetails": "VIEW_DETAILS",

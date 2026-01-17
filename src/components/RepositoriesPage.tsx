@@ -5,20 +5,10 @@ import {
   useDeleteRepository,
   useScanRepository,
 } from "../hooks/useRepositories";
-import {
-  Search,
-  Plus,
-  Trash2,
-  GitBranch,
-  Loader2,
-  Database,
-  X,
-  RefreshCw,
-} from "lucide-react";
+import { Search, Plus, Trash2, GitBranch, Loader2, Database, X, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import { FeaturedRepositories } from "./FeaturedRepositories";
 import { appToast } from "../lib/toast";
 
 function formatBytes(bytes: number): string {
@@ -161,9 +151,7 @@ export function RepositoriesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-headline text-foreground">
-            {t("repositories.title")}
-          </h1>
+          <h1 className="text-headline text-foreground">{t("repositories.title")}</h1>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
@@ -189,9 +177,7 @@ export function RepositoriesPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-blue-500" />
-              <h3 className="font-semibold text-sm">
-                {t("repositories.cache.stats")}
-              </h3>
+              <h3 className="font-semibold text-sm">{t("repositories.cache.stats")}</h3>
             </div>
 
             {cacheStats.cachedRepositories > 0 && (
@@ -246,16 +232,6 @@ export function RepositoriesPage() {
         </div>
       )}
 
-      {/* Featured Repositories */}
-      <FeaturedRepositories
-        onAdd={(url, name) => {
-          setNewRepoUrl(url);
-          setNewRepoName(name);
-          setShowAddForm(true);
-        }}
-        isAdding={addMutation.isPending}
-      />
-
       {/* Add Repository Form */}
       {showAddForm && (
         <div ref={addFormRef} className="apple-card p-6">
@@ -263,9 +239,7 @@ export function RepositoriesPage() {
             <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center">
               <GitBranch className="w-4 h-4 text-white" />
             </div>
-            <h3 className="font-semibold">
-              {t("repositories.newRepository")}
-            </h3>
+            <h3 className="font-semibold">{t("repositories.newRepository")}</h3>
           </div>
 
           <div className="space-y-5">
@@ -281,9 +255,7 @@ export function RepositoriesPage() {
                 className="apple-input w-full"
                 ref={urlInputRef}
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                {t("repositories.urlHint")}
-              </p>
+              <p className="text-xs text-muted-foreground mt-2">{t("repositories.urlHint")}</p>
             </div>
 
             <div>
@@ -297,9 +269,7 @@ export function RepositoriesPage() {
                 placeholder="owner"
                 className="apple-input w-full"
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                {t("repositories.nameHint")}
-              </p>
+              <p className="text-xs text-muted-foreground mt-2">{t("repositories.nameHint")}</p>
             </div>
           </div>
 
@@ -340,9 +310,7 @@ export function RepositoriesPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-          <p className="text-sm text-muted-foreground">
-            {t("repositories.loading")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("repositories.loading")}</p>
         </div>
       ) : repositories && repositories.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -353,9 +321,7 @@ export function RepositoriesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 mb-2">
                       <GitBranch className="w-4 h-4 text-blue-500" />
-                      <h3 className="font-semibold text-foreground">
-                        {repo.name}
-                      </h3>
+                      <h3 className="font-semibold text-foreground">{repo.name}</h3>
                     </div>
 
                     <div className="text-sm text-muted-foreground mb-2 pl-6">
@@ -465,7 +431,9 @@ export function RepositoriesPage() {
                 <div className="flex flex-wrap items-center gap-4 pl-6 text-xs">
                   {repo.last_scanned && (
                     <div className="text-muted-foreground">
-                      <span className="text-blue-500 font-medium">{t("repositories.lastScan")}</span>{" "}
+                      <span className="text-blue-500 font-medium">
+                        {t("repositories.lastScan")}
+                      </span>{" "}
                       {new Date(repo.last_scanned).toLocaleString("zh-CN", {
                         year: "numeric",
                         month: "2-digit",
@@ -498,12 +466,8 @@ export function RepositoriesPage() {
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mx-auto mb-5">
             <Database className="w-10 h-10 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground mb-2">
-            {t("repositories.noReposFound")}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {t("repositories.clickAddRepo")}
-          </p>
+          <p className="text-sm text-muted-foreground mb-2">{t("repositories.noReposFound")}</p>
+          <p className="text-xs text-muted-foreground">{t("repositories.clickAddRepo")}</p>
         </div>
       )}
     </div>

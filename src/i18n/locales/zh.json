@@ -7,6 +7,7 @@
     "overview": "系统概览",
     "installed": "我的技能",
     "marketplace": "技能市场",
+    "featuredRepositories": "精选仓库",
     "repositories": "仓库配置",
     "settings": "应用设置"
   },
@@ -223,7 +224,7 @@
       "title": "精选仓库",
       "add": "添加",
       "added": "已添加",
-      "refresh": "刷新",
+      "refresh": "刷新推荐",
       "refreshing": "刷新中",
       "refreshed": "精选仓库已更新",
       "refreshFailed": "刷新失败: {{error}}"
@@ -329,7 +330,7 @@
       "Safe": "安全"
     },
     "issues": {
-      "showing": "显示 {{count}} 个技能",
+      "showing": " {{count}} 个技能",
       "found": "发现 {{count}} 个问题：{{breakdown}}",
       "clearFilters": "清除筛选",
       "viewDetails": "查看详情",
