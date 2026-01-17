@@ -323,6 +323,11 @@
       "low": "低风险",
       "safe": "安全"
     },
+    "riskFilters": {
+      "Severe": "严重风险",
+      "MidHigh": "中高风险",
+      "Safe": "安全"
+    },
     "issues": {
       "showing": "显示 {{count}} 个技能",
       "found": "发现 {{count}} 个问题：{{breakdown}}",
@@ -332,8 +337,11 @@
       "noIssues": "太棒了！所有技能都很安全",
       "skillSafe": "这个技能很安全",
       "noCriticalIssues": "太好了！没有严重风险的技能",
+      "noHighRiskIssues": "太好了！没有高风险的技能",
       "noMediumIssues": "很好！没有中风险的技能",
-      "noSafeSkills": "暂无安全的技能",
+      "noSevereIssues": "太好了！没有严重风险的技能",
+      "noMidHighIssues": "很好！没有中高风险的技能",
+      "noSafeSkills": "暂无安全或低风险的技能",
       "lastScanned": "最近扫描：{{time}}",
       "openDirectory": "打开目录",
       "uninstall": "卸载",

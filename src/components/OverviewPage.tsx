@@ -87,11 +87,11 @@ export function OverviewPage() {
   );
 
   const issuesByLevel = useMemo(() => {
-    const result: Record<string, number> = { Critical: 0, Medium: 0, Safe: 0 };
+    const result: Record<string, number> = { Severe: 0, MidHigh: 0, Safe: 0 };
     scanResults.forEach((r) => {
-      if (r.level === "Critical" || r.level === "High") result.Critical++;
-      else if (r.level === "Medium" || r.level === "Low") result.Medium++;
-      else if (r.level === "Safe") result.Safe++;
+      if (r.level === "Critical") result.Severe++;
+      else if (r.level === "High" || r.level === "Medium") result.MidHigh++;
+      else if (r.level === "Safe" || r.level === "Low") result.Safe++;
     });
     return result;
   }, [scanResults]);
@@ -102,15 +102,17 @@ export function OverviewPage() {
   }, [scanResults]);
 
   const issueCount = useMemo(() => {
-    return scanResults.filter((r) => r.level !== "Safe").length;
+    return scanResults.filter((r) => r.level !== "Safe" && r.level !== "Low").length;
   }, [scanResults]);
 
   const filteredIssues = useMemo(() => {
     return scanResults
       .filter((result) => {
-        if (!filterLevel && result.level === "Safe") return false;
-        if (filterLevel && result.level !== filterLevel) return false;
-        return true;
+        if (!filterLevel) return result.level !== "Safe" && result.level !== "Low";
+        if (filterLevel === "Severe") return result.level === "Critical";
+        if (filterLevel === "MidHigh") return result.level === "Medium" || result.level === "High";
+        if (filterLevel === "Safe") return result.level === "Safe" || result.level === "Low";
+        return false;
       })
       .sort((a, b) => {
         const levelOrder = { Critical: 0, High: 1, Medium: 2, Low: 3, Safe: 4 };
@@ -217,10 +219,10 @@ export function OverviewPage() {
                     )}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {filterLevel === "Critical"
-                      ? t("overview.issues.noCriticalIssues")
-                      : filterLevel === "Medium"
-                        ? t("overview.issues.noMediumIssues")
+                    {filterLevel === "Severe"
+                      ? t("overview.issues.noSevereIssues")
+                      : filterLevel === "MidHigh"
+                        ? t("overview.issues.noMidHighIssues")
                         : filterLevel === "Safe"
                           ? t("overview.issues.noSafeSkills")
                           : t("overview.issues.noIssues")}

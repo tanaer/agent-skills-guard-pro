@@ -323,6 +323,11 @@
       "low": "LOW_RISK",
       "safe": "SAFE"
     },
+    "riskFilters": {
+      "Severe": "SEVERE_RISK",
+      "MidHigh": "MID_HIGH_RISK",
+      "Safe": "SAFE"
+    },
     "issues": {
       "showing": "SHOWING {{count}} SKILLS",
       "found": "{{count}} ISSUES_FOUND: {{breakdown}}",
@@ -332,8 +337,11 @@
       "noIssues": "EXCELLENT! ALL_SKILLS_ARE_SAFE",
       "skillSafe": "This skill is safe",
       "noCriticalIssues": "Great! No critical risk skills",
+      "noHighRiskIssues": "Great! No high risk skills",
       "noMediumIssues": "Good! No medium risk skills",
-      "noSafeSkills": "No safe skills found",
+      "noSevereIssues": "Great! No severe risk skills",
+      "noMidHighIssues": "Good! No mid-high risk skills",
+      "noSafeSkills": "No safe or low-risk skills found",
       "lastScanned": "LAST_SCANNED: {{time}}",
       "openDirectory": "OPEN_DIR",
       "uninstall": "UNINSTALL",

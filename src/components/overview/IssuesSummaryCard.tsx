@@ -8,14 +8,14 @@ interface IssuesSummaryCardProps {
 }
 
 const levelConfig = {
-  Critical: {
+  Severe: {
     icon: AlertTriangle,
     iconBg: "bg-red-500",
     textColor: "text-red-600",
     selectedBg: "bg-red-50",
     selectedRing: "ring-red-200",
   },
-  Medium: {
+  MidHigh: {
     icon: AlertCircle,
     iconBg: "bg-orange-500",
     textColor: "text-orange-600",
@@ -62,7 +62,7 @@ export function IssuesSummaryCard({
               {count}
             </div>
             <div className="text-xs text-muted-foreground mt-1 font-medium">
-              {t(`overview.riskLevels.${level.toLowerCase()}`)}
+              {t(`overview.riskFilters.${level}`)}
             </div>
           </button>
         );
