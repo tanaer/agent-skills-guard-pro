@@ -205,15 +205,15 @@ export function OverviewPage() {
               </button>
             )}
           </div>
-          <div className="max-h-[500px] overflow-y-auto">
+          <div className="max-h-[360px] lg:max-h-[420px] overflow-y-auto">
             {filteredIssues.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+              <div className="text-center py-10">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
                     {filterLevel === "Safe" ? (
-                      <Shield className="w-8 h-8 text-green-600" />
+                      <Shield className="w-6 h-6 text-green-600" />
                     ) : (
-                      <CheckCircle className="w-8 h-8 text-green-600" />
+                      <CheckCircle className="w-6 h-6 text-green-600" />
                     )}
                   </div>
                   <div className="text-sm text-muted-foreground">
