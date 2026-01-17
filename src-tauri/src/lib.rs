@@ -21,6 +21,21 @@ const MENU_SHOW: &str = "show";
 const MENU_HIDE: &str = "hide";
 const MENU_QUIT: &str = "quit";
 
+#[cfg(target_os = "macos")]
+fn maybe_suppress_macos_os_activity_logs() {
+    // macOS 在某些场景会输出类似：
+    // CoreText note: Client requested name ".SFNS-..."
+    // 这类日志通常来自系统/依赖层（如 WebKit），对应用功能无影响，但会污染开发期控制台输出。
+    //
+    // 默认：在 macOS 下抑制（避免影响用户/开发者体验）。
+    // 如需强制开启（不抑制），可显式设置 OS_ACTIVITY_MODE（例如：`OS_ACTIVITY_MODE=default`）。
+    if std::env::var_os("OS_ACTIVITY_MODE").is_some() {
+        return;
+    }
+
+    std::env::set_var("OS_ACTIVITY_MODE", "disable");
+}
+
 /// 获取托盘菜单文本（中英文双语）
 ///
 /// 返回值：(显示窗口文本, 隐藏窗口文本, 退出文本)
@@ -115,6 +130,9 @@ fn handle_tray_event(tray: &tauri::tray::TrayIcon<tauri::Wry>, event: tauri::tra
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "macos")]
+    maybe_suppress_macos_os_activity_logs();
+
     // 初始化日志
     env_logger::init();
 
