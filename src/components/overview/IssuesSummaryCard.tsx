@@ -39,7 +39,7 @@ export function IssuesSummaryCard({
   const { t } = useTranslation();
 
   return (
-    <div className="grid h-full grid-cols-3 gap-4">
+    <div className="grid grid-cols-3 gap-4">
       {Object.entries(levelConfig).map(([level, config]) => {
         const Icon = config.icon;
         const count = issuesByLevel[level] || 0;

@@ -38,7 +38,7 @@ export function ScanStatusCard({
   const status = getStatusInfo();
 
   return (
-    <div className="apple-card p-6 h-full">
+    <div className="apple-card p-6">
       <div className="space-y-5">
         {/* 顶部信息区 */}
         <div className="flex items-center justify-between">
