@@ -6,7 +6,7 @@
 
 ### Making Claude Code Skills Management as Simple and Secure as an App Store
 
-[![Version](https://img.shields.io/badge/version-0.9.6-blue.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[![Version](https://img.shields.io/badge/version-0.9.7-blue.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
 
@@ -68,12 +68,13 @@ Built-in manually curated quality skills repository, automatically syncs updates
 
 ### 🎨 Modern Visual Management
 
-Say goodbye to command lines and enjoy the intuitive cyberpunk-style interface.
+Say goodbye to command lines and enjoy the intuitive Apple minimalist interface.
 
-- 🎨 **Cyberpunk theme**: Unique terminal style design
+- 🎨 **Apple minimalist theme**: Clean macOS style design
+- 📱 **Sidebar navigation**: Intuitive navigation experience
 - ⚡ **Smooth animations**: Carefully polished interaction experience
 - 🌐 **Bilingual interface**: Complete Chinese and English interface support
-- 📱 **Responsive layout**: Perfect adaptation to various screen sizes
+- 📐 **Responsive layout**: Perfect adaptation to various screen sizes
 
 ---
 

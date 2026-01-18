@@ -6,7 +6,7 @@
 
 ### 让 Claude Code 技能管理像应用商店一样简单安全
 
-[![Version](https://img.shields.io/badge/version-0.9.6-blue.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[![Version](https://img.shields.io/badge/version-0.9.7-blue.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
 
@@ -68,12 +68,13 @@
 
 ### 🎨 现代化可视化管理
 
-告别命令行，享受赛博朋克风格的直观界面。
+告别命令行，享受苹果简约风格的直观界面。
 
-- 🎨 **赛博朋克主题**：独特的终端风格设计
+- 🎨 **苹果简约主题**：清爽的 macOS 风格设计
+- 📱 **侧边栏导航**：直观的导航体验
 - ⚡ **流畅动画**：精心打磨的交互体验
 - 🌐 **中英双语**：完整的中英文界面支持
-- 📱 **响应式布局**：完美适配各种屏幕尺寸
+- 📐 **响应式布局**：完美适配各种屏幕尺寸
 
 ---
 
