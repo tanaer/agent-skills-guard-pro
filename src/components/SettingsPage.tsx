@@ -7,6 +7,135 @@ import { GroupCard, GroupCardItem } from "./ui/GroupCard";
 
 declare const __APP_VERSION__: string;
 
+type MarkdownBlock =
+  | { type: "heading"; level: number; text: string }
+  | { type: "orderedList"; items: string[] }
+  | { type: "unorderedList"; items: string[] }
+  | { type: "paragraph"; text: string };
+
+function parseSimpleMarkdown(markdown: string): MarkdownBlock[] {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const blocks: MarkdownBlock[] = [];
+  let pendingOrderedList: string[] = [];
+  let pendingUnorderedList: string[] = [];
+  let pendingParagraph: string[] = [];
+
+  const flushLists = () => {
+    if (pendingOrderedList.length > 0) {
+      blocks.push({ type: "orderedList", items: pendingOrderedList });
+      pendingOrderedList = [];
+    }
+    if (pendingUnorderedList.length > 0) {
+      blocks.push({ type: "unorderedList", items: pendingUnorderedList });
+      pendingUnorderedList = [];
+    }
+  };
+
+  const flushParagraph = () => {
+    if (pendingParagraph.length > 0) {
+      blocks.push({ type: "paragraph", text: pendingParagraph.join("\n") });
+      pendingParagraph = [];
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      flushLists();
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushLists();
+      blocks.push({
+        type: "heading",
+        level: headingMatch[1].length,
+        text: headingMatch[2],
+      });
+      continue;
+    }
+
+    const orderedMatch = trimmed.match(/^\d+\.\s+(.*)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      if (pendingUnorderedList.length > 0) {
+        flushLists();
+      }
+      pendingOrderedList.push(orderedMatch[1]);
+      continue;
+    }
+
+    const unorderedMatch = trimmed.match(/^[-*+]\s+(.*)$/);
+    if (unorderedMatch) {
+      flushParagraph();
+      if (pendingOrderedList.length > 0) {
+        flushLists();
+      }
+      pendingUnorderedList.push(unorderedMatch[1]);
+      continue;
+    }
+
+    if (pendingOrderedList.length > 0 || pendingUnorderedList.length > 0) {
+      flushLists();
+    }
+    pendingParagraph.push(trimmed);
+  }
+
+  flushParagraph();
+  flushLists();
+  return blocks;
+}
+
+function renderUpdateNotes(markdown: string) {
+  const blocks = parseSimpleMarkdown(markdown);
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, index) => {
+        if (block.type === "heading") {
+          const HeadingTag = block.level <= 2 ? "h3" : "h4";
+          return (
+            <HeadingTag
+              key={`heading-${index}`}
+              className="text-sm font-semibold text-foreground"
+            >
+              {block.text}
+            </HeadingTag>
+          );
+        }
+
+        if (block.type === "orderedList") {
+          return (
+            <ol key={`list-${index}`} className="list-decimal pl-5 space-y-1">
+              {block.items.map((item, itemIndex) => (
+                <li key={`item-${index}-${itemIndex}`}>{item}</li>
+              ))}
+            </ol>
+          );
+        }
+
+        if (block.type === "unorderedList") {
+          return (
+            <ul key={`list-${index}`} className="list-disc pl-5 space-y-1">
+              {block.items.map((item, itemIndex) => (
+                <li key={`item-${index}-${itemIndex}`}>{item}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <p key={`para-${index}`} className="whitespace-pre-line">
+            {block.text}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const updateContext = useUpdate();
@@ -198,7 +327,7 @@ export function SettingsPage() {
               </div>
               {updateContext.updateInfo.notes && (
                 <div className="text-sm text-muted-foreground max-h-40 overflow-y-auto p-3 bg-secondary/50 rounded-xl">
-                  {updateContext.updateInfo.notes}
+                  {renderUpdateNotes(updateContext.updateInfo.notes)}
                 </div>
               )}
             </div>
