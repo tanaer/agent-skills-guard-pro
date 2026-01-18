@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Info, Github, RefreshCw, ExternalLink, Package, Languages } from "lucide-react";
-import { useState } from "react";
+import { useEffect } from "react";
 import { appToast } from "@/lib/toast";
 import { useUpdate } from "../contexts/UpdateContext";
 import { GroupCard, GroupCardItem } from "./ui/GroupCard";
@@ -10,8 +10,13 @@ declare const __APP_VERSION__: string;
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const updateContext = useUpdate();
-  const [updateStatus, setUpdateStatus] = useState<"idle" | "downloading" | "installing">("idle");
   const currentLang = i18n.language;
+  const updatePhase = updateContext.updatePhase;
+  const isDownloading = updatePhase === "downloading";
+  const isInstalling = updatePhase === "installing" || updatePhase === "restarting";
+  const isRestartRequired = updatePhase === "restartRequired";
+  const isUpdating = isDownloading || isInstalling || isRestartRequired;
+  const downloadPercent = updateContext.updateProgress?.percent;
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang).catch((error) => {
@@ -42,24 +47,22 @@ export function SettingsPage() {
   const handleInstallUpdate = async () => {
     if (!updateContext.updateHandle) return;
 
-    setUpdateStatus("downloading");
     appToast.info(t("update.downloading"));
 
-    try {
-      await updateContext.updateHandle.downloadAndInstall((progress) => {
-        if (progress.event === "Started") {
-          setUpdateStatus("downloading");
-        } else if (progress.event === "Finished") {
-          setUpdateStatus("installing");
-          appToast.success(t("update.installing"));
-        }
-      });
-    } catch (error) {
-      console.error("Install update error:", error);
+    const ok = await updateContext.installUpdate();
+    if (!ok) {
       appToast.error(t("update.failed"));
-      setUpdateStatus("idle");
     }
   };
+
+  useEffect(() => {
+    if (updatePhase === "installing") {
+      appToast.success(t("update.installing"));
+    }
+    if (updatePhase === "restartRequired") {
+      appToast.success(t("update.restartRequired"));
+    }
+  }, [updatePhase, t]);
 
   return (
     <div className="space-y-8">
@@ -147,7 +150,7 @@ export function SettingsPage() {
               <span className="text-sm font-medium">{t("settings.appInfo.updates")}</span>
             </div>
             <div className="flex items-center gap-2">
-              {updateContext.hasUpdate && updateContext.updateHandle && updateStatus === "idle" && (
+              {updateContext.hasUpdate && updateContext.updateHandle && !isUpdating && (
                 <button
                   onClick={handleInstallUpdate}
                   disabled={updateContext.isChecking}
@@ -156,15 +159,21 @@ export function SettingsPage() {
                   {t("update.downloadAndInstall")}
                 </button>
               )}
-              {updateStatus === "downloading" && (
-                <span className="text-xs text-blue-500 font-medium">{t("update.downloading")}</span>
+              {isDownloading && (
+                <span className="text-xs text-blue-500 font-medium">
+                  {t("update.downloading")}
+                  {typeof downloadPercent === "number" && downloadPercent > 0 ? ` ${downloadPercent}%` : ""}
+                </span>
               )}
-              {updateStatus === "installing" && (
+              {isInstalling && (
                 <span className="text-xs text-blue-500 font-medium">{t("update.installing")}</span>
+              )}
+              {isRestartRequired && (
+                <span className="text-xs text-blue-500 font-medium">{t("update.restartRequired")}</span>
               )}
               <button
                 onClick={handleCheckUpdate}
-                disabled={updateContext.isChecking || updateStatus === "downloading" || updateStatus === "installing"}
+                disabled={updateContext.isChecking || isUpdating}
                 className="apple-button-secondary h-8 px-3 text-xs flex items-center gap-1.5"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${updateContext.isChecking ? "animate-spin" : ""}`} />

@@ -9,6 +9,7 @@ export type UpdaterPhase =
   | "available"
   | "downloading"
   | "installing"
+  | "restartRequired"
   | "restarting"
   | "upToDate"
   | "error";
@@ -84,6 +85,9 @@ export async function checkForUpdate(
     notes: update.body,
     date: update.date,
     async downloadAndInstall(onProgress) {
+      let total = 0;
+      let downloaded = 0;
+
       await update.downloadAndInstall((event) => {
         if (!onProgress) return;
 
@@ -92,10 +96,28 @@ export async function checkForUpdate(
         };
 
         if (event.event === "Started") {
-          mapped.total = event.data.contentLength ?? 0;
-          mapped.downloaded = 0;
+          total = event.data.contentLength ?? 0;
+          downloaded = 0;
+          mapped.total = total;
+          mapped.downloaded = downloaded;
         } else if (event.event === "Progress") {
-          mapped.downloaded = event.data.chunkLength ?? 0;
+          const chunkLength = event.data.chunkLength ?? 0;
+          const nextDownloaded = downloaded + chunkLength;
+
+          if (total > 0 && nextDownloaded > total) {
+            downloaded = Math.min(chunkLength, total);
+          } else {
+            downloaded = nextDownloaded;
+          }
+
+          if (total > 0 && downloaded > total) {
+            downloaded = total;
+          }
+          mapped.total = total;
+          mapped.downloaded = downloaded;
+        } else if (event.event === "Finished") {
+          mapped.total = total;
+          mapped.downloaded = downloaded;
         }
 
         onProgress(mapped);

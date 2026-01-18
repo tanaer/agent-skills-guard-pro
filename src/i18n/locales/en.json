@@ -361,6 +361,7 @@
     "downloadAndInstall": "Download & Install",
     "downloading": "Downloading...",
     "installing": "Installing...",
+    "restartRequired": "Update ready. Please restart the app",
     "failed": "Update failed, please try again later",
     "checkFailed": "Failed to check for updates"
   },

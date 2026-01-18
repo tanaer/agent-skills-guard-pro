@@ -10,7 +10,16 @@ import {
   checkForUpdate,
   type UpdateInfo,
   type UpdateHandle,
+  type UpdaterPhase,
+  relaunchApp,
 } from "../lib/updater";
+import { getPlatform } from "../lib/platform";
+
+type UpdateProgress = {
+  total: number;
+  downloaded: number;
+  percent: number;
+};
 
 interface UpdateContextValue {
   hasUpdate: boolean;
@@ -18,9 +27,12 @@ interface UpdateContextValue {
   updateHandle: UpdateHandle | null;
   isChecking: boolean;
   error: string | null;
+  updatePhase: UpdaterPhase;
+  updateProgress: UpdateProgress | null;
   isDismissed: boolean;
   dismissUpdate: () => void;
   checkUpdate: () => Promise<boolean>;
+  installUpdate: () => Promise<boolean>;
   resetDismiss: () => void;
 }
 
@@ -34,12 +46,28 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
   const [updateHandle, setUpdateHandle] = useState<UpdateHandle | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updatePhase, setUpdatePhase] = useState<UpdaterPhase>("idle");
+  const [updateProgress, setUpdateProgress] = useState<UpdateProgress | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
 
   const isCheckingRef = useRef(false);
+  const updatePhaseRef = useRef<UpdaterPhase>("idle");
+
+  const setUpdatePhaseSafe = useCallback((phase: UpdaterPhase) => {
+    updatePhaseRef.current = phase;
+    setUpdatePhase(phase);
+  }, []);
 
   const checkUpdate = useCallback(async (): Promise<boolean> => {
     if (isCheckingRef.current) return false;
+    if (
+      updatePhaseRef.current === "downloading" ||
+      updatePhaseRef.current === "installing" ||
+      updatePhaseRef.current === "restartRequired" ||
+      updatePhaseRef.current === "restarting"
+    ) {
+      return false;
+    }
 
     isCheckingRef.current = true;
     setIsChecking(true);
@@ -62,6 +90,8 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
         setUpdateInfo(null);
         setUpdateHandle(null);
         setIsDismissed(false);
+        setUpdatePhaseSafe("idle");
+        setUpdateProgress(null);
         return false;
       }
     } catch (err) {
@@ -81,6 +111,69 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
       setIsDismissed(true);
     }
   }, [updateInfo]);
+
+  const installUpdate = useCallback(async (): Promise<boolean> => {
+    if (
+      !updateHandle ||
+      updatePhase === "downloading" ||
+      updatePhase === "installing" ||
+      updatePhase === "restartRequired" ||
+      updatePhase === "restarting"
+    ) {
+      return false;
+    }
+
+    setError(null);
+      setUpdatePhaseSafe("downloading");
+      setUpdateProgress({ total: 0, downloaded: 0, percent: 0 });
+
+    try {
+      await updateHandle.downloadAndInstall((progress) => {
+        if (progress.event === "Started") {
+          const total = progress.total ?? 0;
+          setUpdateProgress({ total, downloaded: 0, percent: 0 });
+          setUpdatePhaseSafe("downloading");
+          return;
+        }
+
+        if (progress.event === "Progress") {
+          setUpdateProgress((prev) => {
+            const total = progress.total ?? prev?.total ?? 0;
+            const downloaded = progress.downloaded ?? prev?.downloaded ?? 0;
+            const percent = total > 0 ? Math.min(100, Math.round((downloaded / total) * 100)) : 0;
+            return { total, downloaded, percent };
+          });
+          return;
+        }
+
+        if (progress.event === "Finished") {
+          setUpdatePhaseSafe("installing");
+        }
+      });
+
+      setHasUpdate(false);
+      setUpdateInfo(null);
+      setUpdateHandle(null);
+      setIsDismissed(false);
+      setUpdateProgress(null);
+
+      const platform = await getPlatform();
+      if (platform === "windows") {
+        setUpdatePhaseSafe("restartRequired");
+        return true;
+      }
+
+      setUpdatePhaseSafe("restarting");
+      await relaunchApp();
+      return true;
+    } catch (err) {
+      console.error("[UpdateContext] Install update failed:", err);
+      setError(err instanceof Error ? err.message : String(err));
+      setUpdateProgress(null);
+      setUpdatePhaseSafe("idle");
+      return false;
+    }
+  }, [updateHandle, updatePhase]);
 
   const resetDismiss = useCallback(() => {
     localStorage.removeItem(DISMISSED_KEY_PREFIX);
@@ -102,9 +195,12 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
     updateHandle,
     isChecking,
     error,
+    updatePhase,
+    updateProgress,
     isDismissed,
     dismissUpdate,
     checkUpdate,
+    installUpdate,
     resetDismiss,
   };
 
