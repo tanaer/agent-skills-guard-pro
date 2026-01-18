@@ -11,7 +11,6 @@ use commands::security::{get_scan_results, scan_all_installed_skills, scan_skill
 use commands::AppState;
 use services::{Database, SkillManager};
 use std::sync::Arc;
-use tauri::image::Image;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder};
 use tauri::Manager;
@@ -23,7 +22,7 @@ const MENU_HIDE: &str = "hide";
 const MENU_QUIT: &str = "quit";
 
 #[cfg(target_os = "macos")]
-const MACOS_TRAY_TEMPLATE_ICON: Image<'static> =
+const MACOS_TRAY_TEMPLATE_ICON: tauri::image::Image<'static> =
     tauri::include_image!("icons/tray-icon-template.png");
 
 #[cfg(target_os = "macos")]
@@ -180,12 +179,18 @@ pub fn run() {
             });
 
             // 初始化系统托盘
-            let icon = if cfg!(target_os = "macos") {
-                MACOS_TRAY_TEMPLATE_ICON.clone()
-            } else {
-                app.default_window_icon()
-                    .ok_or("无法获取默认窗口图标")?
-                    .clone()
+            let icon = {
+                #[cfg(target_os = "macos")]
+                {
+                    MACOS_TRAY_TEMPLATE_ICON.clone()
+                }
+
+                #[cfg(not(target_os = "macos"))]
+                {
+                    app.default_window_icon()
+                        .ok_or("无法获取默认窗口图标")?
+                        .clone()
+                }
             };
 
             let app_handle = app.handle();
