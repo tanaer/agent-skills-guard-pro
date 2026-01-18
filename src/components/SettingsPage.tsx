@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Info, Github, RefreshCw, ExternalLink, Package, Languages } from "lucide-react";
+import { Info, Github, RefreshCw, ExternalLink, Hash, Languages } from "lucide-react";
 import { useEffect } from "react";
 import { appToast } from "@/lib/toast";
 import { useUpdate } from "../contexts/UpdateContext";
@@ -201,7 +201,10 @@ export function SettingsPage() {
       </div>
 
       {/* 语言设置 */}
-      <GroupCard title={t("settings.language.title")}>
+      <GroupCard>
+        <GroupCardItem className="py-3">
+          <div className="apple-section-title mb-0">{t("settings.language.title")}</div>
+        </GroupCardItem>
         <GroupCardItem noBorder>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -237,12 +240,15 @@ export function SettingsPage() {
       </GroupCard>
 
       {/* 应用信息 */}
-      <GroupCard title={t("settings.appInfo.title")}>
+      <GroupCard>
+        <GroupCardItem className="py-3">
+          <div className="apple-section-title mb-0">{t("settings.appInfo.title")}</div>
+        </GroupCardItem>
         <GroupCardItem>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                <Package className="w-4 h-4 text-white" />
+                <Hash className="w-4 h-4 text-white" />
               </div>
               <span className="text-sm font-medium">{t("settings.appInfo.version")}</span>
             </div>

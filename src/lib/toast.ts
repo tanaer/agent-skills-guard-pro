@@ -12,40 +12,27 @@ type BannerTone = "info" | "success" | "error";
 type AppToastBannerOptions = {
   duration?: number;
   tone?: BannerTone;
-  position?: Extract<ToastPosition, "bottom-center" | "top-center">;
+  position?: Extract<ToastPosition, "bottom-center" | "top-center" | "top-right">;
 };
 
 const DEFAULT_DURATION_MS = 3000;
 
 const defaultCornerOptions: Pick<ExternalToast, "duration" | "position"> = {
   duration: DEFAULT_DURATION_MS,
-  position: "bottom-right",
+  position: "top-right",
 };
 
-const toneClasses: Record<BannerTone, { container: string; arrow: string; boxShadow: string }> =
-  {
-    info: {
-      container:
-        "bg-primary/10 border-primary text-primary shadow-lg",
-      arrow: "text-primary",
-      boxShadow:
-        "0 4px 20px rgba(0, 122, 255, 0.15)",
-    },
-    success: {
-      container:
-        "bg-success/10 border-success text-success shadow-lg",
-      arrow: "text-success",
-      boxShadow:
-        "0 4px 20px rgba(52, 199, 89, 0.15)",
-    },
-    error: {
-      container:
-        "bg-destructive/10 border-destructive text-destructive shadow-lg",
-      arrow: "text-destructive",
-      boxShadow:
-        "0 4px 20px rgba(255, 59, 48, 0.15)",
-    },
-  };
+const bannerBaseClasses = [
+  "w-[min(100vw-2rem,24rem)] px-5 py-4 text-sm text-left",
+  "rounded-2xl border border-border/70 bg-card/70 text-foreground",
+  "shadow-[0_6px_16px_rgba(0,0,0,0.12)] backdrop-blur-md",
+].join(" ");
+
+const toneClasses: Record<BannerTone, { icon: string }> = {
+  info: { icon: "text-primary" },
+  success: { icon: "text-success" },
+  error: { icon: "text-destructive" },
+};
 
 export const appToast = {
   message(message: React.ReactNode, options?: AppToastOptions) {
@@ -68,7 +55,7 @@ export const appToast = {
   },
   banner(message: React.ReactNode, options?: AppToastBannerOptions) {
     const duration = options?.duration ?? DEFAULT_DURATION_MS;
-    const position = options?.position ?? "bottom-center";
+    const position = options?.position ?? "top-right";
     const tone: BannerTone = options?.tone ?? "info";
 
     return toast.custom(
@@ -78,19 +65,14 @@ export const appToast = {
           {
             type: "button",
             onClick: () => toast.dismiss(id),
-            className: [
-              "w-[min(100vw-2rem,80rem)] px-8 py-5 border-t-2 backdrop-blur-md text-base text-left",
-              "rounded-lg",
-              toneClasses[tone].container,
-            ].join(" "),
-            style: { boxShadow: toneClasses[tone].boxShadow },
+            className: bannerBaseClasses,
           },
           React.createElement(
             "div",
             { className: "flex items-center" },
             React.createElement(
               "span",
-              { className: `${toneClasses[tone].arrow} mr-3 text-lg` },
+              { className: `${toneClasses[tone].icon} mr-3 text-base` },
               "›"
             ),
             React.createElement("span", { className: "tracking-wide" }, message)

@@ -184,17 +184,20 @@ function App() {
     <QueryClientProvider client={reactQueryClient}>
       <AppContent />
       <Toaster
-        position="bottom-right"
+        position="top-right"
+        offset={{ top: 64, right: 16 }}
+        mobileOffset={{ top: 12, right: 12 }}
         toastOptions={{
           duration: 3000,
           style: { fontFamily: "inherit", fontSize: "14px" },
           classNames: {
-            toast: "!rounded-lg !border !shadow-lg",
-            default: "!bg-card !border-border !text-foreground",
-            success: "!bg-green-50 !border-green-200 !text-green-800",
-            info: "!bg-blue-50 !border-blue-200 !text-blue-800",
-            warning: "!bg-orange-50 !border-orange-200 !text-orange-800",
-            error: "!bg-red-50 !border-red-200 !text-red-800",
+            toast:
+              "!rounded-2xl !border !border-border/70 !bg-card/70 !shadow-[0_6px_16px_rgba(0,0,0,0.12)] !backdrop-blur-md",
+            default: "!text-foreground",
+            success: "!text-success",
+            info: "!text-primary",
+            warning: "!text-warning",
+            error: "!text-destructive",
           },
         }}
       />
