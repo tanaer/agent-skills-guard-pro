@@ -12,6 +12,7 @@ import { UpdateBadge } from "./components/UpdateBadge";
 import { Toaster } from "sonner";
 import { getPlatform, type Platform } from "./lib/platform";
 import { api } from "./lib/api";
+import appIconUrl from "../app-icon.png";
 
 const reactQueryClient = new QueryClient();
 
@@ -90,6 +91,21 @@ function AppContent() {
         {platform === "macos" && (
           <div className="w-[70px]">
             <WindowControls />
+          </div>
+        )}
+
+        {/* Windows: 左侧应用图标 + 标题 */}
+        {platform === "windows" && (
+          <div className="flex items-center gap-2 select-none">
+            <img
+              src={appIconUrl}
+              alt=""
+              className="w-5 h-5"
+              draggable={false}
+            />
+            <div className="text-[13px] font-medium text-foreground/80">
+              Agent Skills Guard
+            </div>
           </div>
         )}
 
