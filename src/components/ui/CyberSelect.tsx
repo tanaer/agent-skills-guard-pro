@@ -23,6 +23,7 @@ export function CyberSelect({
 }: CyberSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -36,6 +37,27 @@ export function CyberSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const listNode = listRef.current;
+    if (!listNode) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      event.stopPropagation();
+      const { scrollTop, scrollHeight, clientHeight } = listNode;
+      const deltaY = event.deltaY;
+      const atTop = scrollTop <= 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+      if ((deltaY < 0 && atTop) || (deltaY > 0 && atBottom)) {
+        event.preventDefault();
+      }
+    };
+
+    listNode.addEventListener("wheel", handleWheel, { passive: false });
+    return () => listNode.removeEventListener("wheel", handleWheel);
+  }, [isOpen]);
 
   return (
     <div ref={selectRef} className={`relative ${className}`}>
@@ -56,7 +78,10 @@ export function CyberSelect({
 
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-          <div className="max-h-60 overflow-y-auto py-1">
+          <div
+            ref={listRef}
+            className="max-h-60 overflow-y-auto overscroll-contain py-1"
+          >
             {options.map((option) => (
               <button
                 key={option.value}
