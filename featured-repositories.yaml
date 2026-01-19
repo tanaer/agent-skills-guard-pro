@@ -144,3 +144,11 @@ categories:
           zh: "基于 Gemini API 的图像生成技能，支持参考图像和多种宽高比"
         tags: ["community", "image-generation", "gemini", "ai-art"]
         featured: true
+
+      - url: "https://github.com/op7418/Humanizer-zh"
+        name: "op7418"
+        description:
+          en: "Chinese version of Humanizer - a Claude Code skill that removes AI-generated traces from text, making it sound more natural and human-written. Detects and fixes 24 AI writing patterns across content, language, style, and communication categories."
+          zh: "来自歸藏的 Humanizer 中文版 - 用于去除文本中 AI 生成的痕迹，使文本更自然、更像人类书写。可检测并修复 24 种 AI 写作模式，涵盖内容、语言、风格和交流四大类别。"
+        tags: ["community", "writing", "text-processing", "chinese", "humanizer"]
+        featured: true
