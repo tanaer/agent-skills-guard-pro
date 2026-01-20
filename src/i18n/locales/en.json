@@ -158,6 +158,8 @@
       "translate": "TRANSLATE",
       "translationFailed": "TRANSLATION_FAILED",
       "translatedContent": "TRANSLATED",
+      "showOriginal": "SHOW_ORIGINAL",
+      "showTranslated": "SHOW_TRANSLATED",
       "apiKeyMissing": "TRANSLATION_REQUIRES_API_KEY",
       "configureApiKey": "CONFIGURE_API_KEY"
     },

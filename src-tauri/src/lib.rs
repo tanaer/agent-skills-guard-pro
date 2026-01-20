@@ -268,6 +268,7 @@ pub fn run() {
             scan_all_installed_skills,
             get_scan_results,
             scan_skill_archive,
+            commands::translate_text,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

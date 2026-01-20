@@ -141,8 +141,8 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
     return filtered;
   }, [repositorySkills, searchQuery, selectedRepository, hideInstalled]);
 
-  // Manual translation hook
-  const { translateSkill, getTranslatedSkill, translatingSkillIds } = useSkillTranslation();
+  // Manual translation hook with toggle support
+  const { translateSkill, toggleTranslation, getTranslatedSkill, translatingSkillIds } = useSkillTranslation();
 
   return (
     <div className="flex flex-col h-full">
@@ -220,6 +220,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
                     key={skill.id}
                     skill={translatedSkill}
                     onTranslate={() => translateSkill(skill.id, skill)}
+                    onToggleTranslation={() => toggleTranslation(skill.id)}
                     isTranslatingSkill={translatingSkillIds.has(skill.id)}
                     onInstall={async () => {
                       try {
@@ -396,6 +397,7 @@ interface SkillCardProps {
   onUninstallPath: (path: string) => void;
   onDelete: () => void;
   onTranslate: () => void;
+  onToggleTranslation: () => void;
   isInstalling: boolean;
   isUninstalling: boolean;
   isDeleting: boolean;
@@ -411,6 +413,7 @@ function SkillCard({
   onUninstall,
   onUninstallPath,
   onTranslate,
+  onToggleTranslation,
   isInstalling,
   isUninstalling,
   isPreparing,
@@ -437,9 +440,10 @@ function SkillCard({
     return () => observer.disconnect();
   }, [skill.description]);
 
-  // Use translated content if available
-  const displayName = skill.translatedName || skill.name;
-  const displayDescription = skill.translatedDescription || skill.description;
+  // Use translated content if showing translation, otherwise original
+  const showTranslated = skill.isTranslated && skill.showingTranslation;
+  const displayName = showTranslated ? (skill.translatedName || skill.name) : skill.name;
+  const displayDescription = showTranslated ? (skill.translatedDescription || skill.description) : skill.description;
 
   return (
     <div className="apple-card p-5 flex flex-col">
@@ -448,22 +452,30 @@ function SkillCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h3 className="font-medium text-foreground">{displayName}</h3>
-            {/* Translate Button */}
+            {/* Translate/Toggle Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (!skill.isTranslated && !isTranslatingSkill) {
+                if (skill.isTranslated) {
+                  // Toggle between original and translated
+                  onToggleTranslation();
+                } else if (!isTranslatingSkill) {
+                  // Start translation
                   onTranslate();
                 }
               }}
               disabled={isTranslatingSkill}
-              className={`text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-colors ${skill.isTranslated
-                  ? "bg-purple-500/10 text-purple-600 cursor-default"
-                  : isTranslatingSkill
-                    ? "bg-purple-500/10 text-purple-400"
-                    : "bg-secondary hover:bg-purple-500/10 text-muted-foreground hover:text-purple-600"
+              className={`text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-colors cursor-pointer ${skill.isTranslated
+                ? skill.showingTranslation
+                  ? "bg-purple-500/20 text-purple-600 hover:bg-purple-500/30"
+                  : "bg-secondary text-muted-foreground hover:bg-purple-500/10 hover:text-purple-600"
+                : isTranslatingSkill
+                  ? "bg-purple-500/10 text-purple-400"
+                  : "bg-secondary hover:bg-purple-500/10 text-muted-foreground hover:text-purple-600"
                 }`}
-              title={skill.isTranslated ? skill.name : t("skills.translation.translate")}
+              title={skill.isTranslated
+                ? (skill.showingTranslation ? t("skills.translation.showOriginal") : t("skills.translation.showTranslated"))
+                : t("skills.translation.translate")}
             >
               {isTranslatingSkill ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

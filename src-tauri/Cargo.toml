@@ -75,6 +75,9 @@ tauri-plugin-os = "2.0"
 # 国际化
 rust-i18n = "3"
 
+# URL 编码
+urlencoding = "2.1"
+
 
 [features]
 default = ["custom-protocol"]

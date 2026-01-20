@@ -1,13 +1,13 @@
 /**
  * Translation service for skill marketplace content
- * Uses Google Translate free public endpoint with local caching
- * No API key required - uses client: 'gtx' endpoint
+ * Uses Tauri backend to call Google Translate (bypasses browser network restrictions)
+ * Includes local caching to avoid redundant API calls
  */
+
+import { invoke } from '@tauri-apps/api/core';
 
 const TRANSLATION_CACHE_KEY = 'skillTranslationCache';
 const CACHE_EXPIRY_DAYS = 30;
-// Free Google Translate endpoint - no API key required
-const GOOGLE_TRANSLATE_FREE_URL = 'https://translate.googleapis.com/translate_a/single';
 
 interface TranslationCacheEntry {
     text: string;
@@ -71,7 +71,7 @@ function saveCache(cache: TranslationCache): void {
 /**
  * Get cached translation if available
  */
-function getCachedTranslation(text: string, targetLang: string): string | null {
+export function getCachedTranslation(text: string, targetLang: string): string | null {
     const cache = getCache();
     const cacheKey = `${targetLang}:${hashText(text)}`;
     const entry = cache[cacheKey];
@@ -98,31 +98,7 @@ function cacheTranslation(originalText: string, translatedText: string, targetLa
 }
 
 /**
- * Parse Google Translate free API response
- * Response format: [[["translated text","original text",null,null,10]],null,"en",...]
- */
-function parseGoogleTranslateResponse(response: unknown): string | null {
-    try {
-        if (!Array.isArray(response) || !Array.isArray(response[0])) {
-            return null;
-        }
-
-        let translatedText = '';
-        for (const item of response[0]) {
-            if (Array.isArray(item) && typeof item[0] === 'string') {
-                translatedText += item[0];
-            }
-        }
-
-        return translatedText || null;
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Translate a single text string using free Google Translate endpoint
- * No API key required
+ * Translate text using Tauri backend (bypasses browser network restrictions)
  * @param text - Text to translate
  * @param targetLang - Target language code (e.g., 'zh-CN')
  * @param sourceLang - Source language code (default: 'auto')
@@ -143,78 +119,21 @@ export async function translateText(
     }
 
     try {
-        const params = new URLSearchParams({
-            client: 'gtx',
-            sl: sourceLang,
-            tl: targetLang,
-            dt: 't',
-            q: text,
+        // Use Tauri backend to make the translation request
+        const translated = await invoke<string>('translate_text', {
+            text,
+            targetLang,
+            sourceLang,
         });
 
-        const response = await fetch(`${GOOGLE_TRANSLATE_FREE_URL}?${params.toString()}`);
+        // Cache the result
+        cacheTranslation(text, translated, targetLang);
 
-        if (!response.ok) {
-            throw new Error(`Translation API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const translatedText = parseGoogleTranslateResponse(data);
-
-        if (translatedText) {
-            cacheTranslation(text, translatedText, targetLang);
-            return translatedText;
-        }
-
-        return text;
+        return translated;
     } catch (error) {
         console.error('Translation failed:', error);
-        return text;
+        throw error;
     }
-}
-
-/**
- * Translate multiple texts in batch (translates one by one for free API)
- * @param texts - Array of texts to translate
- * @param targetLang - Target language code
- * @param sourceLang - Source language code (default: 'auto')
- */
-export async function translateBatch(
-    texts: string[],
-    targetLang: string = 'zh-CN',
-    sourceLang: string = 'auto'
-): Promise<string[]> {
-    if (!texts.length) return [];
-
-    const results: string[] = new Array(texts.length);
-    const uncachedTexts: { index: number; text: string }[] = [];
-
-    // Check cache for each text
-    for (let i = 0; i < texts.length; i++) {
-        const text = texts[i];
-        if (!text || !text.trim()) {
-            results[i] = text;
-            continue;
-        }
-
-        const cached = getCachedTranslation(text, targetLang);
-        if (cached) {
-            results[i] = cached;
-        } else {
-            uncachedTexts.push({ index: i, text });
-        }
-    }
-
-    // Translate uncached texts one by one (free API doesn't support batch)
-    for (const { index, text } of uncachedTexts) {
-        try {
-            const translatedText = await translateText(text, targetLang, sourceLang);
-            results[index] = translatedText;
-        } catch {
-            results[index] = text;
-        }
-    }
-
-    return results;
 }
 
 /**

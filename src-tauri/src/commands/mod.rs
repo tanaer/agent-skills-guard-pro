@@ -821,3 +821,77 @@ pub async fn test_proxy(
         .map_err(|e| e.to_string())
 }
 
+/// 翻译文本（使用 Google Translate 免费接口）
+#[tauri::command]
+pub async fn translate_text(
+    text: String,
+    target_lang: String,
+    source_lang: Option<String>,
+) -> Result<String, String> {
+    use reqwest::header::USER_AGENT;
+
+    if text.trim().is_empty() {
+        return Ok(text);
+    }
+
+    let source = source_lang.unwrap_or_else(|| "auto".to_string());
+    
+    // Google Translate 免费公共接口
+    let url = format!(
+        "https://translate.googleapis.com/translate_a/single?client=gtx&sl={}&tl={}&dt=t&q={}",
+        source,
+        target_lang,
+        urlencoding::encode(&text)
+    );
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
+
+    let response = client
+        .get(&url)
+        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .send()
+        .await
+        .map_err(|e| format!("翻译请求失败: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("翻译 API 返回错误: {}", response.status()));
+    }
+
+    let body = response
+        .text()
+        .await
+        .map_err(|e| format!("读取翻译响应失败: {}", e))?;
+
+    // 解析 Google Translate 响应
+    // 格式: [[["translated text","original text",null,null,10]],null,"en",...]
+    let parsed: serde_json::Value = serde_json::from_str(&body)
+        .map_err(|e| format!("解析翻译响应失败: {}", e))?;
+
+    // 提取翻译文本
+    let mut translated = String::new();
+    if let Some(outer_array) = parsed.as_array() {
+        if let Some(first) = outer_array.first() {
+            if let Some(sentences) = first.as_array() {
+                for sentence in sentences {
+                    if let Some(arr) = sentence.as_array() {
+                        if let Some(text_val) = arr.first() {
+                            if let Some(text_str) = text_val.as_str() {
+                                translated.push_str(text_str);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if translated.is_empty() {
+        return Err("无法解析翻译结果".to_string());
+    }
+
+    log::debug!("翻译成功: {} -> {}", &text[..text.len().min(50)], &translated[..translated.len().min(50)]);
+    Ok(translated)
+}

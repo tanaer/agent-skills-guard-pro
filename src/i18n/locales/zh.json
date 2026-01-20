@@ -158,6 +158,8 @@
       "translate": "翻译",
       "translationFailed": "翻译失败",
       "translatedContent": "已翻译",
+      "showOriginal": "显示原文",
+      "showTranslated": "显示翻译",
       "apiKeyMissing": "翻译需要 API 密钥",
       "configureApiKey": "配置 API 密钥"
     },
