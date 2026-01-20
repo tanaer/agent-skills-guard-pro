@@ -77,6 +77,15 @@ impl Database {
             [],
         )?;
 
+        // 应用设置表（键值对格式）
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )",
+            [],
+        )?;
+
         // 释放锁以便调用迁移方法
         drop(conn);
 
@@ -533,5 +542,27 @@ impl Database {
         .collect::<std::result::Result<Vec<String>, _>>()?;
 
         Ok(repo_ids)
+    }
+
+    /// 获取应用设置
+    pub fn get_setting(&self, key: &str) -> Result<Option<String>> {
+        let conn = self.conn.lock().unwrap();
+        let result: Option<String> = conn.query_row(
+            "SELECT value FROM app_settings WHERE key = ?1",
+            params![key],
+            |row| row.get(0),
+        ).optional()?;
+
+        Ok(result)
+    }
+
+    /// 保存应用设置
+    pub fn set_setting(&self, key: &str, value: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?1, ?2)",
+            params![key, value],
+        )?;
+        Ok(())
     }
 }

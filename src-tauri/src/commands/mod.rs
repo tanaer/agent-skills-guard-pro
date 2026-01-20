@@ -1,7 +1,7 @@
 pub mod security;
 
 use crate::models::{Repository, Skill, FeaturedRepositoriesConfig};
-use crate::services::{Database, GitHubService, SkillManager};
+use crate::services::{Database, GitHubService, SkillManager, ProxyConfig, ProxyService};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::Manager;
@@ -773,3 +773,51 @@ pub async fn auto_scan_unscanned_repositories(
     log::info!("自动扫描完成，成功扫描 {} 个仓库", scanned_repos.len());
     Ok(scanned_repos)
 }
+
+const PROXY_CONFIG_KEY: &str = "proxy_config";
+
+/// 获取代理配置
+#[tauri::command]
+pub async fn get_proxy_config(
+    state: State<'_, AppState>,
+) -> Result<ProxyConfig, String> {
+    let config_json = state.db.get_setting(PROXY_CONFIG_KEY)
+        .map_err(|e| e.to_string())?;
+
+    match config_json {
+        Some(json) => {
+            serde_json::from_str(&json)
+                .map_err(|e| format!("解析代理配置失败: {}", e))
+        }
+        None => Ok(ProxyConfig::default())
+    }
+}
+
+/// 保存代理配置
+#[tauri::command]
+pub async fn save_proxy_config(
+    state: State<'_, AppState>,
+    config: ProxyConfig,
+) -> Result<(), String> {
+    let config_json = serde_json::to_string(&config)
+        .map_err(|e| format!("序列化代理配置失败: {}", e))?;
+
+    state.db.set_setting(PROXY_CONFIG_KEY, &config_json)
+        .map_err(|e| e.to_string())?;
+
+    log::info!("代理配置已保存: enabled={}, host={}, port={}",
+        config.enabled, config.host, config.port);
+
+    Ok(())
+}
+
+/// 测试代理连接
+#[tauri::command]
+pub async fn test_proxy(
+    config: ProxyConfig,
+) -> Result<(), String> {
+    ProxyService::test_proxy(&config)
+        .await
+        .map_err(|e| e.to_string())
+}
+

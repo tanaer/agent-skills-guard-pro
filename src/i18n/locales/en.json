@@ -153,6 +153,13 @@
       "confirm": "Confirm Install",
       "cancel": "Cancel"
     },
+    "translation": {
+      "translating": "TRANSLATING...",
+      "translationFailed": "TRANSLATION_FAILED",
+      "translatedContent": "TRANSLATED",
+      "apiKeyMissing": "TRANSLATION_REQUIRES_API_KEY",
+      "configureApiKey": "CONFIGURE_API_KEY"
+    },
     "toast": {
       "installed": "[SUCCESS] SKILL_INSTALLED",
       "installFailed": "[ERROR] INSTALL_FAILED",
@@ -380,6 +387,24 @@
     "preferences": {
       "title": "PREFERENCES",
       "comingSoon": "More settings coming soon..."
+    },
+    "proxy": {
+      "title": "NETWORK_PROXY",
+      "enabled": "Enable Proxy",
+      "host": "Server Address",
+      "port": "Port",
+      "username": "Username (Optional)",
+      "password": "Password (Optional)",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Proxy settings saved",
+      "saveFailed": "Save failed: {{error}}",
+      "test": "Test Proxy",
+      "testing": "Testing...",
+      "testSuccess": "Proxy is working",
+      "testFailed": "Proxy is not working: {{error}}",
+      "hostPlaceholder": "e.g., 127.0.0.1",
+      "portPlaceholder": "e.g., 1080"
     }
   }
 }

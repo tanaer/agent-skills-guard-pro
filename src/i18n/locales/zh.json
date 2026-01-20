@@ -153,6 +153,13 @@
       "confirm": "确认安装",
       "cancel": "取消"
     },
+    "translation": {
+      "translating": "翻译中...",
+      "translationFailed": "翻译失败",
+      "translatedContent": "已翻译",
+      "apiKeyMissing": "翻译需要 API 密钥",
+      "configureApiKey": "配置 API 密钥"
+    },
     "toast": {
       "installed": "[成功] 技能已安装",
       "installFailed": "[错误] 安装失败",
@@ -380,6 +387,24 @@
     "preferences": {
       "title": "偏好设置",
       "comingSoon": "更多设置项即将推出..."
+    },
+    "proxy": {
+      "title": "网络代理",
+      "enabled": "启用代理",
+      "host": "服务器地址",
+      "port": "端口",
+      "username": "用户名（可选）",
+      "password": "密码（可选）",
+      "save": "保存",
+      "saving": "保存中...",
+      "saved": "代理设置已保存",
+      "saveFailed": "保存失败：{{error}}",
+      "test": "测试代理",
+      "testing": "测试中...",
+      "testSuccess": "代理可用",
+      "testFailed": "代理不可用：{{error}}",
+      "hostPlaceholder": "例如：127.0.0.1",
+      "portPlaceholder": "例如：1080"
     }
   }
 }

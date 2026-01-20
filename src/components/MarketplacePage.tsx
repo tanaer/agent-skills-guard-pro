@@ -7,6 +7,7 @@ import {
   useUninstallSkillPath,
   useDeleteSkill,
 } from "../hooks/useSkills";
+import { useTranslatedSkills, TranslatedSkill } from "../hooks/useTranslatedSkills";
 import { Skill } from "../types";
 import { SecurityReport } from "../types/security";
 import {
@@ -19,6 +20,7 @@ import {
   FolderOpen,
   XCircle,
   CheckCircle,
+  Languages,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
@@ -139,6 +141,9 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
     return filtered;
   }, [repositorySkills, searchQuery, selectedRepository, hideInstalled]);
 
+  // Translate skills when language is Chinese
+  const { skills: translatedSkills, isTranslating, translationEnabled } = useTranslatedSkills(filteredSkills);
+
   return (
     <div className="flex flex-col h-full">
       <div
@@ -152,9 +157,8 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
         <div className="px-8 pt-8 pb-4" style={{ animation: "fadeIn 0.4s ease-out" }}>
           <div className="max-w-6xl mx-auto">
             <div
-              className={`overflow-hidden transition-all duration-200 ${
-                isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-24 opacity-100"
-              }`}
+              className={`overflow-hidden transition-all duration-200 ${isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-24 opacity-100"
+                }`}
             >
               <h1 className="text-headline text-foreground mb-4">{t("nav.marketplace")}</h1>
             </div>
@@ -201,15 +205,23 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
         }}
       >
         <div className={`max-w-6xl mx-auto ${isHeaderCollapsed ? "pt-4" : "pt-6"}`}>
+          {/* Translation Status */}
+          {translationEnabled && isTranslating && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+              <Languages className="w-4 h-4 animate-pulse" />
+              <span>{t("skills.translation.translating")}</span>
+            </div>
+          )}
+
           {/* Skills Grid */}
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
               <p className="text-sm text-muted-foreground">{t("skills.loading")}</p>
             </div>
-          ) : filteredSkills && filteredSkills.length > 0 ? (
+          ) : translatedSkills && translatedSkills.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              {filteredSkills.map((skill) => (
+              {translatedSkills.map((skill) => (
                 <SkillCard
                   key={skill.id}
                   skill={skill}
@@ -381,7 +393,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
 }
 
 interface SkillCardProps {
-  skill: Skill;
+  skill: TranslatedSkill;
   onInstall: () => void;
   onUninstall: () => void;
   onUninstallPath: (path: string) => void;
@@ -424,19 +436,30 @@ function SkillCard({
     return () => observer.disconnect();
   }, [skill.description]);
 
+  // Use translated content if available
+  const displayName = skill.translatedName || skill.name;
+  const displayDescription = skill.translatedDescription || skill.description;
+
   return (
     <div className="apple-card p-5 flex flex-col">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="font-medium text-foreground">{skill.name}</h3>
+            <h3 className="font-medium text-foreground">{displayName}</h3>
+            {skill.isTranslated && (
+              <span
+                className="text-xs px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600"
+                title={skill.name}
+              >
+                <Languages className="w-3 h-3" />
+              </span>
+            )}
             <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
-                skill.repository_owner === "local"
+              className={`text-xs px-2 py-0.5 rounded-full ${skill.repository_owner === "local"
                   ? "bg-muted text-muted-foreground"
                   : "bg-blue-500/10 text-blue-600"
-              }`}
+                }`}
             >
               {formatRepositoryTag(skill)}
             </span>
@@ -526,10 +549,10 @@ function SkillCard({
       {/* Description - 自动填充剩余空间 */}
       <p
         ref={descriptionRef}
-        title={isDescriptionTruncated && skill.description ? skill.description : undefined}
+        title={isDescriptionTruncated && displayDescription ? (skill.isTranslated ? skill.description : displayDescription) : undefined}
         className="text-sm text-muted-foreground mb-3 leading-5 h-[6.25rem] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:5] [-webkit-box-orient:vertical]"
       >
-        {skill.description || t("skills.noDescription")}
+        {displayDescription || t("skills.noDescription")}
       </p>
 
       {/* Repository - 固定在底部 */}
@@ -658,15 +681,14 @@ function InstallConfirmDialog({
               <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <span className="text-sm">{t("skills.marketplace.install.securityScore")}:</span>
                 <span
-                  className={`text-3xl font-bold ${
-                    report.score >= 90
+                  className={`text-3xl font-bold ${report.score >= 90
                       ? "text-success"
                       : report.score >= 70
                         ? "text-success"
                         : report.score >= 50
                           ? "text-warning"
                           : "text-destructive"
-                  }`}
+                    }`}
                 >
                   {report.score}
                 </span>
@@ -701,13 +723,12 @@ function InstallConfirmDialog({
               {/* Issue List */}
               {report.issues.length > 0 && (
                 <div
-                  className={`p-3 rounded-lg ${
-                    isHighRisk
+                  className={`p-3 rounded-lg ${isHighRisk
                       ? "bg-destructive/10 border border-destructive/30"
                       : isMediumRisk
                         ? "bg-warning/10 border border-warning/30"
                         : "bg-success/10 border border-success/30"
-                  }`}
+                    }`}
                 >
                   <ul className="space-y-1 text-sm">
                     {report.issues.slice(0, 3).map((issue, idx) => (
@@ -757,13 +778,12 @@ function InstallConfirmDialog({
           <button
             onClick={() => onConfirm(selectedPath)}
             disabled={!selectedPath}
-            className={`px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${
-              isHighRisk
+            className={`px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${isHighRisk
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 : isMediumRisk
                   ? "bg-warning text-white hover:bg-warning/90"
                   : "bg-success text-white hover:bg-success/90"
-            }`}
+              }`}
           >
             {isHighRisk
               ? t("skills.marketplace.install.installAnyway")

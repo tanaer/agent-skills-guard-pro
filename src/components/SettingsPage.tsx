@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Info, Github, RefreshCw, ExternalLink, Hash, Languages } from "lucide-react";
-import { useEffect } from "react";
+import { Info, Github, RefreshCw, ExternalLink, Hash, Languages, Network, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { appToast } from "@/lib/toast";
 import { useUpdate } from "../contexts/UpdateContext";
 import { GroupCard, GroupCardItem } from "./ui/GroupCard";
@@ -216,21 +217,19 @@ export function SettingsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleLanguageChange('zh')}
-                className={`h-8 px-4 text-sm font-medium rounded-lg transition-all ${
-                  currentLang === 'zh'
+                className={`h-8 px-4 text-sm font-medium rounded-lg transition-all ${currentLang === 'zh'
                     ? 'bg-blue-500 text-white'
                     : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                }`}
+                  }`}
               >
                 中文
               </button>
               <button
                 onClick={() => handleLanguageChange('en')}
-                className={`h-8 px-4 text-sm font-medium rounded-lg transition-all ${
-                  currentLang === 'en'
+                className={`h-8 px-4 text-sm font-medium rounded-lg transition-all ${currentLang === 'en'
                     ? 'bg-blue-500 text-white'
                     : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                }`}
+                  }`}
               >
                 English
               </button>
