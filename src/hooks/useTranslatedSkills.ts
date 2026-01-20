@@ -56,14 +56,12 @@ export function useSkillTranslation(): UseSkillTranslationResult {
         setTranslatingSkillIds(prev => new Set(prev).add(skillId));
 
         try {
-            const [translatedName, translatedDescription] = await Promise.all([
-                skill.name ? translateText(skill.name, targetLanguage) : Promise.resolve(skill.name),
+            const [translatedDescription] = await Promise.all([
                 skill.description ? translateText(skill.description, targetLanguage) : Promise.resolve(skill.description),
             ]);
 
             const translated: TranslatedSkill = {
                 ...skill,
-                translatedName,
                 translatedDescription,
                 isTranslated: true,
                 isTranslating: false,
@@ -119,14 +117,12 @@ export function useSkillTranslation(): UseSkillTranslationResult {
         }
 
         // Check if there's a cached translation in localStorage
-        const cachedName = skill.name ? getCachedTranslation(skill.name, targetLanguage) : null;
         const cachedDescription = skill.description ? getCachedTranslation(skill.description, targetLanguage) : null;
 
-        if (cachedName || cachedDescription) {
+        if (cachedDescription) {
             // Found in localStorage cache, add to state
             const translatedSkill: TranslatedSkill = {
                 ...skill,
-                translatedName: cachedName || skill.name,
                 translatedDescription: cachedDescription || skill.description,
                 isTranslated: true,
                 isTranslating: false,

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useInstalledSkills, useUninstallSkill, useUninstallSkillPath } from "../hooks/useSkills";
+import { useSkillTranslation, TranslatedSkillType } from "../hooks/useTranslatedSkills";
 import { Skill } from "../types";
 import { SecurityReport } from "../types/security";
 import {
@@ -15,6 +16,7 @@ import {
   CheckCircle,
   XCircle,
   Lightbulb,
+  Languages,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "@tauri-apps/api/core";
@@ -45,6 +47,7 @@ export function InstalledSkillsPage() {
   const queryClient = useQueryClient();
   const listContainerRef = useRef<HTMLDivElement | null>(null);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const { translateSkill, toggleTranslation, getTranslatedSkill, translatingSkillIds } = useSkillTranslation();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRepository, setSelectedRepository] = useState("all");
@@ -237,9 +240,8 @@ export function InstalledSkillsPage() {
         <div className="px-8 pt-8 pb-4" style={{ animation: "fadeIn 0.4s ease-out" }}>
           <div className="max-w-6xl mx-auto">
             <div
-              className={`overflow-hidden transition-all duration-200 ${
-                isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-24 opacity-100"
-              }`}
+              className={`overflow-hidden transition-all duration-200 ${isHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-24 opacity-100"
+                }`}
             >
               <h1 className="text-headline text-foreground mb-4">{t("nav.installed")}</h1>
             </div>
@@ -319,67 +321,73 @@ export function InstalledSkillsPage() {
             </div>
           ) : filteredSkills && filteredSkills.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 auto-rows-fr">
-              {filteredSkills.map((skill, index) => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  index={index}
-                  onUninstall={() => {
-                    setUninstallingSkillId(skill.id);
-                    uninstallMutation.mutate(skill.id, {
-                      onSuccess: () => {
-                        setUninstallingSkillId(null);
-                        appToast.success(t("skills.toast.uninstalled"));
-                      },
-                      onError: (error: any) => {
-                        setUninstallingSkillId(null);
-                        appToast.error(
-                          `${t("skills.toast.uninstallFailed")}: ${error.message || error}`
-                        );
-                      },
-                    });
-                  }}
-                  onUninstallPath={(path: string) => {
-                    uninstallPathMutation.mutate(
-                      { skillId: skill.id, path },
-                      {
-                        onSuccess: () => appToast.success(t("skills.toast.uninstalled")),
-                        onError: (error: any) =>
+              {filteredSkills.map((skill, index) => {
+                const translatedSkill = getTranslatedSkill(skill);
+                return (
+                  <SkillCard
+                    key={skill.id}
+                    skill={translatedSkill}
+                    onTranslate={() => translateSkill(skill.id, skill)}
+                    onToggleTranslation={() => toggleTranslation(skill.id)}
+                    isTranslatingSkill={translatingSkillIds.has(skill.id)}
+                    index={index}
+                    onUninstall={() => {
+                      setUninstallingSkillId(skill.id);
+                      uninstallMutation.mutate(skill.id, {
+                        onSuccess: () => {
+                          setUninstallingSkillId(null);
+                          appToast.success(t("skills.toast.uninstalled"));
+                        },
+                        onError: (error: any) => {
+                          setUninstallingSkillId(null);
                           appToast.error(
                             `${t("skills.toast.uninstallFailed")}: ${error.message || error}`
-                          ),
+                          );
+                        },
+                      });
+                    }}
+                    onUninstallPath={(path: string) => {
+                      uninstallPathMutation.mutate(
+                        { skillId: skill.id, path },
+                        {
+                          onSuccess: () => appToast.success(t("skills.toast.uninstalled")),
+                          onError: (error: any) =>
+                            appToast.error(
+                              `${t("skills.toast.uninstallFailed")}: ${error.message || error}`
+                            ),
+                        }
+                      );
+                    }}
+                    onUpdate={async () => {
+                      try {
+                        setPreparingUpdateSkillId(skill.id);
+                        const [report, conflicts] = await api.prepareSkillUpdate(
+                          skill.id,
+                          i18n.language
+                        );
+                        setPreparingUpdateSkillId(null);
+                        setPendingUpdate({ skill, report, conflicts });
+                      } catch (error: any) {
+                        setPreparingUpdateSkillId(null);
+                        appToast.error(
+                          `${t("skills.toast.updateFailed")}: ${error.message || error}`
+                        );
                       }
-                    );
-                  }}
-                  onUpdate={async () => {
-                    try {
-                      setPreparingUpdateSkillId(skill.id);
-                      const [report, conflicts] = await api.prepareSkillUpdate(
-                        skill.id,
-                        i18n.language
-                      );
-                      setPreparingUpdateSkillId(null);
-                      setPendingUpdate({ skill, report, conflicts });
-                    } catch (error: any) {
-                      setPreparingUpdateSkillId(null);
-                      appToast.error(
-                        `${t("skills.toast.updateFailed")}: ${error.message || error}`
-                      );
+                    }}
+                    hasUpdate={availableUpdates.has(skill.id)}
+                    isUninstalling={uninstallingSkillId === skill.id}
+                    isPreparingUpdate={preparingUpdateSkillId === skill.id}
+                    isApplyingUpdate={confirmingUpdateSkillId === skill.id}
+                    isAnyOperationPending={
+                      uninstallMutation.isPending ||
+                      uninstallPathMutation.isPending ||
+                      preparingUpdateSkillId !== null ||
+                      confirmingUpdateSkillId !== null
                     }
-                  }}
-                  hasUpdate={availableUpdates.has(skill.id)}
-                  isUninstalling={uninstallingSkillId === skill.id}
-                  isPreparingUpdate={preparingUpdateSkillId === skill.id}
-                  isApplyingUpdate={confirmingUpdateSkillId === skill.id}
-                  isAnyOperationPending={
-                    uninstallMutation.isPending ||
-                    uninstallPathMutation.isPending ||
-                    preparingUpdateSkillId !== null ||
-                    confirmingUpdateSkillId !== null
-                  }
-                  t={t}
-                />
-              ))}
+                    t={t}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 apple-card">
@@ -450,7 +458,7 @@ export function InstalledSkillsPage() {
 }
 
 interface SkillCardProps {
-  skill: Skill;
+  skill: TranslatedSkillType;
   index: number;
   onUninstall: () => void;
   onUninstallPath: (path: string) => void;
@@ -460,6 +468,9 @@ interface SkillCardProps {
   isPreparingUpdate: boolean;
   isApplyingUpdate: boolean;
   isAnyOperationPending: boolean;
+  onTranslate: () => void;
+  onToggleTranslation: () => void;
+  isTranslatingSkill: boolean;
   t: (key: string, options?: any) => string;
 }
 
@@ -473,6 +484,9 @@ function SkillCard({
   isPreparingUpdate,
   isApplyingUpdate,
   isAnyOperationPending,
+  onTranslate,
+  onToggleTranslation,
+  isTranslatingSkill,
   t,
 }: SkillCardProps) {
   const descriptionRef = useRef<HTMLParagraphElement | null>(null);
@@ -500,12 +514,42 @@ function SkillCard({
         <div className="flex-1">
           <div className="flex items-center gap-2.5 mb-1 flex-wrap">
             <h3 className="font-semibold text-foreground">{skill.name}</h3>
+            {/* Translate/Toggle Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (skill.isTranslated) {
+                  // Toggle between original and translated
+                  onToggleTranslation();
+                } else if (!isTranslatingSkill) {
+                  // Start translation
+                  onTranslate();
+                }
+              }}
+              disabled={isTranslatingSkill}
+              className={`text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-colors cursor-pointer ${skill.isTranslated
+                ? skill.showingTranslation
+                  ? "bg-purple-500/20 text-purple-600 hover:bg-purple-500/30"
+                  : "bg-secondary text-muted-foreground hover:bg-purple-500/10 hover:text-purple-600"
+                : isTranslatingSkill
+                  ? "bg-purple-500/10 text-purple-400"
+                  : "bg-secondary hover:bg-purple-500/10 text-muted-foreground hover:text-purple-600"
+                }`}
+              title={skill.isTranslated
+                ? (skill.showingTranslation ? t("skills.translation.showOriginal") : t("skills.translation.showTranslated"))
+                : t("skills.translation.translate")}
+            >
+              {isTranslatingSkill ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Languages className="w-3 h-3" />
+              )}
+            </button>
             <span
-              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                skill.repository_owner === "local"
-                  ? "text-muted-foreground bg-secondary"
-                  : "text-blue-600 bg-blue-500/10"
-              }`}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium ${skill.repository_owner === "local"
+                ? "text-muted-foreground bg-secondary"
+                : "text-blue-600 bg-blue-500/10"
+                }`}
             >
               {formatRepositoryTag(skill)}
             </span>
@@ -557,10 +601,10 @@ function SkillCard({
       {/* Description - 自动填充剩余空间 */}
       <p
         ref={descriptionRef}
-        title={isDescriptionTruncated && skill.description ? skill.description : undefined}
+        title={isDescriptionTruncated ? (skill.isTranslated && skill.showingTranslation ? (skill.translatedDescription || skill.description) : skill.description) : undefined}
         className="text-sm text-muted-foreground mb-4 leading-5 h-[6.25rem] overflow-hidden [display:-webkit-box] [-webkit-line-clamp:5] [-webkit-box-orient:vertical]"
       >
-        {skill.description || t("skills.noDescription")}
+        {(skill.isTranslated && skill.showingTranslation ? (skill.translatedDescription || skill.description) : skill.description) || t("skills.noDescription")}
       </p>
 
       {/* Repository - 固定在底部 */}
@@ -690,15 +734,14 @@ function UpdateConfirmDialog({
               <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <span className="text-sm">{t("skills.marketplace.install.securityScore")}:</span>
                 <span
-                  className={`text-2xl font-semibold ${
-                    report.score >= 90
+                  className={`text-2xl font-semibold ${report.score >= 90
+                    ? "text-success"
+                    : report.score >= 70
                       ? "text-success"
-                      : report.score >= 70
-                        ? "text-success"
-                        : report.score >= 50
-                          ? "text-warning"
-                          : "text-destructive"
-                  }`}
+                      : report.score >= 50
+                        ? "text-warning"
+                        : "text-destructive"
+                    }`}
                 >
                   {report.score}
                 </span>

@@ -442,7 +442,6 @@ function SkillCard({
 
   // Use translated content if showing translation, otherwise original
   const showTranslated = skill.isTranslated && skill.showingTranslation;
-  const displayName = showTranslated ? (skill.translatedName || skill.name) : skill.name;
   const displayDescription = showTranslated ? (skill.translatedDescription || skill.description) : skill.description;
 
   return (
@@ -451,7 +450,7 @@ function SkillCard({
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="font-medium text-foreground">{displayName}</h3>
+            <h3 className="font-medium text-foreground">{skill.name}</h3>
             {/* Translate/Toggle Button */}
             <button
               onClick={(e) => {
