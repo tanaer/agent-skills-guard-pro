@@ -102,7 +102,7 @@ pub async fn scan_repository(
         .join("agent-skills-guard")
         .join("repositories");
 
-    let skills = if let Some(cache_path) = &repo.cache_path {
+    let mut skills = if let Some(cache_path) = &repo.cache_path {
         // 使用缓存扫描(0次API请求)
         log::info!("使用本地缓存扫描仓库: {}", repo.name);
 
@@ -150,6 +150,82 @@ pub async fn scan_repository(
         state.github.scan_cached_repository(&extract_dir, &repo.url, repo.scan_subdirs)
             .map_err(|e| format!("扫描缓存失败: {}", e))?
     };
+
+    // 第一步：对扫描结果按名称去重（同一仓库内同名技能只保留一个）
+    // 优先保留 file_path 最短的（通常是主目录而非 .claude/.codex 等子目录）
+    let mut seen_names: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut deduped_skills: Vec<Skill> = Vec::new();
+    
+    // 先按 file_path 长度排序，短路径优先
+    skills.sort_by(|a, b| a.file_path.len().cmp(&b.file_path.len()));
+    let original_count = skills.len();
+    
+    for skill in skills {
+        if let Some(&existing_idx) = seen_names.get(&skill.name) {
+            log::info!("跳过重复技能 '{}' (已存在更短路径版本): {}", skill.name, skill.file_path);
+            // 如果现有技能未安装但新扫描的有安装信息，更新现有技能
+            if !deduped_skills[existing_idx].installed && skill.installed {
+                deduped_skills[existing_idx].installed = skill.installed;
+                deduped_skills[existing_idx].installed_at = skill.installed_at;
+                deduped_skills[existing_idx].local_path = skill.local_path.clone();
+                deduped_skills[existing_idx].local_paths = skill.local_paths.clone();
+            }
+        } else {
+            seen_names.insert(skill.name.clone(), deduped_skills.len());
+            deduped_skills.push(skill);
+        }
+    }
+    
+    log::info!("扫描到 {} 个技能，去重后剩余 {} 个", original_count, deduped_skills.len());
+    let mut skills = deduped_skills;
+
+    // 第二步：迁移旧 ID 的数据并删除旧记录
+    if let Ok(existing_skills) = state.db.get_skills() {
+        // 筛选出属于当前仓库的现有技能（通过标准化 URL 匹配）
+        let repo_skills: Vec<&Skill> = existing_skills.iter().filter(|s| {
+            if let Ok((s_owner, s_repo)) = Repository::from_github_url(&s.repository_url) {
+                s_owner.eq_ignore_ascii_case(&owner) && s_repo.eq_ignore_ascii_case(&repo_name)
+            } else {
+                false
+            }
+        }).collect();
+
+        // 收集需要删除的旧技能 ID（同名但不同 ID 的旧记录）
+        let mut ids_to_delete: Vec<String> = Vec::new();
+        
+        for skill in &mut skills {
+            // 查找所有同名但 ID 不同的旧技能
+            for old_skill in repo_skills.iter().filter(|s| s.name == skill.name && s.id != skill.id) {
+                log::info!("发现遗留的同名技能，正在迁移数据: {} -> {}", old_skill.id, skill.id);
+                
+                // 迁移安装状态
+                if old_skill.installed && !skill.installed {
+                    skill.installed = true;
+                    skill.installed_at = old_skill.installed_at;
+                    skill.local_path = old_skill.local_path.clone();
+                    skill.local_paths = old_skill.local_paths.clone();
+                    skill.installed_commit_sha = old_skill.installed_commit_sha.clone();
+                }
+                
+                // 迁移安全扫描数据
+                if old_skill.security_score.is_some() && skill.security_score.is_none() {
+                    skill.security_score = old_skill.security_score;
+                    skill.security_issues = old_skill.security_issues.clone();
+                    skill.security_level = old_skill.security_level.clone();
+                    skill.scanned_at = old_skill.scanned_at;
+                }
+                
+                ids_to_delete.push(old_skill.id.clone());
+            }
+        }
+        
+        // 删除旧技能记录
+        for id in ids_to_delete {
+            if let Err(e) = state.db.delete_skill(&id) {
+                log::error!("删除遗留技能失败 {}: {}", id, e);
+            }
+        }
+    }
 
     // 保存到数据库
     for skill in &skills {
@@ -893,4 +969,175 @@ pub async fn translate_text(
 
     log::debug!("翻译成功: {} -> {}", &text[..text.len().min(50)], &translated[..translated.len().min(50)]);
     Ok(translated)
+}
+
+// ==================== 工具管理命令 ====================
+
+use crate::models::{AiTool, FileNode, get_all_supported_tools};
+
+/// 获取所有支持的 AI 工具列表（含安装状态检测）
+#[tauri::command]
+pub async fn get_supported_tools() -> Result<Vec<AiTool>, String> {
+    Ok(get_all_supported_tools())
+}
+
+/// 获取指定工具的技能目录树结构
+#[tauri::command]
+pub async fn get_tool_skills_tree(tool_id: String) -> Result<Vec<FileNode>, String> {
+    let tools = get_all_supported_tools();
+    let tool = tools
+        .iter()
+        .find(|t| t.id == tool_id)
+        .ok_or_else(|| format!("未找到工具: {}", tool_id))?;
+
+    let skills_path = tool.skills_path();
+    
+    if !skills_path.exists() {
+        return Ok(vec![]);
+    }
+
+    fn build_tree(path: &std::path::Path) -> Result<Vec<FileNode>, String> {
+        let mut nodes = Vec::new();
+        
+        let entries = std::fs::read_dir(path)
+            .map_err(|e| format!("无法读取目录: {}", e))?;
+        
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("读取目录项失败: {}", e))?;
+            let file_path = entry.path();
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            
+            // 跳过隐藏文件和目录
+            if file_name.starts_with('.') {
+                continue;
+            }
+            
+            let is_dir = file_path.is_dir();
+            let children = if is_dir {
+                Some(build_tree(&file_path)?)
+            } else {
+                None
+            };
+            
+            nodes.push(FileNode {
+                name: file_name,
+                path: file_path.to_string_lossy().to_string(),
+                is_dir,
+                children,
+            });
+        }
+        
+        // 排序：目录优先，然后按名称排序
+        nodes.sort_by(|a, b| {
+            match (a.is_dir, b.is_dir) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+            }
+        });
+        
+        Ok(nodes)
+    }
+
+    build_tree(&skills_path)
+}
+
+/// 读取指定技能文件内容
+#[tauri::command]
+pub async fn read_skill_file(file_path: String) -> Result<String, String> {
+    let path = std::path::Path::new(&file_path);
+    
+    if !path.exists() {
+        return Err("文件不存在".to_string());
+    }
+    
+    if !path.is_file() {
+        return Err("路径不是文件".to_string());
+    }
+    
+    std::fs::read_to_string(path)
+        .map_err(|e| format!("读取文件失败: {}", e))
+}
+
+/// 打开工具的技能文件夹
+#[tauri::command]
+pub async fn open_tool_folder(tool_id: String) -> Result<(), String> {
+    let tools = get_all_supported_tools();
+    let tool = tools
+        .iter()
+        .find(|t| t.id == tool_id)
+        .ok_or_else(|| format!("未找到工具: {}", tool_id))?;
+
+    let folder_path = tool.skills_path();
+    
+    // 如果技能目录不存在，尝试打开基础目录
+    let path_to_open = if folder_path.exists() {
+        folder_path
+    } else if tool.base_path.exists() {
+        tool.base_path.clone()
+    } else {
+        return Err(format!("工具目录不存在: {}", tool.base_path.display()));
+    };
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&path_to_open)
+            .spawn()
+            .map_err(|e| format!("打开文件夹失败: {}", e))?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path_to_open)
+            .spawn()
+            .map_err(|e| format!("打开文件夹失败: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path_to_open)
+            .spawn()
+            .map_err(|e| format!("打开文件夹失败: {}", e))?;
+    }
+
+    Ok(())
+}
+
+/// 工具安装路径信息
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ToolInstallPath {
+    /// 工具 ID
+    pub tool_id: String,
+    /// 工具名称
+    pub tool_name: String,
+    /// 技能安装路径
+    pub skills_path: String,
+    /// 是否为默认选项
+    pub is_default: bool,
+}
+
+/// 获取所有已安装工具的技能安装路径
+#[tauri::command]
+pub async fn get_installed_tool_paths() -> Result<Vec<ToolInstallPath>, String> {
+    let tools = get_all_supported_tools();
+    let mut paths: Vec<ToolInstallPath> = Vec::new();
+    let mut is_first = true;
+
+    for tool in tools {
+        if tool.is_installed {
+            let skills_path = tool.skills_path();
+            paths.push(ToolInstallPath {
+                tool_id: tool.id.clone(),
+                tool_name: tool.name.clone(),
+                skills_path: skills_path.to_string_lossy().to_string(),
+                is_default: is_first,
+            });
+            is_first = false;
+        }
+    }
+
+    Ok(paths)
 }

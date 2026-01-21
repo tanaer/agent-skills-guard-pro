@@ -1,40 +1,109 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { User, Clock, FolderPlus } from 'lucide-react';
+import { ChevronDown, Check, FolderPlus, CheckSquare, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getRecentInstallPaths } from '@/lib/storage';
 
-interface InstallPathSelectorProps {
-  onSelect: (path: string) => void;
-  defaultPath?: string;
+interface ToolInstallPath {
+  tool_id: string;
+  tool_name: string;
+  skills_path: string;
+  is_default: boolean;
 }
 
-export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelectorProps) {
+interface InstallPathSelectorProps {
+  onSelect: (paths: string[]) => void;
+}
+
+export function InstallPathSelector({ onSelect }: InstallPathSelectorProps) {
   const { t } = useTranslation();
-  const [selectedPath, setSelectedPath] = useState<string>('');
-  const [userPath, setUserPath] = useState<string>('');
-  const [recentPaths, setRecentPaths] = useState<string[]>([]);
+  const [toolPaths, setToolPaths] = useState<ToolInstallPath[]>([]);
+  const [selectedToolIds, setSelectedToolIds] = useState<Set<string>>(new Set());
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [customPath, setCustomPath] = useState<string>('');
+  const [isCustomSelected, setIsCustomSelected] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 工具图标映射
+  const getToolIcon = (id: string): string => {
+    const iconMap: Record<string, string> = {
+      claude: "🤖", cursor: "🖱️", codex: "🧠", "github-copilot": "🐙",
+      windsurf: "🏄", gemini: "✨", kiro: "☁️", vscode: "💻",
+      cline: "📝", roo: "🦘", aider: "🔧", augment: "➕",
+      continue: "▶️", opencode: "📂", kilocode: "📊", zencoder: "🧘", zed: "⚡",
+    };
+    return iconMap[id] || "🛠️";
+  };
+
+  // 计算选中的路径
+  const getSelectedPaths = (selectedIds: Set<string>, includeCustom: boolean): string[] => {
+    const paths = toolPaths
+      .filter(t => selectedIds.has(t.tool_id))
+      .map(t => t.skills_path);
+    if (includeCustom && customPath) {
+      paths.push(customPath);
+    }
+    return paths;
+  };
+
+  // 点击外部关闭下拉框
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
-    invoke<string>('get_default_install_path')
-      .then(path => {
-        setUserPath(path);
-        const initial = defaultPath || path;
-        setSelectedPath(initial);
-        onSelect(initial);
-      })
-      .catch(error => {
-        console.error('Failed to get default install path:', error);
-      });
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const paths = await invoke<ToolInstallPath[]>('get_installed_tool_paths');
+        setToolPaths(paths);
 
-    setRecentPaths(getRecentInstallPaths());
-  }, [defaultPath, onSelect]);
+        // 默认全选所有工具
+        const allIds = new Set(paths.map(p => p.tool_id));
+        setSelectedToolIds(allIds);
+        onSelect(paths.map(p => p.skills_path));
+      } catch (error) {
+        console.error('Failed to load tool paths:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
-  const handleSelect = (path: string) => {
-    setSelectedPath(path);
-    onSelect(path);
+  const toggleTool = (toolId: string) => {
+    const newSelected = new Set(selectedToolIds);
+    if (newSelected.has(toolId)) {
+      newSelected.delete(toolId);
+    } else {
+      newSelected.add(toolId);
+    }
+    setSelectedToolIds(newSelected);
+    onSelect(getSelectedPaths(newSelected, isCustomSelected));
+  };
+
+  const selectAll = () => {
+    const allIds = new Set(toolPaths.map(t => t.tool_id));
+    setSelectedToolIds(allIds);
+    onSelect(getSelectedPaths(allIds, isCustomSelected));
+  };
+
+  const deselectAll = () => {
+    setSelectedToolIds(new Set());
+    onSelect(getSelectedPaths(new Set(), isCustomSelected));
+  };
+
+  const toggleCustom = () => {
+    const newIsCustomSelected = !isCustomSelected;
+    setIsCustomSelected(newIsCustomSelected);
+    onSelect(getSelectedPaths(selectedToolIds, newIsCustomSelected));
   };
 
   const handleCustomPath = async () => {
@@ -43,7 +112,8 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
       const selectedCustomPath = await invoke<string | null>('select_custom_install_path');
       if (selectedCustomPath) {
         setCustomPath(selectedCustomPath);
-        handleSelect(selectedCustomPath);
+        setIsCustomSelected(true);
+        onSelect(getSelectedPaths(selectedToolIds, true));
       }
     } catch (error: any) {
       console.error('Failed to select custom path:', error);
@@ -52,104 +122,143 @@ export function InstallPathSelector({ onSelect, defaultPath }: InstallPathSelect
     }
   };
 
+  const selectedCount = selectedToolIds.size + (isCustomSelected && customPath ? 1 : 0);
+  const totalCount = toolPaths.length + (customPath ? 1 : 0);
+
+  // 显示文本
+  const getDisplayText = () => {
+    if (selectedCount === 0) {
+      return t('skills.pathSelection.noToolsSelected');
+    }
+    if (selectedCount === totalCount && totalCount > 0) {
+      return t('skills.pathSelection.allToolsSelected', { count: selectedCount });
+    }
+    return t('skills.pathSelection.toolsSelected', { count: selectedCount });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-2 text-center text-muted-foreground text-sm">
+        {t('tools.loading')}
+      </div>
+    );
+  }
+
+  if (toolPaths.length === 0 && !customPath) {
+    return (
+      <div className="space-y-3">
+        <div className="py-3 text-center text-muted-foreground text-sm border border-dashed border-border rounded-lg">
+          {t('skills.pathSelection.noTools')}
+        </div>
+        <button
+          type="button"
+          onClick={handleCustomPath}
+          disabled={isSelecting}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-dashed border-primary/50 rounded-lg hover:bg-primary/5 transition-colors disabled:opacity-50 text-sm text-primary"
+        >
+          <FolderPlus className="w-4 h-4" />
+          {isSelecting ? t('skills.pathSelection.selecting') : t('skills.pathSelection.addCustomPath')}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <label className="text-sm text-primary font-medium">
         {t('skills.pathSelection.selectPath')}:
       </label>
 
-      {/* 用户目录选项 */}
-      {userPath && (
-        <PathOption
-          icon={<User className="w-4 h-4" />}
-          label={t('skills.pathSelection.userDirectory')}
-          path={userPath}
-          selected={selectedPath === userPath}
-          onClick={() => handleSelect(userPath)}
-        />
-      )}
+      {/* 多选下拉框 */}
+      <div ref={dropdownRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between px-4 py-2.5 border border-border rounded-lg bg-background hover:border-primary/50 transition-colors"
+        >
+          <span className="text-sm">{getDisplayText()}</span>
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-      {/* 最近使用的路径 */}
-      {recentPaths.filter(path => path.toLowerCase() !== userPath.toLowerCase()).length > 0 && (
-        <div className="border-t border-border pt-3 mt-3">
-          <label className="text-xs text-muted-foreground mb-2 block">
-            {t('skills.pathSelection.recentPaths')}:
-          </label>
-          {recentPaths
-            .filter(path => path.toLowerCase() !== userPath.toLowerCase())
-            .map((path, idx) => (
-              <PathOption
-                key={path}
-                icon={<Clock className="w-4 h-4" />}
-                label={`${t('skills.pathSelection.recent')} ${idx + 1}`}
-                path={path}
-                selected={selectedPath === path}
-                onClick={() => handleSelect(path)}
-              />
-            ))}
-        </div>
-      )}
+        {isOpen && (
+          <div className="absolute z-50 w-full mt-1 border border-border rounded-lg bg-card shadow-lg max-h-60 overflow-y-auto">
+            {/* 全选/反选按钮 */}
+            <div className="flex gap-2 p-2 border-b border-border sticky top-0 bg-card z-10">
+              <button
+                type="button"
+                onClick={selectAll}
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs px-2 py-1.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                {t('skills.pathSelection.selectAll')}
+              </button>
+              <button
+                type="button"
+                onClick={deselectAll}
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs px-2 py-1.5 rounded bg-secondary text-muted-foreground hover:bg-secondary/80 transition-colors"
+              >
+                <Square className="w-3.5 h-3.5" />
+                {t('skills.pathSelection.deselectAll')}
+              </button>
+            </div>
 
-      {/* 显示已选择的自定义路径 */}
-      {customPath && customPath !== userPath && !recentPaths.includes(customPath) && (
-        <div className="border-t border-border pt-3 mt-3">
-          <label className="text-xs text-muted-foreground mb-2 block">
-            自定义路径:
-          </label>
-          <PathOption
-            icon={<FolderPlus className="w-4 h-4" />}
-            label="自定义"
-            path={customPath}
-            selected={selectedPath === customPath}
-            onClick={() => handleSelect(customPath)}
-          />
-        </div>
-      )}
+            {/* 工具列表 */}
+            <div className="p-1">
+              {toolPaths.map((tool) => {
+                const isSelected = selectedToolIds.has(tool.tool_id);
+                return (
+                  <button
+                    key={tool.tool_id}
+                    type="button"
+                    onClick={() => toggleTool(tool.tool_id)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isSelected ? 'bg-primary/10' : 'hover:bg-secondary/50'
+                      }`}
+                  >
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'
+                      }`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                    <span className="text-base">{getToolIcon(tool.tool_id)}</span>
+                    <span className="flex-1 text-sm text-left">{tool.tool_name}</span>
+                  </button>
+                );
+              })}
 
-      {/* 自定义路径按钮 */}
-      <button
-        onClick={handleCustomPath}
-        disabled={isSelecting}
-        className="w-full flex items-center gap-2 px-4 py-3 border border-dashed border-primary/50 rounded-lg hover:bg-primary/5 transition-colors disabled:opacity-50"
-      >
-        <FolderPlus className="w-4 h-4 text-primary" />
-        <span className="text-sm text-primary">
-          {isSelecting ? t('skills.pathSelection.selecting') : t('skills.pathSelection.customPath')}
-        </span>
-      </button>
+              {/* 自定义路径选项 */}
+              {customPath && (
+                <button
+                  type="button"
+                  onClick={toggleCustom}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isCustomSelected ? 'bg-primary/10' : 'hover:bg-secondary/50'
+                    }`}
+                >
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${isCustomSelected ? 'bg-primary border-primary' : 'border-muted-foreground'
+                    }`}>
+                    {isCustomSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <FolderPlus className="w-4 h-4 text-primary" />
+                  <span className="flex-1 text-sm text-left truncate" title={customPath}>
+                    {t('skills.pathSelection.custom')}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* 添加自定义路径 */}
+            <div className="p-2 border-t border-border">
+              <button
+                type="button"
+                onClick={handleCustomPath}
+                disabled={isSelecting}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-primary hover:bg-primary/5 transition-colors text-sm"
+              >
+                <FolderPlus className="w-4 h-4" />
+                {isSelecting ? t('skills.pathSelection.selecting') : t('skills.pathSelection.addCustomPath')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
-}
-
-// PathOption 子组件
-function PathOption({ icon, label, path, selected, onClick }: {
-  icon: React.ReactNode;
-  label: string;
-  path: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-start gap-3 px-4 py-3 border rounded-lg transition-colors ${
-        selected
-          ? 'border-primary bg-primary/5'
-          : 'border-border hover:border-primary/50'
-      }`}
-    >
-      <div className={`mt-0.5 ${selected ? 'text-primary' : 'text-muted-foreground'}`}>
-        {icon}
-      </div>
-      <div className="flex-1 text-left">
-        <div className="text-sm font-medium">{label}</div>
-        <div className="text-xs text-muted-foreground break-all">{path}</div>
-      </div>
-      {selected && (
-        <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center flex-shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-primary"></div>
-        </div>
-      )}
-    </button>
   );
 }

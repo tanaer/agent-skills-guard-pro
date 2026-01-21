@@ -40,14 +40,15 @@ impl Repository {
     /// 支持格式: https://github.com/owner/repo
     pub fn from_github_url(url: &str) -> Result<(String, String)> {
         let url = url.trim_end_matches('/');
+        let url = url.trim_end_matches(".git");
         let parts: Vec<&str> = url.split('/').collect();
 
         if parts.len() < 2 {
             return Err(anyhow!("Invalid GitHub URL"));
         }
 
-        let owner = parts[parts.len() - 2].to_string();
-        let repo = parts[parts.len() - 1].to_string();
+        let owner = parts[parts.len() - 2].to_lowercase();
+        let repo = parts[parts.len() - 1].to_lowercase();
 
         Ok((owner, repo))
     }

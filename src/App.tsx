@@ -6,6 +6,7 @@ import { RepositoriesPage } from "./components/RepositoriesPage";
 import { OverviewPage } from "./components/OverviewPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { FeaturedRepositoriesPage } from "./components/FeaturedRepositoriesPage";
+import { ToolsPage } from "./components/ToolsPage";
 import { Sidebar } from "./components/Sidebar";
 import { WindowControls } from "./components/WindowControls";
 import { UpdateBadge } from "./components/UpdateBadge";
@@ -22,6 +23,7 @@ type TabType =
   | "marketplace"
   | "featuredRepositories"
   | "repositories"
+  | "tools"
   | "settings";
 
 function AppContent() {
@@ -78,9 +80,8 @@ function AppContent() {
 
   return (
     <div
-      className={`h-screen flex flex-col overflow-hidden bg-background ${
-        platform === "macos" ? "macos-window-frame" : ""
-      }`}
+      className={`h-screen flex flex-col overflow-hidden bg-background ${platform === "macos" ? "macos-window-frame" : ""
+        }`}
     >
       {/* Title Bar - Apple 风格：极简、透明感 */}
       <header
@@ -160,6 +161,15 @@ function AppContent() {
               <div className="p-8" style={{ animation: "fadeIn 0.4s ease-out" }}>
                 <div className="max-w-6xl mx-auto">
                   <RepositoriesPage />
+                </div>
+              </div>
+            </div>
+          )}
+          {currentTab === "tools" && (
+            <div className="h-full overflow-y-auto">
+              <div className="p-8" style={{ animation: "fadeIn 0.4s ease-out" }}>
+                <div className="max-w-6xl mx-auto">
+                  <ToolsPage />
                 </div>
               </div>
             </div>

@@ -365,18 +365,21 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
           }
           setPendingInstall(null);
         }}
-        onConfirm={async (selectedPath) => {
-          if (pendingInstall) {
+        onConfirm={async (selectedPaths) => {
+          if (pendingInstall && selectedPaths.length > 0) {
             try {
-              await invoke("confirm_skill_installation", {
-                skillId: pendingInstall.skill.id,
-                installPath: selectedPath,
-              });
-              addRecentInstallPath(selectedPath);
+              // 循环安装到每个选中的路径
+              for (const path of selectedPaths) {
+                await invoke("confirm_skill_installation", {
+                  skillId: pendingInstall.skill.id,
+                  installPath: path,
+                });
+                addRecentInstallPath(path);
+              }
               await queryClient.refetchQueries({ queryKey: ["skills"] });
               await queryClient.refetchQueries({ queryKey: ["skills", "installed"] });
               await queryClient.refetchQueries({ queryKey: ["scanResults"] });
-              appToast.success(t("skills.toast.installed"));
+              appToast.success(t("skills.toast.installedToMultiple", { count: selectedPaths.length }));
             } catch (error: any) {
               appToast.error(`${t("skills.toast.installFailed")}: ${error.message || error}`);
             }
@@ -658,7 +661,7 @@ function SkillCard({
 interface InstallConfirmDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (selectedPath: string) => void;
+  onConfirm: (selectedPaths: string[]) => void;
   report: SecurityReport | null;
   skillName: string;
 }
@@ -671,7 +674,7 @@ function InstallConfirmDialog({
   skillName,
 }: InstallConfirmDialogProps) {
   const { t } = useTranslation();
-  const [selectedPath, setSelectedPath] = useState<string>("");
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
 
   const isMediumRisk = report ? report.score >= 50 && report.score < 70 : false;
   const isHighRisk = report ? report.score < 50 || report.blocked : false;
@@ -795,7 +798,7 @@ function InstallConfirmDialog({
 
         {/* Path Selector */}
         <div className="py-4 border-t border-border">
-          <InstallPathSelector onSelect={setSelectedPath} />
+          <InstallPathSelector onSelect={setSelectedPaths} />
         </div>
 
         <AlertDialogFooter>
@@ -803,8 +806,8 @@ function InstallConfirmDialog({
             {t("skills.marketplace.install.cancel")}
           </AlertDialogCancel>
           <button
-            onClick={() => onConfirm(selectedPath)}
-            disabled={!selectedPath}
+            onClick={() => onConfirm(selectedPaths)}
+            disabled={selectedPaths.length === 0}
             className={`px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${isHighRisk
               ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               : isMediumRisk
@@ -814,7 +817,9 @@ function InstallConfirmDialog({
           >
             {isHighRisk
               ? t("skills.marketplace.install.installAnyway")
-              : t("skills.marketplace.install.confirmInstall")}
+              : selectedPaths.length > 1
+                ? t("skills.marketplace.install.confirmInstallMultiple", { count: selectedPaths.length })
+                : t("skills.marketplace.install.confirmInstall")}
           </button>
         </AlertDialogFooter>
       </AlertDialogContent>

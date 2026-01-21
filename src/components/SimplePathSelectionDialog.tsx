@@ -15,7 +15,7 @@ interface SimplePathSelectionDialogProps {
   open: boolean;
   skillName: string;
   onClose: () => void;
-  onConfirm: (selectedPath: string) => void;
+  onConfirm: (selectedPaths: string[]) => void;
 }
 
 export function SimplePathSelectionDialog({
@@ -25,7 +25,7 @@ export function SimplePathSelectionDialog({
   onConfirm,
 }: SimplePathSelectionDialogProps) {
   const { t } = useTranslation();
-  const [selectedPath, setSelectedPath] = useState<string>('');
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
@@ -41,7 +41,7 @@ export function SimplePathSelectionDialog({
 
         {/* 路径选择器 */}
         <div className="py-4">
-          <InstallPathSelector onSelect={setSelectedPath} />
+          <InstallPathSelector onSelect={setSelectedPaths} />
         </div>
 
         <AlertDialogFooter>
@@ -49,11 +49,13 @@ export function SimplePathSelectionDialog({
             {t('skills.pathSelection.cancel')}
           </AlertDialogCancel>
           <button
-            onClick={() => onConfirm(selectedPath)}
-            disabled={!selectedPath}
+            onClick={() => onConfirm(selectedPaths)}
+            disabled={selectedPaths.length === 0}
             className="macos-button-primary disabled:opacity-50"
           >
-            {t('skills.pathSelection.confirm')}
+            {selectedPaths.length > 1
+              ? t('skills.pathSelection.confirmMultiple', { count: selectedPaths.length })
+              : t('skills.pathSelection.confirm')}
           </button>
         </AlertDialogFooter>
       </AlertDialogContent>

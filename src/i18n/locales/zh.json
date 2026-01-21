@@ -9,6 +9,7 @@
     "marketplace": "技能市场",
     "featuredRepositories": "精选仓库",
     "repositories": "仓库配置",
+    "tools": "工具管理",
     "settings": "应用设置"
   },
   "footer": {
@@ -108,7 +109,8 @@
         "warningTitle": "⚠️ 强烈建议不要安装此 Skill！",
         "warningMessage": "检测到严重安全威胁，可能危害您的系统或数据。",
         "blocked": "该 Skill 存在严重安全风险，已被阻止安装",
-        "preparationFailed": "安装准备失败"
+        "preparationFailed": "安装准备失败",
+        "confirmInstallMultiple": "确认安装到 {{count}} 个位置"
       }
     },
     "installedPage": {
@@ -142,16 +144,29 @@
       "openFailed": "打开文件夹失败：{{error}}"
     },
     "pathSelection": {
-      "selectPath": "选择安装路径",
+      "selectPath": "选择安装工具",
       "selectInstallPath": "选择安装位置",
       "selectPathDescription": "请选择 {{skillName}} 的安装位置",
+      "selectTool": "选择工具",
       "userDirectory": "用户目录（默认）",
       "recentPaths": "最近使用",
       "recent": "最近",
       "customPath": "选择自定义路径...",
+      "customPathLabel": "自定义路径",
+      "custom": "自定义路径",
+      "addCustomPath": "添加自定义路径...",
       "selecting": "选择中...",
       "confirm": "确认安装",
-      "cancel": "取消"
+      "cancel": "取消",
+      "installedTools": "已安装工具",
+      "noTools": "未检测到已安装的 AI 工具",
+      "default": "默认",
+      "selectAll": "全选",
+      "deselectAll": "取消全选",
+      "noToolsSelected": "未选择工具",
+      "allToolsSelected": "已选所有工具 ({{count}})",
+      "toolsSelected": "已选 {{count}} 个工具",
+      "confirmMultiple": "确认安装 ({{count}})"
     },
     "translation": {
       "translating": "翻译中...",
@@ -165,6 +180,7 @@
     },
     "toast": {
       "installed": "[成功] 技能已安装",
+      "installedToMultiple": "[成功] 技能已安装到 {{count}} 个工具",
       "installFailed": "[错误] 安装失败",
       "uninstalled": "[成功] 技能已卸载",
       "uninstallFailed": "[错误] 卸载失败",
@@ -408,6 +424,23 @@
       "testFailed": "代理不可用：{{error}}",
       "hostPlaceholder": "例如：127.0.0.1",
       "portPlaceholder": "例如：1080"
+    }
+  },
+  "tools": {
+    "title": "工具管理",
+    "description": "管理已安装的 AI 编码工具及其技能文件",
+    "loading": "加载中...",
+    "loadFailed": "加载失败：{{error}}",
+    "installed": "已安装",
+    "notFound": "未找到",
+    "viewSkills": "查看技能",
+    "openFolder": "打开文件夹",
+    "folderOpened": "文件夹已打开",
+    "openFolderFailed": "打开失败：{{error}}",
+    "noSkills": "暂无技能文件",
+    "skillViewer": {
+      "title": "技能查看器",
+      "selectFile": "请选择左侧文件查看内容"
     }
   }
 }

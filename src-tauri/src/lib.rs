@@ -311,6 +311,12 @@ pub fn run() {
             get_scan_results,
             scan_skill_archive,
             commands::translate_text,
+            // 工具管理命令
+            commands::get_supported_tools,
+            commands::get_tool_skills_tree,
+            commands::read_skill_file,
+            commands::open_tool_folder,
+            commands::get_installed_tool_paths,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

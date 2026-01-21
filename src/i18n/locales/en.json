@@ -9,6 +9,7 @@
     "marketplace": "MARKETPLACE",
     "featuredRepositories": "FEATURED_REPOS",
     "repositories": "REPO_CONFIG",
+    "tools": "TOOLS",
     "settings": "SETTINGS"
   },
   "footer": {
@@ -108,7 +109,8 @@
         "warningTitle": "⚠️ Strongly Recommended NOT to Install This Skill!",
         "warningMessage": "Severe security threats detected that may harm your system or data.",
         "blocked": "This Skill has severe security risks and has been blocked",
-        "preparationFailed": "Installation preparation failed"
+        "preparationFailed": "Installation preparation failed",
+        "confirmInstallMultiple": "Confirm Install to {{count}} Locations"
       }
     },
     "installedPage": {
@@ -142,16 +144,29 @@
       "openFailed": "OPEN_FOLDER_FAILED: {{error}}"
     },
     "pathSelection": {
-      "selectPath": "Select Installation Path",
+      "selectPath": "Select Installation Tool",
       "selectInstallPath": "Select Installation Location",
       "selectPathDescription": "Please select installation location for {{skillName}}",
+      "selectTool": "Select Tool",
       "userDirectory": "User Directory (Default)",
       "recentPaths": "Recent Paths",
       "recent": "Recent",
       "customPath": "Choose Custom Path...",
+      "customPathLabel": "Custom Path",
+      "custom": "Custom Path",
+      "addCustomPath": "Add Custom Path...",
       "selecting": "Selecting...",
       "confirm": "Confirm Install",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "installedTools": "Installed Tools",
+      "noTools": "No installed AI tools detected",
+      "default": "Default",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "noToolsSelected": "No tools selected",
+      "allToolsSelected": "All tools selected ({{count}})",
+      "toolsSelected": "{{count}} tools selected",
+      "confirmMultiple": "Confirm Install ({{count}})"
     },
     "translation": {
       "translating": "TRANSLATING...",
@@ -165,6 +180,7 @@
     },
     "toast": {
       "installed": "[SUCCESS] SKILL_INSTALLED",
+      "installedToMultiple": "[SUCCESS] Skill installed to {{count}} locations",
       "installFailed": "[ERROR] INSTALL_FAILED",
       "uninstalled": "[SUCCESS] SKILL_UNINSTALLED",
       "uninstallFailed": "[ERROR] UNINSTALL_FAILED",
@@ -408,6 +424,23 @@
       "testFailed": "Proxy is not working: {{error}}",
       "hostPlaceholder": "e.g., 127.0.0.1",
       "portPlaceholder": "e.g., 1080"
+    }
+  },
+  "tools": {
+    "title": "Tools",
+    "description": "Manage installed AI coding tools and their skill files",
+    "loading": "Loading...",
+    "loadFailed": "Load failed: {{error}}",
+    "installed": "Installed",
+    "notFound": "Not Found",
+    "viewSkills": "View Skills",
+    "openFolder": "Open Folder",
+    "folderOpened": "Folder opened",
+    "openFolderFailed": "Failed to open: {{error}}",
+    "noSkills": "No skill files",
+    "skillViewer": {
+      "title": "Skill Viewer",
+      "selectFile": "Select a file from the left to view content"
     }
   }
 }
