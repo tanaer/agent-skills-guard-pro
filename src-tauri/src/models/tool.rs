@@ -90,5 +90,11 @@ pub fn get_all_supported_tools() -> Vec<AiTool> {
         AiTool::new("zencoder", "Zencoder", home.join(".zencoder"), "skills"),
         // Zed
         AiTool::new("zed", "Zed", home.join(".zed"), "skills"),
+        // Qoder
+        AiTool::new("qoder", "Qoder", home.join(".qoder"), "skills"),
+        // Antigravity
+        AiTool::new("antigravity", "Antigravity", home.join(".antigravity"), "skills"),
+        // Trae
+        AiTool::new("trae", "Trae", home.join(".trae"), "skills"),
     ]
 }

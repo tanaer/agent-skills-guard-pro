@@ -315,9 +315,41 @@ export function InstalledSkillsPage() {
       >
         <div className={`max-w-6xl mx-auto ${isHeaderCollapsed ? "pt-4" : "pt-6"}`}>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-              <p className="text-sm text-muted-foreground">{t("skills.loading")}</p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-center gap-3 py-4">
+                <div className="relative w-8 h-8">
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                  <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                </div>
+                <p className="text-sm text-muted-foreground animate-pulse">{t("skills.loading")}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 auto-rows-fr">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="apple-card p-6 flex flex-col h-full animate-in fade-in-50 duration-500">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <div className="animate-pulse bg-muted/60 rounded h-5 w-32" />
+                          <div className="animate-pulse bg-muted/60 rounded-full h-5 w-16" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <div className="animate-pulse bg-muted/60 rounded-lg h-8 w-20" />
+                        <div className="animate-pulse bg-muted/60 rounded-lg h-8 w-20" />
+                      </div>
+                    </div>
+                    <div className="space-y-2 mb-4 h-[6.25rem]">
+                      <div className="animate-pulse bg-muted/60 rounded h-4 w-full" />
+                      <div className="animate-pulse bg-muted/60 rounded h-4 w-full" />
+                      <div className="animate-pulse bg-muted/60 rounded h-4 w-3/4" />
+                      <div className="animate-pulse bg-muted/60 rounded h-4 w-1/2" />
+                    </div>
+                    <div className="mb-4">
+                      <div className="animate-pulse bg-muted/60 rounded h-4 w-48" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : filteredSkills && filteredSkills.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 auto-rows-fr">

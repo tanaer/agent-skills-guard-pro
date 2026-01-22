@@ -631,7 +631,7 @@ pub async fn select_custom_install_path(app: tauri::AppHandle) -> Result<Option<
 }
 
 const FEATURED_REPOSITORIES_REMOTE_URL: &str =
-    "https://raw.githubusercontent.com/brucevanfdm/agent-skills-guard/main/featured-repositories.yaml";
+    "https://raw.githubusercontent.com/tanaer/agent-skills-guard-pro/main/featured-repositories.yaml";
 const DEFAULT_FEATURED_REPOSITORIES_YAML: &str = include_str!("../../../featured-repositories.yaml");
 
 fn featured_repositories_cache_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
