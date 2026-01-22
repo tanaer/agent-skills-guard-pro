@@ -4,7 +4,7 @@
   "identifier": "com.agent-skills-guard.app",
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJEM0VGNkNFQTk0Nzg5MDAKUldRQWlVZXB6dlkrdmN2YjBHUVJoQzdUYldXVGNZMFRDY25jSTJSZmV1V1FZZXhqM2RId1I4cDAK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA1QjcyMkZERjBFNkU2NjQKUldSazV1YncvU0szQmFsZG8rSXdKVyt3NHErbGxjMHI0c2pLdSt5K2ZqdjM4S2VYYzQ2am80WTYK",
       "endpoints": [
         "https://github.com/tanaer/agent-skills-guard-pro/releases/latest/download/latest.json"
       ]
