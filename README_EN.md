@@ -1,7 +1,3 @@
-<div align="center">
-
-<a name="readme-top"></a>
-
 # 🛡️ Agent Skills Guard
 
 ### Making Claude Code Skills Management as Simple and Secure as an App Store
@@ -12,7 +8,7 @@
 
 English | [简体中文](README.md)
 
-</div>
+
 
 ---
 
@@ -26,13 +22,13 @@ When enjoying Claude Code's AI-assisted programming, do you face these frustrati
 
 **Agent Skills Guard** is designed to solve these problems. It transforms the skills world originally hidden in command lines and folders into a **visible, manageable, trustworthy** app store experience.
 
-<div align="center">
+
 
 **🎯 Core value in three seconds: Visual management + Security scanning + Featured repositories**
 
 [⭐ Download Now](https://github.com/brucevanfdm/agent-skills-guard/releases) | [📖 Quick Start Guide](#-quick-start)
 
-</div>
+
 
 ---
 
@@ -100,11 +96,11 @@ Visit [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releas
 - **macOS**: Download `.dmg` file, drag to install
 - **Windows**: Download `.msi` installer, double-click to install
 
-<div align="center">
+
 
 *Security warnings on first launch can be safely ignored*
 
-</div>
+
 
 ### 🎯 First Time Use
 
@@ -289,11 +285,11 @@ Have questions or suggestions? Contact via:
 - 🐦 [X/Twitter](https://x.com/brucevanfdm) - Follow project updates
 - 💬 **Agent Skills Security Community**
 
-<div align="center">
+
 
 ![Community](screen-shot/agentskillsgroup.jpg)
 
-</div>
+
 
 ---
 
@@ -326,7 +322,7 @@ MIT License - Free to use, free to share
 
 ---
 
-<div align="center">
+
 
 Made with ❤️ by [Bruce](https://github.com/brucevanfdm)
 
@@ -334,4 +330,4 @@ If this project helps you, please give it a ⭐️ Star!
 
 [⬆ Back to top](#readme-top)
 
-</div>
+
