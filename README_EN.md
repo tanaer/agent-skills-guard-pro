@@ -2,9 +2,9 @@
 
 ### Making Claude Code Skills Management as Simple and Secure as an App Store
 
-[![Version](https://img.shields.io/badge/version-0.9.8-blue.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[![Version](https://img.shields.io/badge/version-0.9.8-blue.svg)](https://github.com/tanaer/agent-skills-guard-pro/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/tanaer/agent-skills-guard-pro/releases)
 
 English | [简体中文](README.md)
 
@@ -26,7 +26,7 @@ When enjoying Claude Code's AI-assisted programming, do you face these frustrati
 
 **🎯 Core value in three seconds: Visual management + Security scanning + Featured repositories**
 
-[⭐ Download Now](https://github.com/brucevanfdm/agent-skills-guard/releases) | [📖 Quick Start Guide](#-quick-start)
+[⭐ Download Now](https://github.com/tanaer/agent-skills-guard-pro/releases) | [📖 Quick Start Guide](#-quick-start)
 
 
 
@@ -91,7 +91,7 @@ Say goodbye to command lines and enjoy the intuitive Apple minimalist interface.
 
 ### 📥 Installation
 
-Visit [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) to download the latest version:
+Visit [GitHub Releases](https://github.com/tanaer/agent-skills-guard-pro/releases) to download the latest version:
 
 - **macOS**: Download `.dmg` file, drag to install
 - **Windows**: Download `.msi` installer, double-click to install
@@ -258,7 +258,7 @@ A: By default installed to `~/.claude/skills/`, and you can also choose custom p
 
 ## 📝 Changelog
 
-[View full changelog](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[View full changelog](https://github.com/tanaer/agent-skills-guard-pro/releases)
 
 ---
 
@@ -275,20 +275,13 @@ A: By default installed to `~/.claude/skills/`, and you can also choose custom p
 
 ### Download
 
-- 📦 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) - Get the latest version
+- 📦 [GitHub Releases](https://github.com/tanaer/agent-skills-guard-pro/releases) - Get the latest version
 
 ### Contact
 
 Have questions or suggestions? Contact via:
 
-- 💬 [GitHub Issues](https://github.com/brucevanfdm/agent-skills-guard/issues) - Report issues or suggest features
-- 🐦 [X/Twitter](https://x.com/brucevanfdm) - Follow project updates
-- 💬 **Agent Skills Security Community**
-
-
-
-![Community](screen-shot/agentskillsgroup.jpg)
-
+- 💬 [GitHub Issues](https://github.com/tanaer/agent-skills-guard-pro/issues) - Report issues or suggest features
 
 
 ---
@@ -299,8 +292,8 @@ If you're a developer and want to build from source or contribute:
 
 ```bash
 # 1. Clone the project
-git clone https://github.com/brucevanfdm/agent-skills-guard.git
-cd agent-skills-guard
+git clone https://tanaer/agent-skills-guard-pro.git
+cd agent-skills-guard-pro
 
 # 2. Install dependencies (requires pnpm)
 pnpm install
@@ -324,7 +317,7 @@ MIT License - Free to use, free to share
 
 
 
-Made with ❤️ by [Bruce](https://github.com/brucevanfdm)
+Thanks [Bruce](https://github.com/brucevanfdm)
 
 If this project helps you, please give it a ⭐️ Star!
 

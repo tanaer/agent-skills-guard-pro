@@ -37,9 +37,9 @@
 
 ### 让 Claude Code 技能管理像应用商店一样简单安全
 
-[![Version](https://img.shields.io/badge/version-0.9.8-blue.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[![Version](https://img.shields.io/badge/version-0.9.8-blue.svg)](https://github.com/tanaer/agent-skills-guard-pro/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/tanaer/agent-skills-guard-pro/releases)
 
 [English](README_EN.md) | 简体中文
 
@@ -59,7 +59,7 @@
 
 **🎯 三秒钟了解核心价值：可视化管理 + 安全扫描 + 精选仓库**
 
-[⭐ 立即下载](https://github.com/brucevanfdm/agent-skills-guard/releases) | [📖 使用教程](#-快速开始)
+[⭐ 立即下载](https://github.com/tanaer/agent-skills-guard-pro/releases) | [📖 使用教程](#-快速开始)
 
 
 
@@ -124,7 +124,7 @@
 
 ### 📥 安装
 
-访问 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) 下载最新版本：
+访问 [GitHub Releases](https://github.com/tanaer/agent-skills-guard-pro/releases) 下载最新版本：
 
 - **macOS**：下载 `.dmg` 文件，拖拽安装
 - **Windows**：下载 `.msi` 安装包，双击安装
@@ -275,7 +275,7 @@
 
 A: 有可能。扫描基于规则匹配，可能将无害代码标记为风险。建议查看扫描报告中的代码上下文，判断是否真的存在风险。
 
-### Q: 我可以添加自己的技能仓库吗？
+### Q: 我可以添加自己的技能仓库吗？ 
 
 A: 可以！在「仓库配置」页面添加任意 GitHub 仓库，应用会自动扫描并发现其中的技能。
 
@@ -291,7 +291,7 @@ A: 默认安装到 `~/.claude/skills/`，你也可以在安装时选择自定义
 
 ## 📝 更新日志
 
-[查看完整更新日志](https://github.com/brucevanfdm/agent-skills-guard/releases)
+[查看完整更新日志](https://github.com/tanaer/agent-skills-guard-pro/releases)
 
 ---
 
@@ -308,19 +308,13 @@ A: 默认安装到 `~/.claude/skills/`，你也可以在安装时选择自定义
 
 ### 下载
 
-- 📦 [GitHub Releases](https://github.com/brucevanfdm/agent-skills-guard/releases) - 获取最新版本
+- 📦 [GitHub Releases](https://github.com/tanaer/agent-skills-guard-pro/releases) - 获取最新版本
 
 ### 联系方式
 
 有问题或建议？欢迎通过以下方式联系：
 
-- 💬 [GitHub Issues](https://github.com/brucevanfdm/agent-skills-guard/issues) - 报告问题或提出功能建议
-- 🐦 [X/Twitter](https://x.com/brucevanfdm) - 关注项目动态
-- 💬 **Agent Skills 安全交流群**
-
-
-
-![交流群](screen-shot/agentskillsgroup.jpg)
+- 💬 [GitHub Issues](https://github.com/tanaer/agent-skills-guard-pro/issues) - 报告问题或提出功能建议
 
 
 
@@ -328,12 +322,9 @@ A: 默认安装到 `~/.claude/skills/`，你也可以在安装时选择自定义
 
 ## 🔧 开发者
 
-如果你是开发者，想自行编译或贡献代码：
-
-```bash
 # 1. 克隆项目
-git clone https://github.com/brucevanfdm/agent-skills-guard.git
-cd agent-skills-guard
+git clone https://github.com/tanaer/agent-skills-guard-pro.git
+cd agent-skills-guard-pro
 
 # 2. 安装依赖（需要 pnpm）
 pnpm install
@@ -357,7 +348,7 @@ MIT License - 自由使用，自由分享
 
 
 
-Made with ❤️ by [Bruce](https://github.com/brucevanfdm)
+感谢 [Bruce](https://github.com/brucevanfdm)
 
 如果这个项目对你有帮助，请给个 ⭐️ Star 支持一下！
 
