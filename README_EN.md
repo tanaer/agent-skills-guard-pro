@@ -292,7 +292,7 @@ If you're a developer and want to build from source or contribute:
 
 ```bash
 # 1. Clone the project
-git clone https://tanaer/agent-skills-guard-pro.git
+git clone https://github.com/tanaer/agent-skills-guard-pro.git
 cd agent-skills-guard-pro
 
 # 2. Install dependencies (requires pnpm)

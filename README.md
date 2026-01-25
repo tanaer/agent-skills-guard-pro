@@ -322,6 +322,9 @@ A: 默认安装到 `~/.claude/skills/`，你也可以在安装时选择自定义
 
 ## 🔧 开发者
 
+如果你是开发者，想自行编译或贡献代码：
+
+```bash
 # 1. 克隆项目
 git clone https://github.com/tanaer/agent-skills-guard-pro.git
 cd agent-skills-guard-pro
