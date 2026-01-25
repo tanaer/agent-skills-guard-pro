@@ -1,7 +1,3 @@
-<div align="center">
-
-<a name="readme-top"></a>
-
 ## 🎉 v1.0.0 正式版发布！
 
 > **2026-01-22 发布**
@@ -42,8 +38,6 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)](https://github.com/brucevanfdm/agent-skills-guard/releases)
 
 [English](README_EN.md) | 简体中文
-
-</div>
 
 ---
 
