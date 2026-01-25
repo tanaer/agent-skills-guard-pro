@@ -284,6 +284,7 @@ pub fn run() {
             commands::install_skill,
             commands::prepare_skill_installation,
             commands::confirm_skill_installation,
+            commands::sync_skill,
             commands::cancel_skill_installation,
             commands::uninstall_skill,
             commands::uninstall_skill_path,

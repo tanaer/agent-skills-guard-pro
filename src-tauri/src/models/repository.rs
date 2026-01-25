@@ -37,20 +37,44 @@ impl Repository {
     }
 
     /// 从 GitHub URL 提取仓库信息
-    /// 支持格式: https://github.com/owner/repo
-    pub fn from_github_url(url: &str) -> Result<(String, String)> {
-        let url = url.trim_end_matches('/');
-        let url = url.trim_end_matches(".git");
-        let parts: Vec<&str> = url.split('/').collect();
+    /// 支持格式: 
+    /// - https://github.com/owner/repo
+    /// - https://github.com/owner/repo/tree/branch/...
+    pub fn from_github_url(url: &str) -> Result<(String, String, Option<String>)> {
+        let url_clean = url.trim_end_matches('/');
+        let url_clean = url_clean.trim_end_matches(".git");
+        
+        let parts: Vec<&str> = url_clean.split('/').collect();
 
-        if parts.len() < 2 {
-            return Err(anyhow!("Invalid GitHub URL"));
+        // Find "github.com" index
+        let github_idx = parts.iter().position(|&p| p == "github.com");
+        
+        if let Some(idx) = github_idx {
+            if parts.len() > idx + 2 {
+                let owner = parts[idx + 1].to_lowercase();
+                let repo = parts[idx + 2].to_lowercase();
+                
+                // Check for tree/{branch}
+                let mut branch = None;
+                if let Some(tree_idx) = parts.iter().position(|&p| p == "tree") {
+                    if parts.len() > tree_idx + 1 {
+                        branch = Some(parts[tree_idx + 1].to_string());
+                    }
+                }
+                
+                return Ok((owner, repo, branch));
+            }
+        } else {
+             // Fallback for non-standard or direct paths if any (simple split)
+             // Assumption: last two parts are owner/repo if not github.com
+             if parts.len() >= 2 {
+                 let owner = parts[parts.len() - 2].to_lowercase();
+                 let repo = parts[parts.len() - 1].to_lowercase();
+                 return Ok((owner, repo, None));
+             }
         }
 
-        let owner = parts[parts.len() - 2].to_lowercase();
-        let repo = parts[parts.len() - 1].to_lowercase();
-
-        Ok((owner, repo))
+        Err(anyhow!("Invalid GitHub URL: {}", url))
     }
 }
 

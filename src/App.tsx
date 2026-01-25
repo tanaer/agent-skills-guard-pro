@@ -7,6 +7,7 @@ import { OverviewPage } from "./components/OverviewPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { FeaturedRepositoriesPage } from "./components/FeaturedRepositoriesPage";
 import { ToolsPage } from "./components/ToolsPage";
+import { SyncSkillsPage } from "./components/SyncSkillsPage";
 import { Sidebar } from "./components/Sidebar";
 import { WindowControls } from "./components/WindowControls";
 import { UpdateBadge } from "./components/UpdateBadge";
@@ -24,6 +25,7 @@ type TabType =
   | "featuredRepositories"
   | "repositories"
   | "tools"
+  | "sync"
   | "settings";
 
 function AppContent() {
@@ -172,6 +174,11 @@ function AppContent() {
                   <ToolsPage />
                 </div>
               </div>
+            </div>
+          )}
+          {currentTab === "sync" && (
+            <div className="h-full overflow-hidden">
+              <SyncSkillsPage />
             </div>
           )}
           {currentTab === "settings" && (

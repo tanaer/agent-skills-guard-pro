@@ -71,7 +71,7 @@ impl GitHubService {
 
     /// 扫描仓库中的 skills
     pub async fn scan_repository(&self, repo: &Repository) -> Result<Vec<Skill>> {
-        let (owner, repo_name) = Repository::from_github_url(&repo.url)?;
+        let (owner, repo_name, _) = Repository::from_github_url(&repo.url)?;
         let mut skills = Vec::new();
 
         // 获取仓库根目录内容
@@ -384,6 +384,7 @@ impl GitHubService {
         &self,
         owner: &str,
         repo: &str,
+        branch: Option<&str>,
         cache_base_dir: &Path,
     ) -> Result<(PathBuf, String)> {
         // 1. 创建仓库专属缓存目录
@@ -391,8 +392,14 @@ impl GitHubService {
         fs::create_dir_all(&repo_cache_dir)
             .context("无法创建缓存目录")?;
 
-        // 2. 尝试下载压缩包（先尝试 main，如果 404 则尝试 master）
-        let branches = ["main", "master"];
+        // 2. 尝试下载压缩包
+        // 如果指定了分支，优先尝试该分支
+        let branches = if let Some(b) = branch {
+            vec![b.to_string()]
+        } else {
+            vec!["main".to_string(), "master".to_string()]
+        };
+        
         let mut last_error = None;
         let mut response = None;
 

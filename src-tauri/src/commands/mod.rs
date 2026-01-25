@@ -93,7 +93,7 @@ pub async fn scan_repository(
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "仓库不存在".to_string())?;
 
-    let (owner, repo_name) = Repository::from_github_url(&repo.url)
+    let (owner, repo_name, branch) = Repository::from_github_url(&repo.url)
         .map_err(|e| e.to_string())?;
 
     // 确定缓存基础目录
@@ -114,7 +114,7 @@ pub async fn scan_repository(
             // 缓存路径不存在，重新下载
             log::warn!("缓存路径不存在，重新下载: {:?}", cache_path_buf);
             let (extract_dir, commit_sha) = state.github
-                .download_repository_archive(&owner, &repo_name, &cache_base_dir)
+                .download_repository_archive(&owner, &repo_name, branch.as_deref(), &cache_base_dir)
                 .await
                 .map_err(|e| format!("下载仓库压缩包失败: {}", e))?;
 
@@ -134,7 +134,7 @@ pub async fn scan_repository(
         log::info!("首次扫描，下载仓库压缩包: {}", repo.name);
 
         let (extract_dir, commit_sha) = state.github
-            .download_repository_archive(&owner, &repo_name, &cache_base_dir)
+            .download_repository_archive(&owner, &repo_name, branch.as_deref(), &cache_base_dir)
             .await
             .map_err(|e| format!("下载仓库压缩包失败: {}", e))?;
 
@@ -181,9 +181,9 @@ pub async fn scan_repository(
 
     // 第二步：迁移旧 ID 的数据并删除旧记录
     if let Ok(existing_skills) = state.db.get_skills() {
-        // 筛选出属于当前仓库的现有技能（通过标准化 URL 匹配）
+         // 筛选出属于当前仓库的现有技能（通过标准化 URL 匹配）
         let repo_skills: Vec<&Skill> = existing_skills.iter().filter(|s| {
-            if let Ok((s_owner, s_repo)) = Repository::from_github_url(&s.repository_url) {
+            if let Ok((s_owner, s_repo, _)) = Repository::from_github_url(&s.repository_url) {
                 s_owner.eq_ignore_ascii_case(&owner) && s_repo.eq_ignore_ascii_case(&repo_name)
             } else {
                 false
@@ -270,7 +270,19 @@ pub async fn install_skill(
     install_path: Option<String>,
 ) -> Result<(), String> {
     let manager = state.skill_manager.lock().await;
-    manager.install_skill(&skill_id, install_path).await
+    manager.install_skill(&skill_id, install_path, false).await
+        .map_err(|e| e.to_string())
+}
+
+/// 同步 skill (跳过安全扫描)
+#[tauri::command]
+pub async fn sync_skill(
+    state: State<'_, AppState>,
+    skill_id: String,
+    install_path: Option<String>,
+) -> Result<(), String> {
+    let manager = state.skill_manager.lock().await;
+    manager.install_skill(&skill_id, install_path, true).await
         .map_err(|e| e.to_string())
 }
 
@@ -705,9 +717,6 @@ pub async fn refresh_featured_repositories(
     tmp.flush()
         .map_err(|e| format!("Failed to flush temp file: {}", e))?;
 
-    if cache_path.exists() {
-        let _ = std::fs::remove_file(&cache_path);
-    }
     tmp.persist(&cache_path)
         .map_err(|e| format!("Failed to persist featured repositories cache: {}", e))?;
 
@@ -745,7 +754,7 @@ pub async fn check_skills_updates(
         }
 
         // 解析仓库 URL
-        let (owner, repo) = match Repository::from_github_url(&skill.repository_url) {
+        let (owner, repo, _) = match Repository::from_github_url(&skill.repository_url) {
             Ok(result) => result,
             Err(e) => {
                 log::warn!("无法解析仓库 URL {}: {}", skill.repository_url, e);

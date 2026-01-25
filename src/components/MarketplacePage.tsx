@@ -11,35 +11,22 @@ import { useSkillTranslation, TranslatedSkill } from "../hooks/useTranslatedSkil
 import { Skill } from "../types";
 import { SecurityReport } from "../types/security";
 import {
-  Download,
   Trash2,
-  AlertTriangle,
+  Download,
   Loader2,
   Search,
   SearchX,
   FolderOpen,
-  XCircle,
-  CheckCircle,
   Languages,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { formatRepositoryTag } from "../lib/utils";
 import { invoke } from "@tauri-apps/api/core";
-import { countIssuesBySeverity } from "@/lib/security-utils";
-import { addRecentInstallPath } from "@/lib/storage";
 import { CyberSelect, type CyberSelectOption } from "./ui/CyberSelect";
-import { InstallPathSelector } from "./InstallPathSelector";
 import { appToast } from "@/lib/toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from "./ui/alert-dialog";
+import { InstallConfirmDialog } from "./InstallConfirmDialog";
+import { addRecentInstallPath } from "@/lib/storage";
 
 interface MarketplacePageProps {
   onNavigateToRepositories?: () => void;
@@ -56,6 +43,7 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRepository, setSelectedRepository] = useState("all");
+  const [sortOption, setSortOption] = useState("default");
   const [hideInstalled, setHideInstalled] = useState(false);
   const [pendingInstall, setPendingInstall] = useState<{
     skill: Skill;
@@ -65,6 +53,11 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
   const [deletingSkillId, setDeletingSkillId] = useState<string | null>(null);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const listContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const sortOptions: CyberSelectOption[] = [
+    { value: "default", label: t("skills.marketplace.sort.default") || "Default (A-Z)" },
+    { value: "latest", label: t("skills.marketplace.sort.latest") || "Latest Updated" },
+  ];
 
   const repositorySkills = useMemo(() => {
     if (!allSkills) return [];
@@ -136,10 +129,25 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
       });
 
       filtered = [...nameMatches, ...descriptionMatches];
+    } else {
+      // Apply sorting only when not searching (or apply on top?)
+      // User request implies sorting capability generally.
+      // Search usually implies relevance sort, but valid to sort results too.
+      // Let's sort the 'filtered' list.
+
+      filtered.sort((a, b) => {
+        if (sortOption === "latest") {
+          const timeA = a.scanned_at ? new Date(a.scanned_at).getTime() : 0;
+          const timeB = b.scanned_at ? new Date(b.scanned_at).getTime() : 0;
+          return timeB - timeA;
+        }
+        // Default: A-Z
+        return a.name.localeCompare(b.name);
+      });
     }
 
     return filtered;
-  }, [repositorySkills, searchQuery, selectedRepository, hideInstalled]);
+  }, [repositorySkills, searchQuery, selectedRepository, hideInstalled, sortOption]);
 
   // Manual translation hook with toggle support
   const { translateSkill, toggleTranslation, getTranslatedSkill, translatingSkillIds } = useSkillTranslation();
@@ -174,6 +182,13 @@ export function MarketplacePage({ onNavigateToRepositories }: MarketplacePagePro
                   className="apple-input w-full h-10 pl-10 pr-4"
                 />
               </div>
+
+              <CyberSelect
+                value={sortOption}
+                onChange={setSortOption}
+                options={sortOptions}
+                className="min-w-[160px]"
+              />
 
               <CyberSelect
                 value={selectedRepository}
@@ -688,171 +703,4 @@ function SkillCard({
   );
 }
 
-interface InstallConfirmDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (selectedPaths: string[]) => void;
-  report: SecurityReport | null;
-  skillName: string;
-}
 
-function InstallConfirmDialog({
-  open,
-  onClose,
-  onConfirm,
-  report,
-  skillName,
-}: InstallConfirmDialogProps) {
-  const { t } = useTranslation();
-  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
-
-  const isMediumRisk = report ? report.score >= 50 && report.score < 70 : false;
-  const isHighRisk = report ? report.score < 50 || report.blocked : false;
-
-  const issueCounts = useMemo(
-    () => (report ? countIssuesBySeverity(report.issues) : { critical: 0, error: 0, warning: 0 }),
-    [report]
-  );
-
-  if (!report) return null;
-
-  return (
-    <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-2xl">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            {isHighRisk ? (
-              <XCircle className="w-5 h-5 text-destructive" />
-            ) : isMediumRisk ? (
-              <AlertTriangle className="w-5 h-5 text-warning" />
-            ) : (
-              <CheckCircle className="w-5 h-5 text-success" />
-            )}
-            {t("skills.marketplace.install.scanResult")}
-          </AlertDialogTitle>
-          <AlertDialogDescription asChild>
-            <div className="space-y-4 pb-4">
-              <div>
-                {t("skills.marketplace.install.preparingInstall")}:{" "}
-                <span className="font-semibold">{skillName}</span>
-              </div>
-
-              {/* Score */}
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <span className="text-sm">{t("skills.marketplace.install.securityScore")}:</span>
-                <span
-                  className={`text-3xl font-bold ${report.score >= 90
-                    ? "text-success"
-                    : report.score >= 70
-                      ? "text-success"
-                      : report.score >= 50
-                        ? "text-warning"
-                        : "text-destructive"
-                    }`}
-                >
-                  {report.score}
-                </span>
-              </div>
-
-              {/* Issue Summary */}
-              {report.issues.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">
-                    {t("skills.marketplace.install.issuesDetected")}:
-                  </div>
-                  <div className="flex gap-4 text-sm">
-                    {issueCounts.critical > 0 && (
-                      <span className="text-destructive">
-                        {t("skills.marketplace.install.critical")}: {issueCounts.critical}
-                      </span>
-                    )}
-                    {issueCounts.error > 0 && (
-                      <span className="text-warning">
-                        {t("skills.marketplace.install.highRisk")}: {issueCounts.error}
-                      </span>
-                    )}
-                    {issueCounts.warning > 0 && (
-                      <span className="text-warning">
-                        {t("skills.marketplace.install.mediumRisk")}: {issueCounts.warning}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Issue List */}
-              {report.issues.length > 0 && (
-                <div
-                  className={`p-3 rounded-lg ${isHighRisk
-                    ? "bg-destructive/10 border border-destructive/30"
-                    : isMediumRisk
-                      ? "bg-warning/10 border border-warning/30"
-                      : "bg-success/10 border border-success/30"
-                    }`}
-                >
-                  <ul className="space-y-1 text-sm">
-                    {report.issues.slice(0, 3).map((issue, idx) => (
-                      <li key={idx} className="text-xs">
-                        {issue.file_path && (
-                          <span className="text-primary mr-1.5">[{issue.file_path}]</span>
-                        )}
-                        {issue.description}
-                        {issue.line_number && (
-                          <span className="text-muted-foreground ml-2">
-                            (行 {issue.line_number})
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Warning */}
-              {isHighRisk && (
-                <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="block mb-1">
-                        {t("skills.marketplace.install.warningTitle")}
-                      </strong>
-                      {t("skills.marketplace.install.warningMessage")}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        {/* Path Selector */}
-        <div className="py-4 border-t border-border">
-          <InstallPathSelector onSelect={setSelectedPaths} />
-        </div>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>
-            {t("skills.marketplace.install.cancel")}
-          </AlertDialogCancel>
-          <button
-            onClick={() => onConfirm(selectedPaths)}
-            disabled={selectedPaths.length === 0}
-            className={`px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${isHighRisk
-              ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              : isMediumRisk
-                ? "bg-warning text-white hover:bg-warning/90"
-                : "bg-success text-white hover:bg-success/90"
-              }`}
-          >
-            {isHighRisk
-              ? t("skills.marketplace.install.installAnyway")
-              : selectedPaths.length > 1
-                ? t("skills.marketplace.install.confirmInstallMultiple", { count: selectedPaths.length })
-                : t("skills.marketplace.install.confirmInstall")}
-          </button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}

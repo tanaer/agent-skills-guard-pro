@@ -3,6 +3,10 @@
     "title": "智能体技能管家",
     "subtitle": "一站式技能安全管理"
   },
+  "common": {
+    "cancel": "取消",
+    "confirm": "确认"
+  },
   "nav": {
     "overview": "系统概览",
     "installed": "我的技能",
@@ -10,6 +14,7 @@
     "featuredRepositories": "精选仓库",
     "repositories": "仓库配置",
     "tools": "工具管理",
+    "sync": "技能同步",
     "settings": "应用设置"
   },
   "footer": {
@@ -80,6 +85,25 @@
     "installWarning": "安装此技能可能会危及系统安全。请在继续之前验证源的真实性。",
     "abort": "中止",
     "proceedAnyway": "仍然继续",
+    "abort": "中止",
+    "proceedAnyway": "仍然继续",
+    "sync": {
+      "title": "技能同步",
+      "description": "在不同的 AI 工具之间同步已安装的技能。",
+      "source": "源工具",
+      "target": "目标工具",
+      "button": "开始同步",
+      "noSkillsFound": "源工具中未发现技能",
+      "success": "成功同步 {{count}} 个技能",
+      "failed": "{{count}} 个技能同步失败，请查看详情",
+      "selectSource": "选择要从哪个工具复制技能。",
+      "selectTarget": "选择要将技能复制到哪些工具。",
+      "syncCompleted": "同步完成",
+      "results": {
+        "success": "成功同步 {{count}} 个技能。",
+        "failed": "失败：{{count}}"
+      }
+    },
     "marketplace": {
       "found": "找到 {{count}} 个技能",
       "search": "搜索技能...",
@@ -92,6 +116,10 @@
       "goToRepositories": "前往仓库页面",
       "localRepo": "本地",
       "allRepos": "全部",
+      "sort": {
+        "default": "默认排序 (A-Z)",
+        "latest": "最近更新"
+      },
       "install": {
         "scanResult": "安全扫描结果",
         "preparingInstall": "准备安装",

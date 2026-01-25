@@ -152,3 +152,11 @@ categories:
           zh: "来自歸藏的 Humanizer 中文版 - 用于去除文本中 AI 生成的痕迹，使文本更自然、更像人类书写。可检测并修复 24 种 AI 写作模式，涵盖内容、语言、风格和交流四大类别。"
         tags: ["community", "writing", "text-processing", "chinese", "humanizer"]
         featured: true
+
+      - url: "https://github.com/facebook/react/tree/main/.claude"
+        name: "facebook"
+        description:
+          en: "Official React repository Claude skills"
+          zh: "React 官方仓库 Claude 技能"
+        tags: ["official", "react", "frontend"]
+        featured: true

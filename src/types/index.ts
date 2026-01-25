@@ -30,6 +30,7 @@ export interface Skill {
   security_score?: number;
   security_issues?: string[];
   installed_commit_sha?: string;  // 安装时的 commit SHA，用于版本追踪
+  scanned_at?: string;
 }
 
 export enum SecurityLevel {

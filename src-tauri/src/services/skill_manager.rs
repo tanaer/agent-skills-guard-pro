@@ -34,10 +34,15 @@ impl SkillManager {
     /// 下载并分析 skill，返回文件内容和安全报告
     pub async fn download_and_analyze(&self, skill: &mut Skill) -> Result<(Vec<u8>, crate::models::SecurityReport)> {
         // 构建下载 URL
-        let (owner, repo) = crate::models::Repository::from_github_url(&skill.repository_url)?;
+        let (owner, repo, url_branch) = crate::models::Repository::from_github_url(&skill.repository_url)?;
 
         // 尝试多个分支下载 SKILL.md 文件
-        let branches = ["main", "master"];
+        // 如果 URL 中包含分支，优先使用该分支
+        let branches = if let Some(b) = url_branch {
+            vec![b]
+        } else {
+            vec!["main".to_string(), "master".to_string()]
+        };
         let mut content = None;
         let mut last_error = None;
 
@@ -91,7 +96,7 @@ impl SkillManager {
     }
 
     /// 安装 skill 到本地
-    pub async fn install_skill(&self, skill_id: &str, install_path: Option<String>) -> Result<()> {
+    pub async fn install_skill(&self, skill_id: &str, install_path: Option<String>, skip_scan: bool) -> Result<()> {
         // 从数据库获取 skill
         let mut skill = self.db.get_skills()?
             .into_iter()
@@ -202,62 +207,51 @@ impl SkillManager {
         }
 
         // 扫描整个技能目录
-        let scan_report = self.scanner.scan_directory(
-            skill_dir.to_str().context("技能目录路径无效")?,
-            &skill.id,
-            "zh"
-        )?;
+        if !skip_scan {
+            let scan_report = self.scanner.scan_directory(
+                skill_dir.to_str().context("技能目录路径无效")?,
+                &skill.id,
+                "zh"
+            )?;
 
-        log::info!("Security scan completed: score={}, scanned {} files",
-            scan_report.score, scan_report.scanned_files.len());
+            log::info!("Security scan completed: score={}, scanned {} files",
+                scan_report.score, scan_report.scanned_files.len());
 
-        // 检查是否被 hard_trigger 阻止
-        if scan_report.blocked {
-            // 先删除已下载的文件
-            if skill_dir.exists() {
-                std::fs::remove_dir_all(&skill_dir)?;
+            // 检查是否被 hard_trigger 阻止
+            if scan_report.blocked {
+                // 先删除已下载的文件
+                if skill_dir.exists() {
+                    std::fs::remove_dir_all(&skill_dir)?;
+                }
+
+                let mut error_msg = format!(
+                    "⛔ 安全检测发现严重威胁，禁止安装！\n\n检测到以下高危操作：\n"
+                );
+                for (idx, issue) in scan_report.hard_trigger_issues.iter().enumerate() {
+                    error_msg.push_str(&format!("{}. {}\n", idx + 1, issue));
+                }
+                error_msg.push_str("\n这些操作可能对您的系统造成严重危害，强烈建议不要安装此技能。");
+                anyhow::bail!(error_msg);
             }
 
-            let mut error_msg = format!(
-                "⛔ 安全检测发现严重威胁，禁止安装！\n\n检测到以下高危操作：\n"
+            // 更新 skill 安全信息
+            skill.security_score = Some(scan_report.score);
+            skill.security_level = Some(scan_report.level.as_str().to_string());
+            skill.security_issues = Some(
+                scan_report.issues.iter()
+                    .map(|i| {
+                        let file_info = i.file_path.as_ref()
+                            .map(|f| format!("[{}] ", f))
+                            .unwrap_or_default();
+                        format!("{}{:?}: {}", file_info, i.severity, i.description)
+                    })
+                    .collect()
             );
-            for (idx, issue) in scan_report.hard_trigger_issues.iter().enumerate() {
-                error_msg.push_str(&format!("{}. {}\n", idx + 1, issue));
-            }
-            error_msg.push_str("\n这些操作可能对您的系统造成严重危害，强烈建议不要安装此技能。");
-            anyhow::bail!(error_msg);
+            skill.scanned_at = Some(Utc::now());
+        } else {
+            log::info!("Skipping security scan for trusted installation");
+            // 保持原有的安全分数（如果存在）
         }
-
-        // 注释掉评分检查，允许用户在前端确认后安装低分技能
-        // 只有硬触发的技能会被后端强制阻止
-        // if scan_report.score < 50 {
-        //     // 先删除已下载的文件
-        //     if skill_dir.exists() {
-        //         std::fs::remove_dir_all(&skill_dir)?;
-        //     }
-        //
-        //     anyhow::bail!(
-        //         "技能安全评分过低 ({}分)，为保护您的安全已阻止安装。建议评分至少为 50 分以上。\n\n扫描了 {} 个文件：{}",
-        //         scan_report.score,
-        //         scan_report.scanned_files.len(),
-        //         scan_report.scanned_files.join(", ")
-        //     );
-        // }
-
-        // 更新 skill 安全信息
-        skill.security_score = Some(scan_report.score);
-        skill.security_level = Some(scan_report.level.as_str().to_string());
-        skill.security_issues = Some(
-            scan_report.issues.iter()
-                .map(|i| {
-                    let file_info = i.file_path.as_ref()
-                        .map(|f| format!("[{}] ", f))
-                        .unwrap_or_default();
-                    format!("{}{:?}: {}", file_info, i.severity, i.description)
-                })
-                .collect()
-        );
-        skill.scanned_at = Some(Utc::now());
 
         // 更新数据库
         let new_path = skill_dir.to_string_lossy().to_string();
@@ -370,7 +364,7 @@ impl SkillManager {
         log::info!("Downloading and caching repository: {}", repo_url);
 
         // 解析 GitHub URL
-        let (owner, repo_name) = crate::models::Repository::from_github_url(repo_url)?;
+        let (owner, repo_name, branch) = crate::models::Repository::from_github_url(repo_url)?;
 
         // 获取缓存基础目录
         let cache_base_dir = dirs::cache_dir()
@@ -380,7 +374,7 @@ impl SkillManager {
 
         // 下载仓库压缩包并解压
         let (extract_dir, commit_sha) = self.github
-            .download_repository_archive(&owner, &repo_name, &cache_base_dir)
+            .download_repository_archive(&owner, &repo_name, branch.as_deref(), &cache_base_dir)
             .await
             .context("下载仓库压缩包失败")?;
 
@@ -396,7 +390,122 @@ impl SkillManager {
 
         log::info!("Repository cached successfully: {}", cache_path_str);
 
+        // 扫描并更新仓库中的技能
+        if let Err(e) = self.scan_cached_repository(repo_id, &cache_path_str, repo_url) {
+            log::error!("Failed to scan cached repository: {}", e);
+        }
+
         Ok(cache_path_str)
+    }
+
+    /// 扫描缓存的仓库并更新技能列表
+    fn scan_cached_repository(&self, repo_id: &str, cache_path: &str, repo_url: &str) -> Result<()> {
+        log::info!("Scanning cached repository: {} ({})", repo_id, cache_path);
+        
+        // 找到仓库根目录
+        let repo_root = self.find_repo_root_in_cache(std::path::Path::new(cache_path))?;
+        let (repo_owner, _, _) = crate::models::Repository::from_github_url(repo_url)?;
+
+        // 遍历仓库目录寻找 SKILL.md
+        // 这里简单遍历两层目录
+        let mut skill_files = Vec::new();
+
+        // 辅助函数：扫描目录
+        let scan_dir = |dir: &std::path::Path| -> Vec<PathBuf> {
+            let mut found = Vec::new();
+            if let Ok(entries) = std::fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        let skill_md = path.join("SKILL.md");
+                        if skill_md.exists() {
+                            found.push(path);
+                        }
+                    }
+                }
+            }
+            found
+        };
+
+        // 1. 扫描根目录的子目录
+        skill_files.extend(scan_dir(&repo_root));
+
+        // 2. 扫描二级目录 (例如 categories/skill-name)
+        if let Ok(entries) = std::fs::read_dir(&repo_root) {
+            for entry in entries.flatten() {
+                if entry.path().is_dir() {
+                    // 排除 .git 等隐藏目录
+                    if let Some(name) = entry.file_name().to_str() {
+                        if !name.starts_with('.') {
+                           skill_files.extend(scan_dir(&entry.path()));
+                        }
+                    }
+                }
+            }
+        }
+
+        log::info!("Found {} skills in repository", skill_files.len());
+
+        let mut skills_to_save = Vec::new();
+
+        for skill_dir in skill_files {
+            let skill_md_path = skill_dir.join("SKILL.md");
+            if let Ok(content) = std::fs::read_to_string(&skill_md_path) {
+                 // 解析 frontmatter
+                let (name, description) = self.parse_frontmatter(&content).unwrap_or_else(|_| {
+                    (
+                        skill_dir.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                        None
+                    )
+                });
+                
+                // 计算相对路径
+                let relative_path = skill_dir.strip_prefix(&repo_root)
+                    .unwrap_or(&skill_dir)
+                    .to_string_lossy()
+                    .replace("\\", "/");
+
+                // 生成唯一 ID (使用 repo_url + path)
+                let id = format!("{}#{}", repo_url, relative_path);
+                
+                // 构造 Skill 对象
+                let mut skill = Skill {
+                    id: id.clone(),
+                    name,
+                    description,
+                    repository_url: repo_url.to_string(),
+                    repository_owner: Some(repo_owner.clone()),
+                    file_path: relative_path,
+                    installed: false, // 仓库扫描的技能默认未安装
+                    ..Default::default()
+                };
+
+                // 检查数据库中是否已存在 (保留已安装状态)
+                if let Ok(existing_skills) = self.db.get_skills() {
+                    if let Some(existing) = existing_skills.iter().find(|s| s.id == id) {
+                        skill.installed = existing.installed;
+                        skill.installed_at = existing.installed_at;
+                        skill.local_path = existing.local_path.clone();
+                        skill.local_paths = existing.local_paths.clone();
+                        skill.security_score = existing.security_score;
+                        skill.security_level = existing.security_level.clone();
+                        skill.security_issues = existing.security_issues.clone();
+                        skill.scanned_at = existing.scanned_at;
+                    }
+                }
+
+                skills_to_save.push(skill);
+            }
+        }
+
+        // 批量保存
+        for skill in skills_to_save {
+            if let Err(e) = self.db.save_skill(&skill) {
+                log::error!("Failed to save skill {}: {}", skill.name, e);
+            }
+        }
+
+        Ok(())
     }
 
     /// 在仓库缓存中定位技能目录
@@ -934,7 +1043,7 @@ impl SkillManager {
 
     /// 从网络下载并安装技能（降级方案）
     async fn install_from_network(&self, skill: &crate::models::Skill, skill_dir: &PathBuf) -> Result<()> {
-        let (owner, repo) = crate::models::Repository::from_github_url(&skill.repository_url)?;
+        let (owner, repo, _) = crate::models::Repository::from_github_url(&skill.repository_url)?;
 
         // 如果 file_path 是 "."，转换为空字符串以获取根目录内容
         let api_path = if skill.file_path == "." { "" } else { &skill.file_path };
@@ -1032,7 +1141,7 @@ impl SkillManager {
 
         // 重新下载仓库到新的临时缓存（staging）
         log::info!("下载最新版本到 staging 目录");
-        let (owner, repo_name) = crate::models::Repository::from_github_url(&skill.repository_url)?;
+        let (owner, repo_name, branch) = crate::models::Repository::from_github_url(&skill.repository_url)?;
 
         let staging_base_dir = dirs::cache_dir()
             .context("无法获取系统缓存目录")?
@@ -1047,7 +1156,7 @@ impl SkillManager {
 
         // 下载最新版本
         let (extract_dir, new_commit_sha) = self.github
-            .download_repository_archive(&owner, &repo_name, &staging_base_dir)
+            .download_repository_archive(&owner, &repo_name, branch.as_deref(), &staging_base_dir)
             .await
             .context("下载最新版本失败")?;
 
@@ -1321,7 +1430,7 @@ impl SkillManager {
                         log::info!("更新 installed_commit_sha");
 
                         // 将 staging 下载的版本提升为“仓库缓存基线”，避免后续把已更新内容误判为“本地修改”
-                        if let Ok((owner, repo_name)) = crate::models::Repository::from_github_url(&skill.repository_url) {
+                        if let Ok((owner, repo_name, _)) = crate::models::Repository::from_github_url(&skill.repository_url) {
                             if let Some(cache_base_dir) = dirs::cache_dir() {
                                 let repositories_base_dir = cache_base_dir
                                     .join("agent-skills-guard")

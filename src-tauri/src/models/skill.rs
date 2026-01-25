@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
 /// Skill 信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Skill {
     pub id: String,
     pub name: String,
@@ -37,7 +37,7 @@ impl Skill {
         let file_path = file_path.replace('\\', "/");
 
         // 尝试生成标准化的 ID 以避免重复（例如 .git 后缀或大小写差异）
-        let id = if let Ok((owner, repo)) = crate::models::Repository::from_github_url(&repository_url) {
+        let id = if let Ok((owner, repo, _)) = crate::models::Repository::from_github_url(&repository_url) {
             format!("https://github.com/{}/{}::{}", owner, repo, file_path)
         } else {
             format!("{}::{}", repository_url, file_path)

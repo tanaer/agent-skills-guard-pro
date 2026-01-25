@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Package, ShoppingCart, Star, Database, Settings, Wrench } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Star, Database, Settings, Wrench, ArrowRightLeft } from "lucide-react";
 
 type TabType =
   | "overview"
@@ -8,6 +8,7 @@ type TabType =
   | "featuredRepositories"
   | "repositories"
   | "tools"
+  | "sync"
   | "settings";
 
 interface SidebarProps {
@@ -19,6 +20,7 @@ const mainNavItems: { id: TabType; icon: typeof LayoutDashboard; labelKey: strin
   { id: "overview", icon: LayoutDashboard, labelKey: "nav.overview" },
   { id: "installed", icon: Package, labelKey: "nav.installed" },
   { id: "marketplace", icon: ShoppingCart, labelKey: "nav.marketplace" },
+  { id: "sync", icon: ArrowRightLeft, labelKey: "nav.sync" },
   { id: "featuredRepositories", icon: Star, labelKey: "nav.featuredRepositories" },
   { id: "repositories", icon: Database, labelKey: "nav.repositories" },
   { id: "tools", icon: Wrench, labelKey: "nav.tools" },

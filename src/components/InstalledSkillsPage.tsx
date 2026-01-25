@@ -27,6 +27,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { appToast } from "../lib/toast";
 import { countIssuesBySeverity } from "@/lib/security-utils";
+import { addRecentInstallPath } from "@/lib/storage";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -35,7 +36,9 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
+  AlertDialogAction,
 } from "./ui/alert-dialog";
+import { InstallConfirmDialog } from "./InstallConfirmDialog";
 
 const AVAILABLE_UPDATES_KEY = "available_updates";
 
@@ -74,6 +77,13 @@ export function InstalledSkillsPage() {
     report: SecurityReport;
     conflicts: string[];
   } | null>(null);
+
+  const [pendingInstall, setPendingInstall] = useState<{
+    skill: Skill;
+    report: SecurityReport;
+  } | null>(null);
+  const [preparingInstallSkillId, setPreparingInstallSkillId] = useState<string | null>(null);
+  const [uninstallConfirmSkillId, setUninstallConfirmSkillId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -364,20 +374,25 @@ export function InstalledSkillsPage() {
                     isTranslatingSkill={translatingSkillIds.has(skill.id)}
                     index={index}
                     onUninstall={() => {
-                      setUninstallingSkillId(skill.id);
-                      uninstallMutation.mutate(skill.id, {
-                        onSuccess: () => {
-                          setUninstallingSkillId(null);
-                          appToast.success(t("skills.toast.uninstalled"));
-                        },
-                        onError: (error: any) => {
-                          setUninstallingSkillId(null);
-                          appToast.error(
-                            `${t("skills.toast.uninstallFailed")}: ${error.message || error}`
-                          );
-                        },
-                      });
+                      setUninstallConfirmSkillId(skill.id);
                     }}
+                    onInstall={async () => {
+                      try {
+                        setPreparingInstallSkillId(skill.id);
+                        const report = await invoke<SecurityReport>("prepare_skill_installation", {
+                          skillId: skill.id,
+                          locale: i18n.language,
+                        });
+                        setPreparingInstallSkillId(null);
+                        setPendingInstall({ skill, report });
+                      } catch (error: any) {
+                        setPreparingInstallSkillId(null);
+                        appToast.error(
+                          `${t("skills.toast.installFailed")}: ${error.message || error}`
+                        );
+                      }
+                    }}
+                    isPreparingInstall={preparingInstallSkillId === skill.id}
                     onUninstallPath={(path: string) => {
                       uninstallPathMutation.mutate(
                         { skillId: skill.id, path },
@@ -411,10 +426,10 @@ export function InstalledSkillsPage() {
                     isPreparingUpdate={preparingUpdateSkillId === skill.id}
                     isApplyingUpdate={confirmingUpdateSkillId === skill.id}
                     isAnyOperationPending={
-                      uninstallMutation.isPending ||
                       uninstallPathMutation.isPending ||
                       preparingUpdateSkillId !== null ||
-                      confirmingUpdateSkillId !== null
+                      confirmingUpdateSkillId !== null ||
+                      preparingInstallSkillId !== null
                     }
                     t={t}
                   />
@@ -485,6 +500,79 @@ export function InstalledSkillsPage() {
         conflicts={pendingUpdate?.conflicts || []}
         skillName={pendingUpdate?.skill.name || ""}
       />
+
+      <InstallConfirmDialog
+        open={pendingInstall !== null}
+        onClose={async () => {
+          if (pendingInstall) {
+            try {
+              await invoke("cancel_skill_installation", { skillId: pendingInstall.skill.id });
+            } catch (error: any) {
+              console.error("[ERROR] 取消安装失败:", error);
+            }
+          }
+          setPendingInstall(null);
+        }}
+        onConfirm={async (selectedPaths) => {
+          if (pendingInstall && selectedPaths.length > 0) {
+            try {
+              for (const path of selectedPaths) {
+                await invoke("confirm_skill_installation", {
+                  skillId: pendingInstall.skill.id,
+                  installPath: path,
+                });
+                addRecentInstallPath(path);
+              }
+              await queryClient.refetchQueries({ queryKey: ["skills"] });
+              await queryClient.refetchQueries({ queryKey: ["skills", "installed"] });
+              await queryClient.refetchQueries({ queryKey: ["scanResults"] });
+              appToast.success(t("skills.toast.installedToMultiple", { count: selectedPaths.length }));
+            } catch (error: any) {
+              appToast.error(`${t("skills.toast.installFailed")}: ${error.message || error}`);
+            }
+          }
+          setPendingInstall(null);
+        }}
+        report={pendingInstall?.report || null}
+        skillName={pendingInstall?.skill.name || ""}
+      />
+
+      <AlertDialog open={uninstallConfirmSkillId !== null} onOpenChange={() => setUninstallConfirmSkillId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("skills.uninstallConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("skills.uninstallConfirmMessage")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={() => {
+                if (uninstallConfirmSkillId) {
+                  setUninstallingSkillId(uninstallConfirmSkillId);
+                  uninstallMutation.mutate(uninstallConfirmSkillId, {
+                    onSuccess: () => {
+                      setUninstallingSkillId(null);
+                      appToast.success(t("skills.toast.uninstalled"));
+                    },
+                    onError: (error: any) => {
+                      setUninstallingSkillId(null);
+                      appToast.error(
+                        `${t("skills.toast.uninstallFailed")}: ${error.message || error}`
+                      );
+                    },
+                  });
+                  setUninstallConfirmSkillId(null);
+                }
+              }}
+            >
+              {t("skills.uninstall")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -495,9 +583,11 @@ interface SkillCardProps {
   onUninstall: () => void;
   onUninstallPath: (path: string) => void;
   onUpdate: () => void;
+  onInstall: () => void;
   hasUpdate: boolean;
   isUninstalling: boolean;
   isPreparingUpdate: boolean;
+  isPreparingInstall: boolean;
   isApplyingUpdate: boolean;
   isAnyOperationPending: boolean;
   onTranslate: () => void;
@@ -511,9 +601,11 @@ function SkillCard({
   onUninstall,
   onUninstallPath,
   onUpdate,
+  onInstall,
   hasUpdate,
   isUninstalling,
   isPreparingUpdate,
+  isPreparingInstall,
   isApplyingUpdate,
   isAnyOperationPending,
   onTranslate,
@@ -610,6 +702,26 @@ function SkillCard({
               )}
             </button>
           )}
+
+          {!hasUpdate && (
+            <button
+              onClick={onInstall}
+              disabled={isAnyOperationPending}
+              className="apple-button-secondary h-8 px-3 text-xs flex items-center gap-1.5"
+            >
+              {isPreparingInstall ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  {t("skills.installToOther")}
+                </>
+              )}
+            </button>
+          )}
+
           <button
             onClick={onUninstall}
             disabled={isAnyOperationPending}

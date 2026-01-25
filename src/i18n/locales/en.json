@@ -3,6 +3,10 @@
     "title": "AGENT SKILLS GUARD",
     "subtitle": "SECURE_SKILL_MANAGEMENT_PROTOCOL"
   },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
   "nav": {
     "overview": "OVERVIEW",
     "installed": "INSTALLED",
@@ -10,6 +14,7 @@
     "featuredRepositories": "FEATURED_REPOS",
     "repositories": "REPO_CONFIG",
     "tools": "TOOLS",
+    "sync": "Sync Skills",
     "settings": "SETTINGS"
   },
   "footer": {
@@ -80,6 +85,25 @@
     "installWarning": "Installing this skill may compromise system security. Verify source authenticity before proceeding.",
     "abort": "ABORT",
     "proceedAnyway": "PROCEED_ANYWAY",
+    "abort": "ABORT",
+    "proceedAnyway": "PROCEED_ANYWAY",
+    "sync": {
+      "title": "Skill Synchronization",
+      "description": "Synchronize your installed skills across different AI tools.",
+      "source": "Source Tool",
+      "target": "Target Tools",
+      "button": "Sync",
+      "noSkillsFound": "No skills found in source tool",
+      "success": "Successfully synced {{count}} skills",
+      "failed": "Failed to sync {{count}} skills. Check details.",
+      "selectSource": "Select where to copy skills from.",
+      "selectTarget": "Select where to copy skills to.",
+      "syncCompleted": "Sync Completed",
+      "results": {
+        "success": "Successfully synced {{count}} skills.",
+        "failed": "Failed: {{count}}"
+      }
+    },
     "marketplace": {
       "found": "FOUND_{{count}}_SKILLS",
       "search": "SEARCH_SKILLS...",
@@ -92,6 +116,10 @@
       "goToRepositories": "GO_TO_REPOSITORIES",
       "localRepo": "LOCAL",
       "allRepos": "ALL",
+      "sort": {
+        "default": "Default (A-Z)",
+        "latest": "Latest Updated"
+      },
       "install": {
         "scanResult": "Security Scan Result",
         "preparingInstall": "Preparing to install",
